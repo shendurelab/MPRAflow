@@ -27,7 +27,7 @@
 ### Clone repository 
 
 ```bash
-git clone https://github.com/JJZhao123/MPRA_nextflow
+git clone https://github.com/shendurelab/MPRAflow.git
 ```
 
 ### Set up conda environment:
@@ -36,8 +36,9 @@ Two .yml files are provided to create the appropriate environments: mpra.yml py3
 After installing conda on your system create environment by running code below.
 
 ```bash
-conda env create -f mpra.yml
-conda env create -f py36.yml
+cd ~/MPRAflow/conf
+conda env create -f mpraflow_py27.yml
+conda env create -f mpraflow_py36.yml
 ```
 ##### ****WARNING: currently certain required packages are not available in conda 4.7 as they have discontinued the 'free' channel (https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/). If you are running 4.7 please follow the instructions below:
 ```bash
@@ -121,8 +122,8 @@ This pipeline comes with a `nextflow.config` file to run on SGE systems, allowin
 
    ```bash
    conda activate py36
-   nextflow run association/main_gg.nf --help
-   nextflow run dna_rna_count/main_gg.nf --help
+   nextflow run count.nf --help
+   nextflow run association.nf --help
    ```
 
 1. Create an 'expermient' csv in the format below:
@@ -144,20 +145,20 @@ This pipeline comes with a `nextflow.config` file to run on SGE systems, allowin
    ```
    The insert names must exactly match the names in the design FASTA file
     
-3. Run main_gg.txt in the association folder
+3. Run Assocaition
 
    ```bash 
-   cd association
-   conda activate py36
-   nextflow run main_gg.nf --fastq_insert ${fastq}_R1_001.fastq.gz --design pilot_library_noprimer.fa" --fastq_bc ${fastq}_R2_001.fastq.gz" --condaloc '~/miniconda3/bin/activate'
+   cd ~/MPRAflow
+   conda activate mpraflow_py36
+   nextflow run association.nf --fastq_insert ${fastq}_R1_001.fastq.gz --design pilot_library_noprimer.fa" --fastq_bc ${fastq}_R2_001.fastq.gz" --condaloc '~/miniconda3/bin/activate'
    ```
 
-4. Run main_gg.txt in the dna_rna_count folder
+4. Run Count
 
    ```bash 
-   cd dna_rna_count
-   conda activate py36
-   nextflow run main_gg.nf --dir bulk_FASTQ_directory --e experiment.csv --design pilot_library_noprimer.fa --association output_filtered_coords_to_barcodes.p --condaloc '~/miniconda3/bin/activate'
+   cd ~/MPRAflow
+   conda activate mpraflow_py36
+   nextflow run count.nf --dir bulk_FASTQ_directory --e experiment.csv --design pilot_library_noprimer.fa --association output_filtered_coords_to_barcodes.p --condaloc '~/miniconda3/bin/activate'
    ```
    
 
