@@ -1,0 +1,30 @@
+# Don't track content of these folders
+data/
+work/
+outs/
+log/
+.nextflow/
+LC_data/
+old_scripts/
+old/
+test_data/
+tmp/
+HK_inputs/
+
+.sam
+.bam
+.sorted.bam
+submit.*.o*
+submit.*.e*
+submit.*
+#ignore nextflow logs
+.nextflow.log.*
+.nextflow.log
+
+input_files/
+
+#ignore nextflow logs
+#.nextflow.log.*
+#.nextflow.log
+#
+#.ipynb_checkpoints/

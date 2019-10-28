@@ -9,7 +9,7 @@
 ### ASSOCIATION:
 ##### This utility takes in library association sequencing data (FASTQ) and a design file (FASTA) to assign enhancers to barcodes. Functionality includes filtering for quality and coverage of barcodes. This utility must be run before the COUNT utility. 
 
-### DNA_RNA_COUNT:
+### COUNT:
 ##### This utility processes sequence data (FASTQ) of barcodes from the DNA and RNA fractions of the MPRA experiment and outputs count tables labeled with the candidate sequence and a label provided in the design file. This utility can process multiple replicates (batches), and conditions in a parallelized manner combining the results into a single count matrix compatible with MPRAnalyze. 
 
 
@@ -164,4 +164,4 @@ This pipeline comes with a `nextflow.config` file to run on SGE systems, allowin
 
 
 
-![MPRA_nextflow](https://github.com/JJZhao123/MPRA_nextflow/blob/master/pipeline.png)
+![MPRA_nextflow](https://github.com/shendurelab/MPRAflow/blob/master/MPRA_nextflow.png)
