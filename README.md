@@ -164,4 +164,4 @@ This pipeline comes with a `nextflow.config` file to run on SGE systems, allowin
 
 
 
-![MPRA_nextflow](https://github.com/shendurelab/MPRAflow/blob/master/MPRA_nextflow.png)
+![MPRA_nextflow](https://github.com/shendurelab/MPRAflow/master/MPRA_nextflow.png)
