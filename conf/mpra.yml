@@ -1,0 +1,34 @@
+name: mpra
+channels:
+  - bioconda
+  - defaults
+  - conda-forge
+  - r
+dependencies:
+  - _libgcc_mutex=0.1=main
+  - bcftools=1.9=h47928c2_2
+  - bzip2=1.0.8=h7b6447c_0
+  - certifi=2019.6.16=py27_0
+  - curl=7.60.0=0
+  - htslib=1.9=h47928c2_5
+  - krb5=1.14.6=0
+  - libdeflate=1.0=h14c3975_1
+  - libedit=3.1.20181209=hc058e9b_0
+  - libgcc=5.2.0=0
+  - libgcc-ng=9.1.0=hdf63c60_0
+  - libssh2=1.8.0=h8c220ad_2
+  - libstdcxx-ng=9.1.0=hdf63c60_0
+  - ncurses=6.1=he6710b0_1
+  - openssl=1.0.1k=1
+  - pip=19.1.1=py27_0
+  - pysam=0.15.2=py27h1671916_1
+  - python=2.7.3=7
+  - readline=6.2=2
+  - samtools=1.9=h91753b0_5
+  - setuptools=41.0.1=py27_0
+  - sqlite=3.29.0=h7b6447c_0
+  - system=5.8=2
+  - tk=8.5.18=0
+  - wheel=0.33.4=py27_0
+  - xz=5.2.4=h14c3975_4
+  - zlib=1.2.11=h7b6447c_3
