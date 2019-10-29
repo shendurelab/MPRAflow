@@ -1,6 +1,6 @@
 [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A519.0.7-brightgreen.svg)](https://www.nextflow.io/)
 
-# MPRA_nextflow
+# MPRAflow
 
 #### This pipeline processes sequencing data (FASTA files) from Massively Parallel Reporter Assays (MPRA) to create count tables for candidate sequences tested in the experiment. 
 
