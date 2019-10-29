@@ -51,13 +51,16 @@ conda env create -f mpraflow_py36.yml
 
 #### Steps to run the pipeline
 
-This pipeline comes with a `nextflow.config` file to run on SGE systems, allowing each process to be run as a separate 'qsub' command. Please use a submit script for steps 2 and 3. For help messages run:
+This pipeline comes with a `nextflow.config` file to run on SGE systems, allowing each process to be run as a separate 'qsub' command. 
+Please use a submit script for steps 2 and 3. For help messages run:
 
    ```bash
    conda activate mpraflow_py36.yml
    nextflow run count.nf --help
    nextflow run association.nf --help
    ```
+
+This pipeline expects the FASTQ files to be demultiplexed and trimmed to only include sequence from the insert, barcodes, and/or UMIs
 
 1. Create an 'expermient' csv in the format below:
  
@@ -68,7 +71,6 @@ This pipeline comes with a `nextflow.config` file to run on SGE systems, allowin
    cell2,1,DNA FASTQ prefix, RNA FASTQ prefix, desired name
    cell2,2,DNA FASTQ prefix, RNA FASTQ prefix, desired name
    ```
-   an example file is here: `dna_rna_count/experiment.csv`
 
 2. Create a 'label' tsv in the format below:
  
