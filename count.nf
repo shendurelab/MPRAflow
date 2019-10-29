@@ -40,6 +40,7 @@ def helpMessage() {
     Options:
       --outdir                      The output directory where the results will be saved (default outs)
       --merge_intersect             Only retain barcodes in RNA and DNA fraction (TRUE/FALSE, default: FALSE)
+      --mpranalyze                  Only generate MPRAnalyze outputs (True:1, False:0 default 0)
     Extras:
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
       --name                         Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
@@ -75,6 +76,7 @@ params.s='26'
 params.l='10'
 params.m='16'
 params.merge_intersect="FALSE"
+params.mpranalyze="0"
 
 //params.dir="bulk_dna"
 //params.e='/wynton/group/ye/ggordon/MPRA_nextflow/barcode_matching_scripts/toy_experiment.csv'
@@ -254,7 +256,7 @@ println 'start analysis'
 if(params.m !=0){
     process 'create_BAM' {
         tag "make idx"
-    
+ 
         input:
         file(params.condaloc)
         val(params.sample_idx)
@@ -266,7 +268,7 @@ if(params.m !=0){
         set datasetID, file("${datasetID}.bam") into clean_bam
         """
         #!/bin/bash
-        source $params.condaloc mpra
+        source $params.condaloc mpraflow_py27
        
         echo "sample idx"
         echo $params.sample_idx
@@ -275,12 +277,12 @@ if(params.m !=0){
 
         new_var2=\$(echo $r1_fastq | awk -F"_R1_" '{print \$1"_R2_"\$2}')
         echo \$new_var2
-        new_2=${"$PWD"}"/"$params.dir"/"\$new_var2
+        new_2=$params.dir"/"\$new_var2
         echo \$new_2
 
         new_var3=\$(echo $r1_fastq | awk -F"_R1_" '{print \$1"_R3_"\$2}')
         echo \$new_var3
-        new_3=${"$PWD"}"/"$params.dir"/"\$new_var3
+        new_3=$params.dir"/"\$new_var3
         echo \$new_3
      
         echo $params.sample_idx'        '${datasetID} >> ${datasetID}_index.lst 
@@ -309,7 +311,7 @@ if(params.m==0){
  
         """
         #!/bin/bash
-        source $params.condaloc mpra
+        source $params.condaloc mpraflow_py27
         echo "sample idx"
         echo $params.sample_idx
         
@@ -317,7 +319,7 @@ if(params.m==0){
         
         new_var=\$(echo $r1_fastq | awk -F"_R1_" '{print \$1"_R3_"\$2}')
         echo \$new_var
-        new_3=${"$PWD"}"/"$params.dir"/"\$new_var
+        new_3=$params.dir"/"\$new_var
         echo \$new_3
 
         echo $params.sample_idx'        '${datasetID} >> ${datasetID}_index.lst
@@ -350,7 +352,7 @@ process 'raw_counts'{
     if(params.m==0)
         """
         #!/bin/bash
-        source $params.condaloc py36
+        source $params.condaloc mpraflow_py36
        
         samtools view -F -r $bam | awk '{print \$10}' | sort | gzip -c > ${datasetID}_raw_counts.tsv.gz 
 
@@ -361,7 +363,7 @@ process 'raw_counts'{
     else if(params.m!=0)
         """
         #!/bin/bash
-        source $params.condaloc py36
+        source $params.condaloc mpraflow_py36
 
         samtools view -F -r $bam | awk 'BEGIN{ OFS= "\t" }{ for (i=12; i<=NF; i++) { if (\$i ~ /^XJ:Z:/) print \$10,substr(\$i,6,16) }}' | sort | uniq -c | awk 'BEGIN{ OFS="\t" }{ print \$2,\$3,\$1 }' | awk '{if(\$2~"GGGGGGGGGGGGGGG" || \$2~"NNNNNN"); else{print}}' | gzip -c > ${datasetID}_raw_counts.tsv.gz
         """ 
@@ -383,7 +385,7 @@ process 'filter_counts'{
 
     """
     #!/bin/bash
-    source $params.condaloc py36
+    source $params.condaloc mpraflow_py36
     
     zcat $rc | grep -v "N" | awk 'BEGIN{ OFS="\t" }{ if (length(\$1) == 15) { print } }' | gzip -c > ${datasetID}_filtered_counts.tsv.gz
 
@@ -409,7 +411,7 @@ process 'final_counts'{
     if(params.m==0)
         """
         #!/bin/bash
-        source $params.condaloc py36
+        source $params.condaloc mpraflow_py36
         
         zcat $fc | awk '{print \$1}' | uniq -c > ${datasetID}_counts.tsv
         
@@ -418,7 +420,7 @@ process 'final_counts'{
         """
         
         #!/bin/bash
-        source $params.condaloc py36
+        source $params.condaloc mpraflow_py36
        
         for i in $fc; do echo \$(basename \$i); zcat \$i | cut -f 2 | sort | uniq -c | sort -nr | head; echo; done > ${params.outdir}/${datasetID}/${datasetID}_freqUMIs.txt
         zcat $fc | awk '{print \$1}' | uniq -c > ${datasetID}_counts.tsv
@@ -428,59 +430,157 @@ process 'final_counts'{
 }
 
 /*
-* STEP 5: Merge each DNA and RNA file label with sequence and enhancer and normalize
+* STEP 5: MPRAnalyze input generation (if option selected)
 */
 
-process 'dna_rna_merge'{
-    publishDir "$params.outdir/", mode:'copy'
+//MPRAnalyze option
+if(params.mpranalyze != 0){
+    /*
+    * STEP 5: Merge each DNA and RNA file
+    */
     
-    input:
-    file(clist) from final_count.collect()
-
-    output:
-    file "*.tsv" into merged_ch
-
-    """
-    #!/bin/bash
-    source $params.condaloc py36
+    process 'dna_rna_mpranalyze_merge'{
+        publishDir "$params.outdir/", mode:'copy'
     
-    #run this in parallel not the most elegant solution, but seems to work
-    iter='a'
-    itera='b'
-    head -1 ${params.e} > tmp.header.txt
-    sed 1d ${params.e} | while read d; do itera=\$itera\$iter; echo \${itera}; cat tmp.header.txt > tmp.file_\${itera}.txt; echo \$d >> tmp.file_\${itera}.txt; python ${"$PWD"}/src/merge_label.py tmp.file_\${itera}.txt ${"$PWD"}/${params.outdir}/ ${params.association} ${params.design} ${params.merge_intersect} & done 
-    #python ${"$PWD"}/bin/merge_label.py ${params.e} ${"$PWD"}/${params.outdir}/	${params.association} ${params.design} ${params.merge_intersect}
-    sleep 2m
-    wait
-    echo 'all jobs are done!'
- 
-    """
+        input:
+        file(clist) from final_count.collect()
+    
+        output:
+        file "*tmp.csv" into merged_ch
+    
+        """
+        #!/bin/bash
+        source $params.condaloc mpraflow_py36
+        #
+        python ${"$PWD"}/src/merge_counts.py ${params.e} ${"$PWD"}/${params.outdir}/
+        
+        """
+    }
+    
+    
+    /*
+    * STEP 6: Merge all DNA/RNA counts into one big file
+    */
+    
+    process 'final_merge'{
+        publishDir "$params.outdir/"
+    
+        input:
+        file(pairlist) from merged_ch.collect()
+    
+        output:
+        file "*.csv" into merged_out
+    
+        """
+        #!/bin/bash
+        source $params.condaloc mpraflow_py36
+        python ${"$PWD"}/src/merge_all.py ${params.e} ${"$PWD"}/${params.outdir}/ ${params.out} ${params.design}
+    
+        """
+    }
+    
+    
+    /*
+    * STEP 7: Add label to outfile
+    */
+    
+    process 'final_label'{
+    
+        publishDir "$params.outdir/", mode:'copy'
+    
+        input:
+        file(table) from merged_out
+    
+        output:
+        file "*_final_labeled_counts.txt" into labeled_out
+    
+        """
+        #!/bin/bash
+        source $params.condaloc mpraflow_py36
+        python ${"$PWD"}/src/label_final_count_mat.py $table ${params.association} ${params.out}"_final_labeled_counts.txt"  ${params.design}
+        """
+    }
+    
+    /*
+    * STEP 8: Generate inputs
+    */
+    
+    process 'gen_mpranalyze'{
+        publishDir "$params.outdir/", mode:'copy'
+        
+        input:
+        file(t) from labeled_out
+    
+        """
+        #!/bin/bash
+        source $params.condaloc mpraflow_py36
+        python ${"$PWD"}/src/mpranalyze_compiler.py $t ${"$PWD"}/$params.outdir/
+       
+        """
+    }
 
 }
-
-
 
 
 /*
-* STEP 6: Calculate correlations between Replicates
+* STEP 5: Merge each DNA and RNA file label with sequence and enhancer and normalize
 */
-process 'calc_correlations'{
-    publishDir "$params.outdir/", mode:'copy'
+//merge and normalize
+if(params.mpranalyze == 0){
 
-    input:
-    file(pairlist) from merged_ch.collect()
+    process 'dna_rna_merge'{
+        publishDir "$params.outdir/", mode:'copy'
+       
+     
+        input:
+        file(clist) from final_count.collect()
+    
+        output:
+        file "*.tsv" into merged_ch
+    
+        """
+        #!/bin/bash
+        source $params.condaloc mpraflow_py36
+        
+        #run this in parallel not the most elegant solution, but seems to work
+        iter='a'
+        itera='b'
+        head -1 ${params.e} > tmp.header.txt
+        sed 1d ${params.e} | while read d; do itera=\$itera\$iter; echo \${itera}; cat tmp.header.txt > tmp.file_\${itera}.txt; echo \$d >> tmp.file_\${itera}.txt; python ${"$PWD"}/src/merge_label.py tmp.file_\${itera}.txt ${"$PWD"}/${params.outdir}/ ${params.association} ${params.design} ${params.merge_intersect} & done 
+        #python ${"$PWD"}/bin/merge_label.py ${params.e} ${"$PWD"}/${params.outdir}/	${params.association} ${params.design} ${params.merge_intersect}
+        sleep 2m
+        wait
+        echo 'all jobs are done!'
+     
+        """
+    
+    }
+    
+    
+    
+    
+    
+    /*
+    * STEP 6: Calculate correlations between Replicates
+    */
+    process 'calc_correlations'{
+        publishDir "$params.outdir/", mode:'copy'
+    
+        input:
+        file(pairlist) from merged_ch.collect()
+    
+        output:
+        file "*.png"
+    
+        """
+        #!/bin/bash
+        source $params.condaloc mpraflow_py36
+        Rscript ${"$PWD"}/src/plot_perInsertCounts_correlation.R ${params.e} ${"$PWD"}/${params.outdir}/ ${"$PWD"}/${params.outdir}/${params.out} ${params.labels}
+    
+        """
+    }
 
-    output:
-    file "*.png"
-
-    """
-    #!/bin/bash
-    source $params.condaloc py36
-    Rscript ${"$PWD"}/src/plot_perInsertCounts_correlation.R ${params.e} ${"$PWD"}/${params.outdir}/ ${"$PWD"}/${params.outdir}/${params.out} ${params.labels}
-
-    """
 }
-
 
 
 /*
