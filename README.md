@@ -17,12 +17,11 @@
 
 ### Required packages
 
-- Samtools
-- BWA and/or Bowtie
-- Picard
-- BCFtools
 - conda
-- shedskin
+
+Download here: `https://docs.conda.io/en/latest/miniconda.html`
+
+
 
 ### Clone repository 
 
@@ -43,9 +42,9 @@ conda env create -f mpraflow_py36.yml
 ##### ****WARNING: currently certain required packages are not available in conda 4.7 as they have discontinued the 'free' channel (https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/). If you are running 4.7 please follow the instructions below:
 ```bash
 conda config --set restore_free_channel true
-conda env create -f mpra.yml
+conda env create -f mpraflow_py27.yml
 conda config --set restore_free_channel false
-conda env create -f py36.yml
+conda env create -f mpraflow_py36.yml
 ```
 
 ## Running the pipeline
@@ -55,7 +54,7 @@ conda env create -f py36.yml
 This pipeline comes with a `nextflow.config` file to run on SGE systems, allowing each process to be run as a separate 'qsub' command. Please use a submit script for steps 2 and 3. For help messages run:
 
    ```bash
-   conda activate py36
+   conda activate mpraflow_py36.yml
    nextflow run count.nf --help
    nextflow run association.nf --help
    ```
