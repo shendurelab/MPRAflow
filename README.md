@@ -1,4 +1,4 @@
-[![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A50.30.1-brightgreen.svg)](https://www.nextflow.io/)
+[![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A519.0.7-brightgreen.svg)](https://www.nextflow.io/)
 
 # MPRA_nextflow
 
@@ -51,7 +51,11 @@ conda env create -f mpraflow_py36.yml
 
 #### Steps to run the pipeline
 
-This pipeline comes with a `nextflow.config` file to run on SGE systems, allowing each process to be run as a separate 'qsub' command. 
+This pipeline comes with a `nextflow.config` file set up to run on HPC clusters, allowing each process to be run as a separate 'qsub' command.
+The config contains example code for SGE, LSF, and SLURM architectures. The default is SGE. 
+Please remove the `\\` for the architechture you would like to use and place `\\` infront of any architectures not currently in use.
+#### **note: Please consult your cluster's wiki page for cluster specific commands and change `clusterOptions = ` to reflect these specifications. Additionally for large libraries, more memory can be specified in this location.
+ 
 Please use a submit script for steps 2 and 3. For help messages run:
 
    ```bash
