@@ -76,7 +76,7 @@ params.s='26'
 params.l='10'
 params.m='16'
 params.merge_intersect="FALSE"
-params.mpranalyze="0"
+params.mpranalyze=0
 
 //params.dir="bulk_dna"
 //params.e='/wynton/group/ye/ggordon/MPRA_nextflow/barcode_matching_scripts/toy_experiment.csv'
@@ -326,7 +326,7 @@ if(params.m==0){
 
         #paste <( zcat $r1_fastq ) <(zcat \$new_3 ) | awk 'BEGIN{ counter=0 }{ counter+=1; if (counter == 2) { print \$1\$2 } else { if (counter==4) { print \$1\$2; counter=0 } else { print \$1 }}}' | python ${"$PWD"}/src/FastQ2BAM.py -p -s $params.s | python ${"$PWD"}/src/MergeTrimReadsBAM.py -p --mergeoverlap > ${datasetID}".bam" 
 
-        paste <( zcat $r1_fastq ) <(zcat \$new_3 ) | awk 'BEGIN{ counter=0 }{ counter+=1; if (counter == 2) { print \$1\$2 } else { if (counter==4) { print \$1\$2; counter=0 } else { print \$1 }}}' | python ${"$PWD"}/src/SplitFastQdoubleIndexBAM.py -p -s $params.s -l $params.l -m $params.m -i $idx | python ${"$PWD"}/src/MergeTrimReadsBAM.py -p --mergeoverlap > ${datasetID}".bam" 
+        paste <( zcat $r1_fastq ) <(zcat \$new_3 ) | awk 'BEGIN{ counter=0 }{ counter+=1; if (counter == 2) { print \$1\$2 } else { if (counter==4) { print \$1\$2; counter=0 } else { print \$1 }}}' | python ${"$PWD"}/src/SplitFastQdoubleIndexBAM.py -p -s $params.s -l $params.l -m $params.m -i ${datasetID}_index.lst | python ${"$PWD"}/src/MergeTrimReadsBAM.py -p --mergeoverlap > ${datasetID}".bam" 
 
 
         """   
