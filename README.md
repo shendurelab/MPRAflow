@@ -66,7 +66,7 @@ Please use a submit script for steps 2 and 3. For help messages run:
 
 This pipeline expects the FASTQ files to be demultiplexed and trimmed to only include sequence from the insert, barcodes, and/or UMIs
 
-1. Create an 'expermient' csv in the format below:
+1. Create an 'experiment' csv in the format below:
  
    ```
    condition,batch,dna,rna,name
@@ -76,15 +76,15 @@ This pipeline expects the FASTQ files to be demultiplexed and trimmed to only in
    cell2,2,DNA FASTQ prefix, RNA FASTQ prefix, desired name
    ```
 
-2. Create a 'label' tsv in the format below:
+2. Each insert should be grouped into different categories, such as "positive control", "negative control", "shuffled control", and "putative enhancer". Create a 'label' tsv in the format below that maps the name to category:
  
    ```
    insert1_name	insert1_label
    insert2_name insert2_label
    ```
-   The insert names must exactly match the names in the design FASTA file
+   The insert names must exactly match the names in the design FASTA file.
     
-3. Run Assocaition
+3. Run Association
 
    ```bash 
    cd ~/MPRAflow
