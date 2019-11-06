@@ -80,7 +80,7 @@ This pipeline expects the FASTQ files to be demultiplexed and trimmed to only in
 2. Each insert should be grouped into different user-specified categories, such as "positive control", "negative control", "shuffled control", and "putative enhancer". Create a 'label' tsv in the format below that maps the name to category:
  
    ```
-   insert1_name	insert1_label
+   insert1_name insert1_label
    insert2_name insert2_label
    ```
    The insert names must exactly match the names in the design FASTA file.
