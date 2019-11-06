@@ -59,6 +59,7 @@ Please remove the `\\` for the architechture you would like to use and place `\\
 Please use a submit script for steps 2 and 3. For help messages run:
 
    ```bash
+   cd ~/MPRAflow
    conda activate mpraflow_py36
    nextflow run count.nf --help
    nextflow run association.nf --help
