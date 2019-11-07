@@ -71,10 +71,10 @@ This pipeline expects the FASTQ files to be demultiplexed and trimmed to only in
  
    ```
    condition,replicate,dna,rna,name
-   condition1,1,DNA FASTQ prefix, RNA FASTQ prefix, desired name
-   condition1,2,DNA FASTQ prefix, RNA FASTQ prefix, desired name
-   condition2,1,DNA FASTQ prefix, RNA FASTQ prefix, desired name
-   condition2,2,DNA FASTQ prefix, RNA FASTQ prefix, desired name
+   condition1,1,DNA FASTQ prefix,RNA FASTQ prefix,desired name
+   condition1,2,DNA FASTQ prefix,RNA FASTQ prefix,desired name
+   condition2,1,DNA FASTQ prefix,RNA FASTQ prefix,desired name
+   condition2,2,DNA FASTQ prefix,RNA FASTQ prefix,desired name
    ```
 
 2. Each insert should be grouped into different user-specified categories, such as "positive control", "negative control", "shuffled control", and "putative enhancer". Create a 'label' tsv in the format below that maps the name to category:
