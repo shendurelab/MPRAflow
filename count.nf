@@ -256,6 +256,7 @@ println 'start analysis'
 if(params.m !=0){
     process 'create_BAM' {
         tag "make idx"
+        label 'longtime'
  
         input:
         file(params.condaloc)
@@ -306,7 +307,8 @@ if(params.m !=0){
 if(params.m==0){
     process 'create_BAM_noUMI' {
         tag "make idx"
-    
+        label 'longtime'
+ 
         input:
         file(params.condaloc)
         val(params.sample_idx)
@@ -350,9 +352,10 @@ if(params.m==0){
 */
 
 process 'raw_counts'{
+    label 'shorttime'
 
     publishDir "$params.outdir/$datasetID"
-
+    
     input:
     set datasetID, file(bam) from clean_bam
 
@@ -386,8 +389,9 @@ process 'raw_counts'{
 */
 
 process 'filter_counts'{
+    label 'shorttime'
     publishDir "$params.outdir/$datasetID"
-
+    
     input:
     set datasetID, file(rc) from raw_ct 
 
@@ -409,7 +413,7 @@ process 'filter_counts'{
 */
 
 process 'final_counts'{
-
+    label 'shorttime'
     publishDir "$params.outdir/$datasetID"
 
     input:
@@ -449,7 +453,7 @@ if(params.mpranalyze != 0){
     /*
     * STEP 5: Merge each DNA and RNA file
     */
-    
+    label 'longtime'   
     process 'dna_rna_mpranalyze_merge'{
         publishDir "$params.outdir/", mode:'copy'
     
@@ -474,8 +478,9 @@ if(params.mpranalyze != 0){
     */
     
     process 'final_merge'{
+        label 'longtime'
         publishDir "$params.outdir/"
-    
+      
         input:
         file(pairlist) from merged_ch.collect()
     
@@ -496,7 +501,7 @@ if(params.mpranalyze != 0){
     */
     
     process 'final_label'{
-    
+        label 'shorttime'
         publishDir "$params.outdir/", mode:'copy'
     
         input:
@@ -517,6 +522,7 @@ if(params.mpranalyze != 0){
     */
     
     process 'gen_mpranalyze'{
+        label 'shorttime'
         publishDir "$params.outdir/", mode:'copy'
         
         input:
@@ -540,7 +546,8 @@ if(params.mpranalyze != 0){
 if(params.mpranalyze == 0){
 
     process 'dna_rna_merge'{
-        publishDir "$params.outdir/", mode:'copy'
+       label 'longtime' 
+       publishDir "$params.outdir/", mode:'copy'
        
      
         input:
@@ -575,6 +582,7 @@ if(params.mpranalyze == 0){
     * STEP 6: Calculate correlations between Replicates
     */
     process 'calc_correlations'{
+        label 'shorttime'
         publishDir "$params.outdir/", mode:'copy'
     
         input:

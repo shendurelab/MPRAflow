@@ -222,7 +222,7 @@ process get_software_versions {
 
 process 'create_BWA_ref' {
     tag "make ref"
-
+    label 'shorttime'
     input:
     file(design) from design 
     file(params.condaloc) 
@@ -256,6 +256,7 @@ process 'create_BWA_ref' {
 
 process 'align_BWA' {
     tag "align"
+    label 'longtime'
     publishDir params.outdir, mode:'copy'    
 
     input:
@@ -303,6 +304,7 @@ process 'align_BWA' {
 
 process 'count_bc' {
     tag 'count'
+    label 'shorttime'
     publishDir params.outdir, mode:'copy'
 
     input:
@@ -327,6 +329,7 @@ process 'count_bc' {
 
 process 'map_enhancer_barcodes' {
     tag "assign"
+    label "shorttime"
     publishDir params.outdir, mode:'copy'
 
     input:
@@ -378,6 +381,7 @@ process 'map_enhancer_barcodes' {
 
 process 'filter_barcodes' {
     tag "$filter"
+    label "shorttime"
     publishDir params.outdir, mode:'copy'
     input:
         params.min_cov
