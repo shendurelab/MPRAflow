@@ -90,7 +90,7 @@ This pipeline expects the FASTQ files to be demultiplexed and trimmed to only in
    ```bash 
    cd ~/MPRAflow
    conda activate mpraflow_py36
-   nextflow run association.nf --fastq_insert ${fastq}_R1_001.fastq.gz --design pilot_library_noprimer.fa" --fastq_bc ${fastq}_R2_001.fastq.gz" --condaloc '~/miniconda3/bin/activate'
+   nextflow run association.nf --fastq_insert "${fastq}_R1_001.fastq.gz" --design "pilot_library_noprimer.fa" --fastq_bc "${fastq}_R2_001.fastq.gz" --condaloc '~/miniconda3/bin/activate'
    ```
 
 4. Run Count
