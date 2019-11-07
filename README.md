@@ -59,37 +59,38 @@ Please remove the `\\` for the architechture you would like to use and place `\\
 Please use a submit script for steps 2 and 3. For help messages run:
 
    ```bash
-   conda activate mpraflow_py36.yml
+   cd ~/MPRAflow
+   conda activate mpraflow_py36
    nextflow run count.nf --help
    nextflow run association.nf --help
    ```
 
 This pipeline expects the FASTQ files to be demultiplexed and trimmed to only include sequence from the insert, barcodes, and/or UMIs
 
-1. Create an 'expermient' csv in the format below:
+1. Create an 'experiment' csv in the format below:
  
    ```
-   condition,batch,dna,rna,name
-   cell1,1,DNA FASTQ prefix, RNA FASTQ prefix, desired name
-   cell1,2,DNA FASTQ prefix, RNA FASTQ prefix, desired name
-   cell2,1,DNA FASTQ prefix, RNA FASTQ prefix, desired name
-   cell2,2,DNA FASTQ prefix, RNA FASTQ prefix, desired name
+   condition,replicate,dna,rna,name
+   condition1,1,DNA FASTQ prefix,RNA FASTQ prefix,desired name
+   condition1,2,DNA FASTQ prefix,RNA FASTQ prefix,desired name
+   condition2,1,DNA FASTQ prefix,RNA FASTQ prefix,desired name
+   condition2,2,DNA FASTQ prefix,RNA FASTQ prefix,desired name
    ```
 
-2. Create a 'label' tsv in the format below:
+2. Each insert should be grouped into different user-specified categories, such as "positive control", "negative control", "shuffled control", and "putative enhancer". Create a 'label' tsv in the format below that maps the name to category:
  
    ```
-   insert1_name	insert1_label
+   insert1_name insert1_label
    insert2_name insert2_label
    ```
-   The insert names must exactly match the names in the design FASTA file
+   The insert names must exactly match the names in the design FASTA file.
     
-3. Run Assocaition
+3. Run Association
 
    ```bash 
    cd ~/MPRAflow
    conda activate mpraflow_py36
-   nextflow run association.nf --fastq_insert ${fastq}_R1_001.fastq.gz --design pilot_library_noprimer.fa" --fastq_bc ${fastq}_R2_001.fastq.gz" --condaloc '~/miniconda3/bin/activate'
+   nextflow run association.nf --fastq_insert "${fastq}_R1_001.fastq.gz" --design "pilot_library_noprimer.fa" --fastq_bc "${fastq}_R2_001.fastq.gz" --condaloc '~/miniconda3/bin/activate'
    ```
 
 4. Run Count
