@@ -6,6 +6,7 @@
 ========================================================================================
 MPRA Analysis Pipeline. Started 2019-07-29.
 Library Association package 
+params.version="1.0"
 
 #### Homepage / Documentation
 https://github.com/shendurelab/MPRAflow
@@ -29,7 +30,6 @@ def helpMessage() {
       --fastq_insert                Path to library association fastqs for insert (must be surrounded with quotes)
       --fastq_bc                    Path to library association fastq for bc (must be surrounded with quotes)
       --design                      fasta of ordered oligo sequences
-      --out                         prefix for outputs (sample name)
       --condaloc                    location of conda instilation activate file ex: ~/miniconda3/bin/activate (must be surrounded with quotes)
       --labels                      tsv with the oligo pool fasta and a group label (ex: positive_control) if no labels desired simply add NA instead of a label in this file
 
@@ -41,7 +41,9 @@ def helpMessage() {
       --baseq                       base quality (default 30)
       --cigar                       require exact match ex: 200M (default none) 
       --outdir                      The output directory where the results will be saved (default outs)
-      
+      --out                         prefix for outputs (sample name, default: output_)
+      -w                            specific name for work directory (default: work)  
+  
     Extras:
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
       --name                         Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
@@ -68,7 +70,7 @@ output_docs = file("$baseDir/docs/output.md")
 
 //defaults
 params.aligner="1"
-params.min_cov="2"
+params.min_cov="3"
 params.min_frac="0.5"
 params.baseq="30"
 params.mapq="30"
@@ -76,12 +78,17 @@ params.cigar="n"
 params.outdir="outs"
 params.nf_required_version="19.07.0"
 params.out="output"
+params.fastq_insertPE=0
 //params.condaloc='/netapp/home/ggordon/tools/miniconda3/bin/activate'
 
 // Validate inputs
 if ( params.fastq_insert ){
     fastq_insert = file(params.fastq_insert)
     if( !fastq_insert.exists() ) exit 1, "Fastq insert file not found: ${params.fastq_insert}"
+}
+
+if(params.fastq_insertPE != 0){
+    fastq_insertPE = file(params.fastq_insertPE)
 }
 
 if ( params.fastq_bc ){
@@ -131,7 +138,7 @@ log.info """=======================================================
 MPRAflow v${params.version}"
 ======================================================="""
 def summary = [:]
-summary['Pipeline Name']    = 'AhituvLab/MPRA_nextflow'
+summary['Pipeline Name']    = 'MPRAflow'
 summary['Pipeline Version'] = params.version
 summary['Run Name']         = custom_runName ?: workflow.runName
 summary['Fastq insert']     = params.fastq_insert
@@ -145,8 +152,8 @@ summary['cigar string']     = params.cigar
 summary['output id']        = params.out
 
 //summary['Thread fqdump']    = params.threadfqdump ? 'YES' : 'NO'
-summary['Max CPUs']         = params.max_cpus
-summary['Max Time']         = params.max_time
+//summary['Max CPUs']         = params.max_cpus
+//summary['Max Time']         = params.max_time
 summary['Output dir']       = params.outdir
 summary['Working dir']      = workflow.workDir
 summary['Container Engine'] = workflow.containerEngine
@@ -247,55 +254,127 @@ process 'create_BWA_ref' {
     """
 }
 
+/*
+*Process 1B: merge Paired end reads
+*/
+
+if(params.fastq_insertPE != 0){
+    process 'PE_merge' {
+        tag 'merge'
+        label 'shorttime'
+        
+        input:
+        file(fastq_insert) from fastq_insert       
+        file(fastq_insertPE) from fastq_insertPE
+        output:
+        file "merged.fastqjoin" into mergedPE   
+
+        script:
+        """
+        #!/bin/bash
+        source ${params.condaloc} mpraflow_py36
+
+        fastq-join $fastq_insert $fastq_insertPE -o merged.fastq      
+       
+        """
+           
+    }
+}
 
 /*
 * 
-* Process 1B: align with BWA
+* Process 1C: align with BWA
 */
 
-
-process 'align_BWA' {
-    tag "align"
-    label 'longtime'
-    publishDir params.outdir, mode:'copy'    
-
-    input:
-    file(design) from design
-    file(fastq_insert) from fastq_insert
-    file(params.out)
-    file(reference_fai) from reference_fai
-    file reference_bwt from reference_bwt
-    file reference_sa from reference_sa
-    file reference_pac from reference_pac
-    file reference_ann from reference_ann
-    file reference_amb from reference_amb
-    file reference_dict from reference_dict
-
-    output:
-    file "${params.out}.bam" into bam
-    file "${params.out}.sorted.bam" into s_bam
-    file 'count_bam.txt' into bam_ch
-
-    script:
-    """
-    #!/bin/bash
-    source ${params.condaloc} mpraflow_py36
+//paired ends
+if(params.fastq_insertPE != 0){
+    process 'align_BWA_PE' {
+        tag "align"
+        label 'longtime'
+        publishDir params.outdir, mode:'copy'    
     
-    bwa index $fastq_insert
-    bwa mem $design $fastq_insert > ${params.out}.sam
-    samtools view -S -b ${params.out}.sam > ${params.out}.bam
-    echo 'bam made'
-    samtools view ${params.out}.bam | head
-
-    #sort bam
-    samtools sort ${params.out}.bam -o ${params.out}.sorted.bam
-    samtools view ${params.out}.sorted.bam | head
-
-    samtools view ${params.out}".bam" | head
-    samtools view ${params.out}".bam" | wc -l > count_bam.txt
-    """
+        input:
+        file(design) from design
+        file(mergedPE) from mergedPE
+        file(params.out)
+        file(reference_fai) from reference_fai
+        file reference_bwt from reference_bwt
+        file reference_sa from reference_sa
+        file reference_pac from reference_pac
+        file reference_ann from reference_ann
+        file reference_amb from reference_amb
+        file reference_dict from reference_dict
+    
+        output:
+        file "${params.out}.bam" into bam
+        file "${params.out}.sorted.bam" into s_bam
+        file 'count_bam.txt' into bam_ch
+    
+        script:
+        """
+        #!/bin/bash
+        source ${params.condaloc} mpraflow_py36
+        
+        bwa index $mergedPE
+        bwa mem $design $mergedPE > ${params.out}.sam
+        samtools view -S -b ${params.out}.sam > ${params.out}.bam
+        echo 'bam made'
+        samtools view ${params.out}.bam | head
+    
+        #sort bam
+        samtools sort ${params.out}.bam -o ${params.out}.sorted.bam
+        samtools view ${params.out}.sorted.bam | head
+    
+        samtools view ${params.out}".bam" | head
+        samtools view ${params.out}".bam" | wc -l > count_bam.txt
+        """
+    }
 }
 
+//single end
+if(params.fastq_insertPE == 0){
+    process 'align_BWA_S' {
+        tag "align"
+        label 'longtime'
+        publishDir params.outdir, mode:'copy'
+    
+        input:
+        file(design) from design
+        file(fastq_insert) from fastq_insert
+        file(params.out)
+        file(reference_fai) from reference_fai
+        file reference_bwt from reference_bwt
+        file reference_sa from reference_sa
+        file reference_pac from reference_pac
+        file reference_ann from reference_ann
+        file reference_amb from reference_amb
+        file reference_dict from reference_dict
+    
+        output:
+        file "${params.out}.bam" into bam
+        file "${params.out}.sorted.bam" into s_bam
+        file 'count_bam.txt' into bam_ch
+    
+        script:
+        """
+        #!/bin/bash
+        source ${params.condaloc} mpraflow_py36
+        
+        bwa index $fastq_insert
+        bwa mem $design $fastq_insert > ${params.out}.sam
+            samtools view -S -b ${params.out}.sam > ${params.out}.bam
+                echo 'bam made'
+                    samtools view ${params.out}.bam | head
+        
+        #sort bam
+        samtools sort ${params.out}.bam -o ${params.out}.sorted.bam
+        samtools view ${params.out}.sorted.bam | head
+        
+        samtools view ${params.out}".bam" | head
+        samtools view ${params.out}".bam" | wc -l > count_bam.txt
+        """
+    }
+}
 
 
 /*
