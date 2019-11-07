@@ -362,9 +362,9 @@ if(params.fastq_insertPE == 0){
         
         bwa index $fastq_insert
         bwa mem $design $fastq_insert > ${params.out}.sam
-            samtools view -S -b ${params.out}.sam > ${params.out}.bam
-                echo 'bam made'
-                    samtools view ${params.out}.bam | head
+        samtools view -S -b ${params.out}.sam > ${params.out}.bam
+        echo 'bam made'
+        samtools view ${params.out}.bam | head
         
         #sort bam
         samtools sort ${params.out}.bam -o ${params.out}.sorted.bam
