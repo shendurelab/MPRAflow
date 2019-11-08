@@ -31,7 +31,7 @@ git clone https://github.com/shendurelab/MPRAflow.git
 
 ### Set up conda environment:
 This pipeline uses python2.7 and python3.6 and is set up to run on a Linux system.   
-Two .yml files are provided to create the appropriate environments: mpraflow_py27 and mpraflow_py36.yml.
+Two .yml files are provided to create the appropriate environments: mpraflow_py27.yml and mpraflow_py36.yml.
 After installing conda on your system create environment by running code below.
 
 ```bash
