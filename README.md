@@ -98,7 +98,7 @@ This pipeline expects the FASTQ files to be demultiplexed and trimmed to only in
    ```bash 
    cd ~/MPRAflow
    conda activate mpraflow_py36
-   nextflow run count.nf --dir "bulk_FASTQ_directory" --e "experiment.csv" --design "pilot_library_noprimer.fa" --"association output_filtered_coords_to_barcodes.p" --condaloc "~/miniconda3/bin/activate"
+   nextflow run count.nf --dir "bulk_FASTQ_directory" --e "experiment.csv" --design "pilot_library_noprimer.fa" --association "output_filtered_coords_to_barcodes.p" --condaloc "~/miniconda3/bin/activate"
    ```
    
 
