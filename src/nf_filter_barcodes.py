@@ -137,7 +137,7 @@ filtered_counts=(pd.Series(filtered_dict, name = 'n_barcodes').str.len().rename_
 print('filter')
 print(filtered_counts)
 create_lib_plots(filtered_counts, pref+"_filtered_counts.png","filtered_count_summary.txt","FALSE")
-pickle.dump(filtered_dict,open(pref+"_filtered_coords_to_barcodes.p","wb"))
+pickle.dump(filtered_dict,open(pref+"_filtered_coords_to_barcodes.pickle","wb"))
 
 
 

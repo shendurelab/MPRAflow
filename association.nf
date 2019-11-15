@@ -27,13 +27,12 @@ def helpMessage() {
     nextflow run MPRA-nextflow -profile singularity,test
 
     Mandatory arguments:
-      --fastq_insert                Path to library association fastqs for insert (must be surrounded with quotes)
+      --fastq_insert                Path to library association fastq for insert (must be surrounded with quotes)
       --fastq_bc                    Path to library association fastq for bc (must be surrounded with quotes)
-      --design                      fasta of ordered oligo sequences
-      --condaloc                    location of conda instilation activate file ex: ~/miniconda3/bin/activate (must be surrounded with quotes)
-      --labels                      tsv with the oligo pool fasta and a group label (ex: positive_control) if no labels desired simply add NA instead of a label in this file
+      --design                      fasta of ordered oligo sequences (this file cannot contain the characters '[' or ']' at this time)
 
     Options:
+      --fastq_insertPE              Path to library association fastq for read2 if the library is paired end (must be surrounded with quotes)
       --aligner                     alignment bwa-mem (1) bowtie2 (2) (currently only supports bwa-mem)
       --min_cov                     minimum coverage of bc to count it (default 2)
       --min_frac                    minimum fraction of bc map to single insert (default 0.5)
@@ -43,7 +42,9 @@ def helpMessage() {
       --outdir                      The output directory where the results will be saved (default outs)
       --out                         prefix for outputs (sample name, default: output_)
       -w                            specific name for work directory (default: work)  
-  
+      --split                       number read entries per fastq chunk for faster processing (default: 2000000)  
+      --labels                      tsv with the oligo pool fasta and a group label (ex: positive_control) if no labels desired a file will be automatically generated (this functionality is not active yet) 
+
     Extras:
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
       --name                         Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
@@ -62,10 +63,8 @@ if (params.help){
 
 // Configurable variables
 params.name = false
-params.multiqc_config = "$baseDir/conf/py36.yaml"
 params.email = false
 params.plaintext_email = false
-multiqc_config = file(params.multiqc_config)
 output_docs = file("$baseDir/docs/output.md")
 
 //defaults
@@ -79,7 +78,7 @@ params.outdir="outs"
 params.nf_required_version="19.07.0"
 params.out="output"
 params.fastq_insertPE=0
-//params.condaloc='/netapp/home/ggordon/tools/miniconda3/bin/activate'
+params.split=2000000
 
 // Validate inputs
 if ( params.fastq_insert ){
@@ -165,6 +164,8 @@ summary['Working dir']      = workflow.workDir
 summary['Output dir']       = params.outdir
 summary['Script dir']       = workflow.projectDir
 summary['Config Profile']   = workflow.profile
+
+
 if(params.email) summary['E-mail Address'] = params.email
 log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
 log.info "========================================="
@@ -184,43 +185,7 @@ try {
 }
 
 
-/*
- * Parse software version numbers
- */
-//conda??
-/*
-process get_software_versions {
 
-    input:
-    file(trimmomatic_jar_path)
-
-    output:
-    file 'software_versions_mqc.yaml' into software_versions_yaml
-
-    script:
-    """
-    module load sra/2.8.0
-    module load igvtools/2.3.75
-    module load fastqc/0.11.5
-    module load bedtools/2.25.0
-    module load bowtie/2.2.9
-    module load samtools/1.8
-
-    echo $params.version > v_pipeline.txt
-    echo $workflow.nextflow.version > v_nextflow.txt
-    fastqc --version > v_fastqc.txt
-    java -XX:ParallelGCThreads=1 -jar ${trimmomatic_jar_path} -version &> v_trimmomatic.txt
-    multiqc --version > v_multiqc.txt
-    samtools --version &> v_samtools.txt
-    bowtie2 --version &> v_bowtie2.txt
-    fastq-dump --version &> v_fastq-dump.txt
-    bedtools --version &> v_bedtools.txt
-    igvtools &> v_igv-tools.txt
-    macs2 --version &>  v_macs2.txt
-    scrape_software_versions.py > software_versions_mqc.yaml
-    """
-}
-*/
 
 /*
 * STEP 1: Align
@@ -233,6 +198,7 @@ process 'create_BWA_ref' {
     input:
     file(design) from design 
     file(params.condaloc) 
+    file(label) from labels 
 
     output:
     file "${design}.fai" into reference_fai
@@ -242,17 +208,60 @@ process 'create_BWA_ref' {
     file "${design}.ann" into reference_ann
     file "${design}.amb" into reference_amb
     file "${design}.dict" into reference_dict
+    file "new_label.txt" into fixed_label
+    file "new_design.txt" into fixed_design
+
     script:
     """
     #!/bin/bash
-    source ${params.condaloc} mpraflow_py36
+    cv=\$(which conda)
+    cv1=\$(dirname "\$cv")
+    cv2=\$(dirname "\$cv1")
+    cv3=\${cv2}"/bin/activate"
+    echo \$cv3
+    source \$cv3 mpraflow_py36
+    #source ${params.condaloc} mpraflow_py36
+    #fix label and design file for picard regex issues   
+    sed -r 's/]/_/g' $label > new_label.txt
+    #sed 's/[/_/g' new_label_t.txt > new_label.txt
+    sed -r 's/]/_/g' $design > new_design.txt
+    #sed 's/[/_/g' new_design_t.txt > new_design.txt 
 
-    bwa index -a bwtsw ${design}
-    samtools faidx ${design}
-    picard CreateSequenceDictionary REFERENCE=${design} OUTPUT=${design}".dict"
+    #echo 'show files'
+    head new_label.txt
+    head new_design.txt
+
+    bwa index -a bwtsw $design
+    samtools faidx $design
+    picard CreateSequenceDictionary REFERENCE=$design OUTPUT=$design".dict"
 
     """
 }
+
+/*
+*CHUNKING FASTQ
+*/
+
+Channel
+    .fromPath(fastq_insert)
+    .splitFastq( by: params.split, file: true )
+    .set{ R1_ch }
+
+if(params.fastq_insertPE != 0){
+    Channel
+        .fromPath(fastq_insertPE)
+        .splitFastq( by: params.split, file: true )
+        .set{ R3_ch }
+}
+
+/*
+Channel
+    .fromPath(params.fastq_bc)
+    .splitFastq( by: params.split, file: true )
+    .set{ mybc_ch }
+*/
+
+
 
 /*
 *Process 1B: merge Paired end reads
@@ -262,27 +271,34 @@ if(params.fastq_insertPE != 0){
     process 'PE_merge' {
         tag 'merge'
         label 'shorttime'
-        
+        //publishDir params.outdir, mode:'copy'
+
         input:
-        file(fastq_insert) from fastq_insert       
-        file(fastq_insertPE) from fastq_insertPE
+        file(fastq_insert) from R1_ch
+        file(fastq_insertPE) from R3_ch
         output:
-        file "merged.fastqjoin" into mergedPE   
+        file "*merged.fastqjoin" into mergedPE
 
         script:
         """
         #!/bin/bash
-        source ${params.condaloc} mpraflow_py36
-
-        fastq-join $fastq_insert $fastq_insertPE -o merged.fastq      
-       
+        cv=\$(which conda)
+        cv1=\$(dirname "\$cv")
+        cv2=\$(dirname "\$cv1")
+        cv3=\${cv2}"/bin/activate"
+        echo \$cv3
+        source \$cv3 mpraflow_py36        
+        #source ${params.condaloc} mpraflow_py36
+        
+        fastq-join $fastq_insert $fastq_insertPE -o ${fastq_insert}_merged.fastq
+        
         """
-           
+       
     }
 }
+        
 
 /*
-* 
 * Process 1C: align with BWA
 */
 
@@ -291,12 +307,11 @@ if(params.fastq_insertPE != 0){
     process 'align_BWA_PE' {
         tag "align"
         label 'longtime'
-        publishDir params.outdir, mode:'copy'    
+        //publishDir params.outdir, mode:'copy'    
     
         input:
         file(design) from design
-        file(mergedPE) from mergedPE
-        file(params.out)
+        file(chunk) from mergedPE
         file(reference_fai) from reference_fai
         file reference_bwt from reference_bwt
         file reference_sa from reference_sa
@@ -306,27 +321,25 @@ if(params.fastq_insertPE != 0){
         file reference_dict from reference_dict
     
         output:
-        file "${params.out}.bam" into bam
-        file "${params.out}.sorted.bam" into s_bam
-        file 'count_bam.txt' into bam_ch
+        file "${params.out}.${chunk}.sorted.bam" into s_bam
+        file '*count_bam.txt' into bam_ch
     
         script:
         """
         #!/bin/bash
-        source ${params.condaloc} mpraflow_py36
+        #source ${params.condaloc} mpraflow_py36
+        cv=\$(which conda)
+        cv1=\$(dirname "\$cv")
+        cv2=\$(dirname "\$cv1")
+        cv3=\${cv2}"/bin/activate"
+        echo \$cv3
+        source \$cv3 mpraflow_py36
         
-        bwa index $mergedPE
-        bwa mem $design $mergedPE > ${params.out}.sam
-        samtools view -S -b ${params.out}.sam > ${params.out}.bam
+        bwa mem $design $chunk | samtools sort - -o ${params.out}.${chunk}.sorted.bam
         echo 'bam made'
-        samtools view ${params.out}.bam | head
-    
-        #sort bam
-        samtools sort ${params.out}.bam -o ${params.out}.sorted.bam
-        samtools view ${params.out}.sorted.bam | head
-    
-        samtools view ${params.out}".bam" | head
-        samtools view ${params.out}".bam" | wc -l > count_bam.txt
+        samtools view ${params.out}.${chunk}.sorted.bam | head
+        samtools view ${params.out}.${chunk}.sorted.bam | wc -l > ${chunk}.count_bam.txt       
+
         """
     }
 }
@@ -336,11 +349,11 @@ if(params.fastq_insertPE == 0){
     process 'align_BWA_S' {
         tag "align"
         label 'longtime'
-        publishDir params.outdir, mode:'copy'
+        //publishDir params.outdir, mode:'copy'
     
         input:
         file(design) from design
-        file(fastq_insert) from fastq_insert
+        file(chunk) from R1_ch
         file(params.out)
         file(reference_fai) from reference_fai
         file reference_bwt from reference_bwt
@@ -351,30 +364,68 @@ if(params.fastq_insertPE == 0){
         file reference_dict from reference_dict
     
         output:
-        file "${params.out}.bam" into bam
-        file "${params.out}.sorted.bam" into s_bam
-        file 'count_bam.txt' into bam_ch
+        file "${params.out}.${chunk}.sorted.bam" into s_bam
+        file '${chunk}_count_bam.txt' into bam_ch
     
         script:
         """
         #!/bin/bash
-        source ${params.condaloc} mpraflow_py36
-        
-        bwa index $fastq_insert
-        bwa mem $design $fastq_insert > ${params.out}.sam
-        samtools view -S -b ${params.out}.sam > ${params.out}.bam
+        #source ${params.condaloc} mpraflow_py36
+        cv=\$(which conda)
+        cv1=\$(dirname "\$cv")
+        cv2=\$(dirname "\$cv1")
+        cv3=\${cv2}"/bin/activate"
+        echo \$cv3
+        source \$cv3 mpraflow_py36
+ 
+        bwa mem $design $chunk | samtools sort - -o ${params.out}.${chunk}.sorted.bam
         echo 'bam made'
-        samtools view ${params.out}.bam | head
-        
-        #sort bam
-        samtools sort ${params.out}.bam -o ${params.out}.sorted.bam
-        samtools view ${params.out}.sorted.bam | head
-        
-        samtools view ${params.out}".bam" | head
-        samtools view ${params.out}".bam" | wc -l > count_bam.txt
+        samtools view ${params.out}.${chunk}.sorted.bam | head
+        samtools view ${params.out}.${chunk}.sorted.bam | wc -l > ${chunk}_count_bam.txt
+ 
         """
     }
 }
+
+/*
+*COLLCT FASTQ CHUNCKS
+*/
+
+process 'collect_chunks'{
+    label 'shorttime'
+    
+    input:
+    file sbam_list from s_bam.collect()
+    file count_bam from bam_ch.collect()       
+
+    output:
+    file 's_merged.bam' into s_merge
+    file 'count_merged.txt' into ch_merge
+
+    script:
+    """
+    #!/bin/bash
+    #source ${params.condaloc} mpraflow_py36
+
+    cv=\$(which conda)
+    cv1=\$(dirname "\$cv")
+    cv2=\$(dirname "\$cv1")
+    cv3=\${cv2}"/bin/activate"
+    echo \$cv3
+    source \$cv3 mpraflow_py36
+
+    #collect sorted bams into one file
+    samtools merge all.bam ${sbam_list} 
+    samtools sort all.bam -o s_merged.bam    
+
+    #collect bam counts into one file
+   
+    samtools view s_merged.bam | wc -l > count_merged.txt
+
+    """
+}
+
+
 
 
 /*
@@ -394,8 +445,15 @@ process 'count_bc' {
 
     """
     #!/bin/bash
-    source ${params.condaloc} mpraflow_py36
-    zcat $fastq_bc | wc -l 
+    #source ${params.condaloc} mpraflow_py36
+    cv=\$(which conda)
+    cv1=\$(dirname "\$cv")
+    cv2=\$(dirname "\$cv1")
+    cv3=\${cv2}"/bin/activate"
+    echo \$cv3
+    source \$cv3 mpraflow_py36
+
+    #zcat $fastq_bc | wc -l 
     zcat $fastq_bc | wc -l  > count_fastq.txt
 
     """
@@ -403,10 +461,10 @@ process 'count_bc' {
 }
 
 /*
-* STEP 2: Assign barcodes to enhancer sequences
+* STEP 2: Assign barcodes to element sequences
 */
 
-process 'map_enhancer_barcodes' {
+process 'map_element_barcodes' {
     tag "assign"
     label "shorttime"
     publishDir params.outdir, mode:'copy'
@@ -417,25 +475,28 @@ process 'map_enhancer_barcodes' {
     params.cigar
     file(fastq_bc) from fastq_bc 
     file count_fastq from bc_ch
-    file count_bam from bam_ch     
-    file bam from bam
+    file count_bam from ch_merge     
+    file bam from s_merge
 
     output:
     file "${params.out}_coords_to_barcodes.pickle" into map_ch
-    file "${params.out}_barcodes_per_candidate.feather"
+    //file "${params.out}_barcodes_per_candidate.feather"
     file "${params.out}_barcodes_per_candidate-no_repeats-no_jackpots.feather" into count_table_ch
-    file "${params.out}_barcodes_per_candidate-no_repeats.feather"
-    file "${params.out}_barcodes_per_candidate-no_jackpots.feather"
+    //file "${params.out}_barcodes_per_candidate-no_repeats.feather"
+    //file "${params.out}_barcodes_per_candidate-no_jackpots.feather"
     file "${params.out}_barcode_counts.pickle"
 
     script:
-
-    file1=file(count_bam)
-    println file1
-
     """
     #!/bin/bash 
-    source ${params.condaloc} mpraflow_py36
+    #source ${params.condaloc} mpraflow_py36
+    cv=\$(which conda)
+    cv1=\$(dirname "\$cv")
+    cv2=\$(dirname "\$cv1")
+    cv3=\${cv2}"/bin/activate"
+    echo \$cv3
+    source \$cv3 mpraflow_py36
+
     echo "test assign inputs"
     echo ${params.mapq}
     echo ${params.baseq}
@@ -463,23 +524,30 @@ process 'filter_barcodes' {
     label "shorttime"
     publishDir params.outdir, mode:'copy'
     input:
-        params.min_cov
-        params.out
-        file(map) from map_ch
-        file(table) from count_table_ch
-    
+    params.min_cov
+    params.out
+    file(map) from map_ch
+    file(table) from count_table_ch
+    file(label) from fixed_label 
     output:
-         file "${params.out}_filtered_coords_to_barcodes.p"
-         file "${params.out}_original_counts.png"
-         file "original_count_summary.txt"
-         file "${params.out}_filtered_counts.png"
-         file "filtered_count_summary.txt" 
+    file "${params.out}_filtered_coords_to_barcodes.pickle"
+    file "${params.out}_original_counts.png"
+    file "original_count_summary.txt"
+    file "${params.out}_filtered_counts.png"
+    file "filtered_count_summary.txt" 
  
     script:
     """
     #!/bin/bash 
-    source ${params.condaloc} mpraflow_py36
-    python ${"$PWD"}/src/nf_filter_barcodes.py ${params.out} ${map} ${table} ${params.min_cov} ${params.min_frac} ${params.labels}
+    #source ${params.condaloc} mpraflow_py36
+    cv=\$(which conda)
+    cv1=\$(dirname "\$cv")
+    cv2=\$(dirname "\$cv1")
+    cv3=\${cv2}"/bin/activate"
+    echo \$cv3
+    source \$cv3 mpraflow_py36   
+ 
+    python ${"$PWD"}/src/nf_filter_barcodes.py ${params.out} ${map} ${table} ${params.min_cov} ${params.min_frac} $label
     """
 
 
@@ -496,9 +564,9 @@ process 'filter_barcodes' {
 workflow.onComplete {
 
     // Set up the e-mail variables
-    def subject = "[NCBI-Hackathons/ATACFlow] Successful: $workflow.runName"
+    def subject = "[MPRAflow] Successful: $workflow.runName"
     if(!workflow.success){
-      subject = "[NCBI-Hackathons/ATACFlow] FAILED: $workflow.runName"
+      subject = "[MPRAflow] FAILED: $workflow.runName"
     }
     def email_fields = [:]
     email_fields['version'] = params.version
@@ -535,7 +603,7 @@ workflow.onComplete {
     def email_html = html_template.toString()
 
     // Render the sendmail template
-    def smail_fields = [ email: params.email, subject: subject, email_txt: email_txt, email_html: email_html, baseDir: "$baseDir", attach1: "$baseDir/results/Documentation/pipeline_report.html", attach2: "$baseDir/results/pipeline_info/NCBI-Hackathons/ATACFlow_report.html", attach3: "$baseDir/results/pipeline_info/NCBI-Hackathons/ATACFlow_timeline.html" ]
+    def smail_fields = [ email: params.email, subject: subject, email_txt: email_txt, email_html: email_html, baseDir: "$baseDir", attach1: "$baseDir/results/Documentation/pipeline_report.html", attach2: "$baseDir/results/pipeline_info//MPRAflow_report.html", attach3: "$baseDir/results/pipeline_info//MPRAflow_timeline.html" ]
     def sf = new File("$baseDir/assets/sendmail_template.txt")
     def sendmail_template = engine.createTemplate(sf).make(smail_fields)
     def sendmail_html = sendmail_template.toString()
@@ -546,11 +614,11 @@ workflow.onComplete {
           if( params.plaintext_email ){ throw GroovyException('Send plaintext e-mail, not HTML') }
           // Try to send HTML e-mail using sendmail
           [ 'sendmail', '-t' ].execute() << sendmail_html
-          log.info "[NCBI-Hackathons/ATACFlow] Sent summary e-mail to $params.email (sendmail)"
+          log.info "[/MPRAflow] Sent summary e-mail to $params.email (sendmail)"
         } catch (all) {
           // Catch failures and try with plaintext
           [ 'mail', '-s', subject, params.email ].execute() << email_txt
-          log.info "[NCBI-Hackathons/ATACFlow] Sent summary e-mail to $params.email (mail)"
+          log.info "[/MPRAflow] Sent summary e-mail to $params.email (mail)"
         }
     }
 
@@ -564,7 +632,7 @@ workflow.onComplete {
     def output_tf = new File( output_d, "pipeline_report.txt" )
     output_tf.withWriter { w -> w << email_txt }
 
-    log.info "[NCBI-Hackathons/ATACFlow] Pipeline Complete"
+    log.info "[/MPRAflow] Pipeline Complete"
 
 }
 
