@@ -27,20 +27,18 @@ def helpMessage() {
     nextflow run MPRA-nextflow -profile singularity,test
 
     Mandatory arguments:
-      --fastq_insert                Path to library association fastq for insert (must be surrounded with quotes)
-      --fastq_bc                    Path to library association fastq for bc (must be surrounded with quotes)
-      --design                      fasta of ordered oligo sequences (this file cannot contain the characters '[' or ']' at this time)
+      --fastq_insert                Full path to library association fastq for insert (must be surrounded with quotes)
+      --fastq_bc                    Full path to library association fastq for bc (must be surrounded with quotes)
+      --design                      Full path to fasta of ordered oligo sequences (this file cannot contain the characters '[' or ']' at this time)
 
     Options:
-      --fastq_insertPE              Path to library association fastq for read2 if the library is paired end (must be surrounded with quotes)
-      --aligner                     alignment bwa-mem (1) bowtie2 (2) (currently only supports bwa-mem)
+      --fastq_insertPE              Full path to library association fastq for read2 if the library is paired end (must be surrounded with quotes)
       --min_cov                     minimum coverage of bc to count it (default 2)
       --min_frac                    minimum fraction of bc map to single insert (default 0.5)
       --mapq                        map quality (default 30)
       --baseq                       base quality (default 30)
       --cigar                       require exact match ex: 200M (default none) 
-      --outdir                      The output directory where the results will be saved (default outs)
-      --out                         prefix for outputs (sample name, default: output_)
+      --outdir                      The output directory where the results will be saved and what will be used as a prefix (default outs)
       -w                            specific name for work directory (default: work)  
       --split                       number read entries per fastq chunk for faster processing (default: 2000000)  
       --labels                      tsv with the oligo pool fasta and a group label (ex: positive_control) if no labels desired a file will be automatically generated (this functionality is not active yet) 
@@ -75,8 +73,8 @@ params.baseq="30"
 params.mapq="30"
 params.cigar="n"
 params.outdir="outs"
+params.out=params.outdir
 params.nf_required_version="19.07.0"
-params.out="output"
 params.fastq_insertPE=0
 params.split=2000000
 
@@ -107,10 +105,12 @@ if ( params.out ){
 }
 */
 
+/*
 if (params.condaloc){
     condaloc=file(params.condaloc)
     if (!condaloc.exists()) exit 1, "conda location not specified ${params.condaloc}"
 }
+*/
 
 if (params.labels){
     labels=file(params.labels)
@@ -160,6 +160,7 @@ if(workflow.containerEngine) summary['Container'] = workflow.container
 summary['Current home']     = "$HOME"
 summary['Current user']     = "$USER"
 summary['Current path']     = "$PWD"
+summary['base directory']   = "$baseDir"
 summary['Working dir']      = workflow.workDir
 summary['Output dir']       = params.outdir
 summary['Script dir']       = workflow.projectDir
@@ -188,6 +189,54 @@ try {
 
 
 /*
+* STEP 2 pre: count fastq and bam length
+* and make design file
+*/
+
+process 'count_bc' {
+    tag 'count'
+    label 'shorttime'
+    publishDir params.outdir, mode:'copy'
+    
+    input:
+    file(fastq_bc) from fastq_bc
+    file(design) from design
+    //file(params.condaloc)
+    file(label) from labels
+    
+    output:
+    file 'count_fastq.txt' into bc_ch
+    file "new_label.txt" into fixed_label
+    file "new_design.fa" into fixed_design
+    """
+    #!/bin/bash
+    #source ${params.condaloc} mpraflow_py36
+    cv=\$(which conda)
+    cv1=\$(dirname "\$cv")
+    cv2=\$(dirname "\$cv1")
+    cv3=\${cv2}"/bin/activate"
+    echo \$cv3
+    source \$cv3 mpraflow_py36
+    
+                                
+    ## UNCOMMENT FOR WORKING VERSION
+    #sed -r 's/]/_/g' $label > new_label.txt
+    #sed -r 's/]/_/g' $design > new_design.fa
+       
+    awk '{gsub(/\\[/,"_")}1' $label > t_new_label.txt 
+    awk '{gsub(/\\]/,"_")}1' t_new_label.txt > new_label.txt
+    
+    awk '{gsub(/\\[/,"_")}1' $design > t_new_design.txt
+    awk '{gsub(/\\]/,"_")}1' t_new_design.txt > new_design.fa
+                  
+    #zcat $fastq_bc | wc -l 
+    zcat $fastq_bc | wc -l  > count_fastq.txt
+            
+    """
+    
+}
+
+/*
 * STEP 1: Align
 * Process 1A: create BWA reference
 */
@@ -196,9 +245,11 @@ process 'create_BWA_ref' {
     tag "make ref"
     label 'shorttime'
     input:
-    file(design) from design 
-    file(params.condaloc) 
-    file(label) from labels 
+    //file(design) from design 
+    //file(params.condaloc) 
+    //file(label) from labels 
+    file(design) from fixed_design
+    file(label) from fixed_label
 
     output:
     file "${design}.fai" into reference_fai
@@ -208,8 +259,17 @@ process 'create_BWA_ref' {
     file "${design}.ann" into reference_ann
     file "${design}.amb" into reference_amb
     file "${design}.dict" into reference_dict
-    file "new_label.txt" into fixed_label
-    file "new_design.txt" into fixed_design
+    //file "new_label.txt" into fixed_label
+    //file "new_design.txt" into fixed_design
+    //file "new_design.txt.fai" into reference_fai
+    //file "new_design.txt.bwt" into reference_bwt
+    //file "new_design.txt.sa" into reference_sa
+    //file "new_design.txt.pac" into reference_pac
+    //file "new_design.txt.ann" into reference_ann
+    //file "new_design.txt.amb" into reference_amb
+    //file "new_design.txt.dict" into reference_dict
+    //file "new_label.txt" into fixed_label
+    //file "new_design.txt" into fixed_design
 
     script:
     """
@@ -220,21 +280,40 @@ process 'create_BWA_ref' {
     cv3=\${cv2}"/bin/activate"
     echo \$cv3
     source \$cv3 mpraflow_py36
+    ## UNCOMMENT FOR WORKING VERSION
+    #sed -r 's/]/_/g' $label > new_label.txt
+    #sed -r 's/]/_/g' $design > new_design.txt
+
     #source ${params.condaloc} mpraflow_py36
     #fix label and design file for picard regex issues   
-    sed -r 's/]/_/g' $label > new_label.txt
-    #sed 's/[/_/g' new_label_t.txt > new_label.txt
-    sed -r 's/]/_/g' $design > new_design.txt
-    #sed 's/[/_/g' new_design_t.txt > new_design.txt 
+    #sed -r 's/]/_/g' $label > new_label.txt
+    #sed -r 's/[/_/g' t_new_label.txt > new_label.txt
+    
+    ## POTENTIAL WORKING
+    #awk '{gsub(/\\[/,"_")}1' $label > t_new_label.txt 
+    #awk '{gsub(/\\]/,"_")}1' t_new_label.txt > new_label.txt
+    
+    #awk '{gsub(/\\[/,"_")}1' $design > t_new_design.txt
+    #awk '{gsub(/\\]/,"_")}1' t_new_design.txt > new_design.txt
+
+
+    #cat $design > new_design.txt
+    #cat $label > new_label.txt
+
+    #sed -r 's/]/_/g' $design > new_design.txt
+    #sed -r 's/[/_/g' t_new_design.txt > new_design.txt 
 
     #echo 'show files'
-    head new_label.txt
-    head new_design.txt
+    #head new_label.txt
+    #head new_design.txt
+
+    #bwa index -a bwtsw new_design.txt
+    #samtools faidx new_design.txt
+    #picard CreateSequenceDictionary REFERENCE=new_design.txt OUTPUT="new_design.txt.dict"
 
     bwa index -a bwtsw $design
     samtools faidx $design
     picard CreateSequenceDictionary REFERENCE=$design OUTPUT=$design".dict"
-
     """
 }
 
@@ -310,7 +389,8 @@ if(params.fastq_insertPE != 0){
         //publishDir params.outdir, mode:'copy'    
     
         input:
-        file(design) from design
+        //file(design) from design
+        file(design) from fixed_design
         file(chunk) from mergedPE
         file(reference_fai) from reference_fai
         file reference_bwt from reference_bwt
@@ -352,7 +432,8 @@ if(params.fastq_insertPE == 0){
         //publishDir params.outdir, mode:'copy'
     
         input:
-        file(design) from design
+        //file(design) from design
+        file(design) from fixed_design
         file(chunk) from R1_ch
         file(params.out)
         file(reference_fai) from reference_fai
@@ -429,38 +510,6 @@ process 'collect_chunks'{
 
 
 /*
-* STEP 2 pre: count fastq and bam length
-*/
-
-process 'count_bc' {
-    tag 'count'
-    label 'shorttime'
-    publishDir params.outdir, mode:'copy'
-
-    input:
-    file(fastq_bc) from fastq_bc
-
-    output:
-    file 'count_fastq.txt' into bc_ch
-
-    """
-    #!/bin/bash
-    #source ${params.condaloc} mpraflow_py36
-    cv=\$(which conda)
-    cv1=\$(dirname "\$cv")
-    cv2=\$(dirname "\$cv1")
-    cv3=\${cv2}"/bin/activate"
-    echo \$cv3
-    source \$cv3 mpraflow_py36
-
-    #zcat $fastq_bc | wc -l 
-    zcat $fastq_bc | wc -l  > count_fastq.txt
-
-    """
-
-}
-
-/*
 * STEP 2: Assign barcodes to element sequences
 */
 
@@ -509,7 +558,7 @@ process 'map_element_barcodes' {
     cat ${count_fastq}     
     cat ${count_bam} 
     
-    python ${"$PWD"}/src/nf_ori_map_barcodes.py ${"$PWD"} ${fastq_bc} ${count_fastq} $bam ${count_bam} ${params.out} ${params.mapq} ${params.baseq} ${params.cigar}
+    python ${"$baseDir"}/src/nf_ori_map_barcodes.py ${"$baseDir"} ${fastq_bc} ${count_fastq} $bam ${count_bam} ${params.out} ${params.mapq} ${params.baseq} ${params.cigar}
     """
     
 
@@ -547,7 +596,7 @@ process 'filter_barcodes' {
     echo \$cv3
     source \$cv3 mpraflow_py36   
  
-    python ${"$PWD"}/src/nf_filter_barcodes.py ${params.out} ${map} ${table} ${params.min_cov} ${params.min_frac} $label
+    python ${"$baseDir"}/src/nf_filter_barcodes.py ${params.out} ${map} ${table} ${params.min_cov} ${params.min_frac} $label
     """
 
 

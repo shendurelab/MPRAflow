@@ -21,15 +21,15 @@ end='_tmp.csv'
 dk_full_df= None 
 iter=1
 for index, row in exp.iterrows():
-    print(row['condition'], row['batch'],row['dna'],row['rna'],row['name'])
+    print(row['condition'], row['replicate'],row['dna'],row['rna'],row['name'])
     #dnaloc=o+row['dna']+d+row['dna']+c
     #rnaloc=o+row['rna']+d+row['rna']+c
     df_loc=o+row['name']+end
     print(df_loc)
     
 
-    #DNA 1 (condition A, batch 1)
-    colnames=["Barcode", "DNA "+str(iter)+" (condition "+str(row['condition'])+', batch '+str(row['batch'])+")","RNA "+str(iter)+" (condition "+str(row['condition'])+', batch '+str(row['batch'])+")"]
+    #DNA 1 (condition A, replicate 1)
+    colnames=["Barcode", "DNA "+str(iter)+" (condition "+str(row['condition'])+', replicate '+str(row['replicate'])+")","RNA "+str(iter)+" (condition "+str(row['condition'])+', replicate '+str(row['replicate'])+")"]
     cur=pd.DataFrame(pd.read_csv(df_loc,header='infer'))
     print(cur.head())
     cur.columns=colnames

@@ -259,7 +259,6 @@ if(params.m !=0){
         label 'longtime'
  
         input:
-        file(params.condaloc)
         val(params.sample_idx)
         set datasetID, file(r1_fastq) from R1_fastq
     
@@ -269,7 +268,13 @@ if(params.m !=0){
         set datasetID, file("${datasetID}.bam") into clean_bam
         """
         #!/bin/bash
-        source $params.condaloc mpraflow_py27
+        cv=\$(which conda)
+        cv1=\$(dirname "\$cv")
+        cv2=\$(dirname "\$cv1")
+        cv3=\${cv2}"/bin/activate"
+        echo \$cv3
+        source \$cv3 mpraflow_py27        
+        #source $params.condaloc mpraflow_py27
        
         echo "sample idx"
         echo $params.sample_idx
@@ -292,8 +297,8 @@ if(params.m !=0){
       
         #paste <( zcat $r1_fastq ) <(zcat \$new_3 ) <(zcat \$new_2) | awk 'BEGIN{ counter=0 }{ counter+=1; if (counter == 2) { print \$1"GATCCGGTTG"\$2\$3 } else { if (counter==4) { print \$1"IIIIIIIIII"\$2\$3; counter=0 } else { print \$1 }}' | python ${"$PWD"}/src/SplitFastQdoubleIndexBAM.py -p -s $params.s -l $params.l -m $params.m -i ${datasetID}_index.lst | python ${"$PWD"}/src/MergeTrimReadsBAM.py -p --mergeoverlap > ${datasetID}".bam" 
         paste <( zcat $r1_fastq ) <(zcat \$new_3 ) <(zcat \$new_2) | awk 'BEGIN{ counter=0 }{ counter+=1; if (counter == 2) { print \$1"GATCCGGTTG"\$2\$3 } else { if (counter==4) { print \$1"IIIIIIIIII"\$2\$3; counter=0 } else { print \$1 }}}' > ${datasetID}_combined.fastq 
-        python ${"$PWD"}/src/SplitFastQdoubleIndexBAM.py -s $params.s -l $params.l -m $params.m -i ${datasetID}_index.lst --outprefix ${datasetID}_demultiplex --remove --summary ${datasetID}_combined.fastq 
-        python ${"$PWD"}/src/MergeTrimReadsBAM.py --mergeoverlap --outprefix ${datasetID} ${datasetID}_demultiplex.bam
+        python ${"$baseDir"}/src/SplitFastQdoubleIndexBAM.py -s $params.s -l $params.l -m $params.m -i ${datasetID}_index.lst --outprefix ${datasetID}_demultiplex --remove --summary ${datasetID}_combined.fastq 
+        python ${"$baseDir"}/src/MergeTrimReadsBAM.py --mergeoverlap --outprefix ${datasetID} ${datasetID}_demultiplex.bam
 
 
         
@@ -310,7 +315,6 @@ if(params.m==0){
         label 'longtime'
  
         input:
-        file(params.condaloc)
         val(params.sample_idx)
         set datasetID, file(r1_fastq) from R1_fastq 
     
@@ -320,7 +324,13 @@ if(params.m==0){
  
         """
         #!/bin/bash
-        source $params.condaloc mpraflow_py27
+        cv=\$(which conda)
+        cv1=\$(dirname "\$cv")
+        cv2=\$(dirname "\$cv1")
+        cv3=\${cv2}"/bin/activate"
+        echo \$cv3
+        source \$cv3 mpraflow_py27
+        #source $params.condaloc mpraflow_py27
         echo "sample idx"
         echo $params.sample_idx
         
@@ -336,8 +346,8 @@ if(params.m==0){
         #paste <( zcat $r1_fastq ) <(zcat \$new_3 ) | awk 'BEGIN{ counter=0 }{ counter+=1; if (counter == 2) { print \$1\$2 } else { if (counter==4) { print \$1\$2; counter=0 } else { print \$1 }}}' | python ${"$PWD"}/src/FastQ2BAM.py -p -s $params.s | python ${"$PWD"}/src/MergeTrimReadsBAM.py -p --mergeoverlap > ${datasetID}".bam" 
        
         paste <( zcat $r1_fastq ) <(zcat \$new_3 ) | awk 'BEGIN{ counter=0 }{ counter+=1; if (counter == 2) { print \$1"GATCCGGTTG"\$2 } else { if (counter==4) { print \$1"IIIIIIIIII"\$2; counter=0 } else { print \$1 }}}' > ${datasetID}_combined.fastq
-        python ${"$PWD"}/src/SplitFastQdoubleIndexBAM.py -p -s $params.s -l $params.l -m $params.m -i ${datasetID}_index.lst --outprefix ${datasetID}_demultiplex --remove --summary ${datasetID}_combined.fastq 
-        python ${"$PWD"}/src/MergeTrimReadsBAM.py --mergeoverlap --outprefix ${datasetID} ${datasetID}_demultiplex.bam
+        python ${"$baseDir"}/src/SplitFastQdoubleIndexBAM.py -p -s $params.s -l $params.l -m $params.m -i ${datasetID}_index.lst --outprefix ${datasetID}_demultiplex --remove --summary ${datasetID}_combined.fastq 
+        python ${"$baseDir"}/src/MergeTrimReadsBAM.py --mergeoverlap --outprefix ${datasetID} ${datasetID}_demultiplex.bam
         
         #paste <( zcat $r1_fastq ) <(zcat \$new_3 ) | awk 'BEGIN{ counter=0 }{ counter+=1; if (counter == 2) { print \$1\$2 } else { if (counter==4) { print \$1\$2; counter=0 } else { print \$1 }}}' | python ${"$PWD"}/src/SplitFastQdoubleIndexBAM.py -p -s $params.s -l $params.l -m $params.m -i ${datasetID}_index.lst | python ${"$PWD"}/src/MergeTrimReadsBAM.py -p --mergeoverlap > ${datasetID}".bam" 
 
@@ -366,7 +376,13 @@ process 'raw_counts'{
     if(params.m==0)
         """
         #!/bin/bash
-        source $params.condaloc mpraflow_py36
+        cv=\$(which conda)
+        cv1=\$(dirname "\$cv")
+        cv2=\$(dirname "\$cv1")
+        cv3=\${cv2}"/bin/activate"
+        echo \$cv3
+        source \$cv3 mpraflow_py36
+        #source $params.condaloc mpraflow_py36
        
         samtools view -F -r $bam | awk '{print \$10}' | sort | gzip -c > ${datasetID}_raw_counts.tsv.gz 
 
@@ -400,7 +416,13 @@ process 'filter_counts'{
 
     """
     #!/bin/bash
-    source $params.condaloc mpraflow_py36
+    cv=\$(which conda)
+    cv1=\$(dirname "\$cv")
+    cv2=\$(dirname "\$cv1")
+    cv3=\${cv2}"/bin/activate"
+    echo \$cv3
+    source \$cv3 mpraflow_py27
+    #source $params.condaloc mpraflow_py36
     
     zcat $rc | grep -v "N" | awk 'BEGIN{ OFS="\t" }{ if (length(\$1) == 15) { print } }' | gzip -c > ${datasetID}_filtered_counts.tsv.gz
 
@@ -426,7 +448,13 @@ process 'final_counts'{
     if(params.m==0)
         """
         #!/bin/bash
-        source $params.condaloc mpraflow_py36
+        cv=\$(which conda)
+        cv1=\$(dirname "\$cv")
+        cv2=\$(dirname "\$cv1")
+        cv3=\${cv2}"/bin/activate"
+        echo \$cv3
+        source \$cv3 mpraflow_py36
+        #source $params.condaloc mpraflow_py36
         
         zcat $fc | awk '{print \$1}' | uniq -c > ${datasetID}_counts.tsv
         
@@ -435,7 +463,13 @@ process 'final_counts'{
         """
         
         #!/bin/bash
-        source $params.condaloc mpraflow_py36
+        cv=\$(which conda)
+        cv1=\$(dirname "\$cv")
+        cv2=\$(dirname "\$cv1")
+        cv3=\${cv2}"/bin/activate"
+        echo \$cv3
+        source \$cv3 mpraflow_py36
+        #source $params.condaloc mpraflow_py36
        
         for i in $fc; do echo \$(basename \$i); zcat \$i | cut -f 2 | sort | uniq -c | sort -nr | head; echo; done > ${params.outdir}/${datasetID}/${datasetID}_freqUMIs.txt
         zcat $fc | awk '{print \$1}' | uniq -c > ${datasetID}_counts.tsv
@@ -465,15 +499,21 @@ if(params.mpranalyze != 0){
     
         """
         #!/bin/bash
-        source $params.condaloc mpraflow_py36
+        cv=\$(which conda)
+        cv1=\$(dirname "\$cv")
+        cv2=\$(dirname "\$cv1")
+        cv3=\${cv2}"/bin/activate"
+        echo \$cv3
+        source \$cv3 mpraflow_py36        
+        #source $params.condaloc mpraflow_py36
         #
-        python ${"$PWD"}/src/merge_counts.py ${params.e} ${"$PWD"}/${params.outdir}/
-        
-        """
-    }
-    
-    
-    /*
+        python ${"$baseDir"}/src/merge_counts.py ${params.e} ${"$baseDir"}/${params.outdir}/
+            
+            """
+    }      
+           
+           
+    /*     
     * STEP 6: Merge all DNA/RNA counts into one big file
     */
     
@@ -489,8 +529,14 @@ if(params.mpranalyze != 0){
     
         """
         #!/bin/bash
-        source $params.condaloc mpraflow_py36
-        python ${"$PWD"}/src/merge_all.py ${params.e} ${"$PWD"}/${params.outdir}/ ${params.out} ${params.design}
+        cv=\$(which conda)
+        cv1=\$(dirname "\$cv")
+        cv2=\$(dirname "\$cv1")
+        cv3=\${cv2}"/bin/activate"
+        echo \$cv3
+        source \$cv3 mpraflow_py36        
+        #source $params.condaloc mpraflow_py36
+        python ${"$baseDir"}/src/merge_all.py ${params.e} ${"$baseDir"}/${params.outdir}/ ${params.out} ${params.design}
     
         """
     }
@@ -512,8 +558,14 @@ if(params.mpranalyze != 0){
     
         """
         #!/bin/bash
-        source $params.condaloc mpraflow_py36
-        python ${"$PWD"}/src/label_final_count_mat.py $table ${params.association} ${params.out}"_final_labeled_counts.txt"  ${params.design}
+        cv=\$(which conda)
+        cv1=\$(dirname "\$cv")
+        cv2=\$(dirname "\$cv1")
+        cv3=\${cv2}"/bin/activate"
+        echo \$cv3
+        source \$cv3 mpraflow_py36        
+        #source $params.condaloc mpraflow_py36
+        python ${"$baseDir"}/src/label_final_count_mat.py $table ${params.association} ${params.out}"_final_labeled_counts.txt"  ${params.design}
         """
     }
     
@@ -530,8 +582,14 @@ if(params.mpranalyze != 0){
     
         """
         #!/bin/bash
-        source $params.condaloc mpraflow_py36
-        python ${"$PWD"}/src/mpranalyze_compiler.py $t ${"$PWD"}/$params.outdir/
+        cv=\$(which conda)
+        cv1=\$(dirname "\$cv")
+        cv2=\$(dirname "\$cv1")
+        cv3=\${cv2}"/bin/activate"
+        echo \$cv3
+        source \$cv3 mpraflow_py36        
+        #source $params.condaloc mpraflow_py36
+        python ${"$baseDir"}/src/mpranalyze_compiler.py $t ${"$baseDir"}/$params.outdir/
        
         """
     }
@@ -540,7 +598,7 @@ if(params.mpranalyze != 0){
 
 
 /*
-* STEP 5: Merge each DNA and RNA file label with sequence and enhancer and normalize
+* STEP 5: Merge each DNA and RNA file label with sequence and insert and normalize
 */
 //merge and normalize
 if(params.mpranalyze == 0){
@@ -558,13 +616,19 @@ if(params.mpranalyze == 0){
     
         """
         #!/bin/bash
-        source $params.condaloc mpraflow_py36
-        
+        #source $params.condaloc mpraflow_py36
+        cv=\$(which conda)
+        cv1=\$(dirname "\$cv")
+        cv2=\$(dirname "\$cv1")
+        cv3=\${cv2}"/bin/activate"
+        echo \$cv3
+        source \$cv3 mpraflow_py36        
+
         #run this in parallel not the most elegant solution, but seems to work
         iter='a'
         itera='b'
         head -1 ${params.e} > tmp.header.txt
-        sed 1d ${params.e} | while read d; do itera=\$itera\$iter; echo \${itera}; cat tmp.header.txt > tmp.file_\${itera}.txt; echo \$d >> tmp.file_\${itera}.txt; python ${"$PWD"}/src/merge_label.py tmp.file_\${itera}.txt ${"$PWD"}/${params.outdir}/ ${params.association} ${params.design} ${params.merge_intersect} & done 
+        sed 1d ${params.e} | while read d; do itera=\$itera\$iter; echo \${itera}; cat tmp.header.txt > tmp.file_\${itera}.txt; echo \$d >> tmp.file_\${itera}.txt; python ${"$baseDir"}/src/merge_label.py tmp.file_\${itera}.txt ${"$baseDir"}/${params.outdir}/ ${params.association} ${params.design} ${params.merge_intersect} & done 
         #python ${"$PWD"}/bin/merge_label.py ${params.e} ${"$PWD"}/${params.outdir}/	${params.association} ${params.design} ${params.merge_intersect}
         sleep 2m
         wait
@@ -593,8 +657,15 @@ if(params.mpranalyze == 0){
     
         """
         #!/bin/bash
-        source $params.condaloc mpraflow_py36
-        Rscript ${"$PWD"}/src/plot_perInsertCounts_correlation.R ${params.e} ${"$PWD"}/${params.outdir}/ ${"$PWD"}/${params.outdir}/${params.out} ${params.labels}
+        #source $params.condaloc mpraflow_py36
+        cv=\$(which conda)
+        cv1=\$(dirname "\$cv")
+        cv2=\$(dirname "\$cv1")
+        cv3=\${cv2}"/bin/activate"
+        echo \$cv3
+        source \$cv3 mpraflow_py36
+        
+        Rscript ${"$baseDir"}/src/plot_perInsertCounts_correlation.R ${params.e} ${"$baseDir"}/${params.outdir}/ ${"$baseDir"}/${params.outdir}/${params.out} ${params.labels}
     
         """
     }

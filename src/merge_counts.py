@@ -16,7 +16,7 @@ o=sys.argv[2]
 d='/'
 c='_counts.tsv'
 for index, row in exp.iterrows():
-    print(row['condition'], row['batch'],row['dna'],row['rna'],row['name'])
+    print(row['condition'], row['replicate'],row['dna'],row['rna'],row['name'])
     dnaloc=o+row['dna']+d+row['dna']+c
     rnaloc=o+row['rna']+d+row['rna']+c
     print(dnaloc)
