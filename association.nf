@@ -29,19 +29,20 @@ def helpMessage() {
     Mandatory arguments:
       --fastq_insert                Full path to library association fastq for insert (must be surrounded with quotes)
       --fastq_bc                    Full path to library association fastq for bc (must be surrounded with quotes)
-      --design                      Full path to fasta of ordered oligo sequences (this file cannot contain the characters '[' or ']' at this time)
+      --design                      Full path to fasta of ordered oligo sequences (must be surrounded with quotes) 
 
     Options:
       --fastq_insertPE              Full path to library association fastq for read2 if the library is paired end (must be surrounded with quotes)
-      --min_cov                     minimum coverage of bc to count it (default 2)
+      --min_cov                     minimum coverage of bc to count it (default 3)
       --min_frac                    minimum fraction of bc map to single insert (default 0.5)
       --mapq                        map quality (default 30)
       --baseq                       base quality (default 30)
       --cigar                       require exact match ex: 200M (default none) 
       --outdir                      The output directory where the results will be saved and what will be used as a prefix (default outs)
       -w                            specific name for work directory (default: work)  
+      -with-timeline                Create html file showing processing times
       --split                       number read entries per fastq chunk for faster processing (default: 2000000)  
-      --labels                      tsv with the oligo pool fasta and a group label (ex: positive_control) if no labels desired a file will be automatically generated (this functionality is not active yet) 
+      --labels                      tsv with the oligo pool fasta and a group label (ex: positive_control) if no labels desired a file will be automatically generated  
 
     Extras:
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
@@ -77,7 +78,7 @@ params.out=params.outdir
 params.nf_required_version="19.07.0"
 params.fastq_insertPE=0
 params.split=2000000
-
+params.labels=0
 // Validate inputs
 if ( params.fastq_insert ){
     fastq_insert = file(params.fastq_insert)
@@ -112,7 +113,14 @@ if (params.condaloc){
 }
 */
 
+/*
 if (params.labels){
+    labels=file(params.labels)
+    if (!labels.exists()) exit 1, "label file not specified ${params.labels}"
+}
+*/
+
+if (params.labels !=0){
     labels=file(params.labels)
     if (!labels.exists()) exit 1, "label file not specified ${params.labels}"
 }
@@ -193,48 +201,100 @@ try {
 * and make design file
 */
 
-process 'count_bc' {
-    tag 'count'
-    label 'shorttime'
-    publishDir params.outdir, mode:'copy'
-    
-    input:
-    file(fastq_bc) from fastq_bc
-    file(design) from design
-    //file(params.condaloc)
-    file(label) from labels
-    
-    output:
-    file 'count_fastq.txt' into bc_ch
-    file "new_label.txt" into fixed_label
-    file "new_design.fa" into fixed_design
-    """
-    #!/bin/bash
-    #source ${params.condaloc} mpraflow_py36
-    cv=\$(which conda)
-    cv1=\$(dirname "\$cv")
-    cv2=\$(dirname "\$cv1")
-    cv3=\${cv2}"/bin/activate"
-    echo \$cv3
-    source \$cv3 mpraflow_py36
-    
-                                
-    ## UNCOMMENT FOR WORKING VERSION
-    #sed -r 's/]/_/g' $label > new_label.txt
-    #sed -r 's/]/_/g' $design > new_design.fa
-       
-    awk '{gsub(/\\[/,"_")}1' $label > t_new_label.txt 
-    awk '{gsub(/\\]/,"_")}1' t_new_label.txt > new_label.txt
-    
-    awk '{gsub(/\\[/,"_")}1' $design > t_new_design.txt
-    awk '{gsub(/\\]/,"_")}1' t_new_design.txt > new_design.fa
-                  
-    #zcat $fastq_bc | wc -l 
-    zcat $fastq_bc | wc -l  > count_fastq.txt
-            
-    """
-    
+if (params.labels != 0){
+    process 'count_bc' {
+        tag 'count'
+        label 'shorttime'
+        publishDir params.outdir, mode:'copy'
+        
+        input:
+        file(fastq_bc) from fastq_bc
+        file(design) from design
+        //file(params.condaloc)
+        file(label) from labels
+        
+        output:
+        file 'count_fastq.txt' into bc_ch
+        file "new_label.txt" into fixed_label
+        file "new_design.fa" into fixed_design
+        """
+        #!/bin/bash
+        #source ${params.condaloc} mpraflow_py36
+        cv=\$(which conda)
+        cv1=\$(dirname "\$cv")
+        cv2=\$(dirname "\$cv1")
+        cv3=\${cv2}"/bin/activate"
+        echo \$cv3
+        source \$cv3 mpraflow_py36
+        
+                                    
+        ## UNCOMMENT FOR WORKING VERSION
+        #sed -r 's/]/_/g' $label > new_label.txt
+        #sed -r 's/]/_/g' $design > new_design.fa
+           
+        awk '{gsub(/\\[/,"_")}1' $label > t_new_label.txt 
+        awk '{gsub(/\\]/,"_")}1' t_new_label.txt > new_label.txt
+        
+        awk '{gsub(/\\[/,"_")}1' $design > t_new_design.txt
+        awk '{gsub(/\\]/,"_")}1' t_new_design.txt > new_design.fa
+                      
+        #zcat $fastq_bc | wc -l 
+        zcat $fastq_bc | wc -l  > count_fastq.txt
+                
+        """
+        
+    }
 }
+
+/*
+* STEP 2 pre: count fastq and bam length
+* and make design file
+*/
+if (params.labels == 0){
+    process 'count_bc_nolab' {
+        tag 'count'
+        label 'shorttime'
+        publishDir params.outdir, mode:'copy'
+    
+        input:
+        file(fastq_bc) from fastq_bc
+        file(design) from design
+        //file(params.condaloc)
+        //file(label) from labels
+    
+        output:
+        file 'count_fastq.txt' into bc_ch
+        file "new_label.txt" into fixed_label
+        file "new_design.fa" into fixed_design
+        """
+        #!/bin/bash
+        #source ${params.condaloc} mpraflow_py36
+        cv=\$(which conda)
+        cv1=\$(dirname "\$cv")
+        cv2=\$(dirname "\$cv1")
+        cv3=\${cv2}"/bin/activate"
+        echo \$cv3
+        source \$cv3 mpraflow_py36
+        #
+        
+        ## UNCOMMENT FOR WORKING VERSION
+        
+        #CREATE LABEL FILE
+        awk -F'\t' 'BEGIN {OFS = FS} NR%2==1 {print substr(\$1,2,length(\$1)),"test"}' $design > label.txt
+        awk '{gsub(/\\[/,"_")}1' label.txt > t_new_label.txt
+        awk '{gsub(/\\]/,"_")}1' t_new_label.txt > new_label.txt
+        
+        awk '{gsub(/\\[/,"_")}1' $design > t_new_design.txt
+        awk '{gsub(/\\]/,"_")}1' t_new_design.txt > new_design.fa
+        
+        #zcat $fastq_bc | wc -l 
+        zcat $fastq_bc | wc -l  > count_fastq.txt
+        
+        """
+        
+    }
+}
+
 
 /*
 * STEP 1: Align
