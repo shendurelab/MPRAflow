@@ -6,7 +6,7 @@
 ========================================================================================
 MPRA Analysis Pipeline. Started 2019-07-29.
 Library Association package 
-params.version="1.0"
+params.version="2.0"
 
 #### Homepage / Documentation
 https://github.com/shendurelab/MPRAflow
@@ -45,7 +45,7 @@ def helpMessage() {
       --labels                      tsv with the oligo pool fasta and a group label (ex: positive_control) if no labels desired a file will be automatically generated  
 
     Extras:
-      --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
+      --email                        Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
       --name                         Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
     """.stripIndent()
 }
@@ -67,7 +67,6 @@ params.plaintext_email = false
 output_docs = file("$baseDir/docs/output.md")
 
 //defaults
-params.aligner="1"
 params.min_cov="3"
 params.min_frac="0.5"
 params.baseq="30"
@@ -79,6 +78,8 @@ params.nf_required_version="19.07.0"
 params.fastq_insertPE=0
 params.split=2000000
 params.labels=0
+
+
 // Validate inputs
 if ( params.fastq_insert ){
     fastq_insert = file(params.fastq_insert)
@@ -98,27 +99,6 @@ if ( params.design ){
     design = file(params.design)
     if( !design.exists() ) exit 1, "Fasta oligo design file not found: ${params.design}"
 }
-
-/*
-if ( params.out ){
-    out= params.out
-    if( !out.exists() ) exit 1, "prefix not specified: ${params.out}"
-}
-*/
-
-/*
-if (params.condaloc){
-    condaloc=file(params.condaloc)
-    if (!condaloc.exists()) exit 1, "conda location not specified ${params.condaloc}"
-}
-*/
-
-/*
-if (params.labels){
-    labels=file(params.labels)
-    if (!labels.exists()) exit 1, "label file not specified ${params.labels}"
-}
-*/
 
 if (params.labels !=0){
     labels=file(params.labels)
@@ -149,18 +129,14 @@ summary['Pipeline Name']    = 'MPRAflow'
 summary['Pipeline Version'] = params.version
 summary['Run Name']         = custom_runName ?: workflow.runName
 summary['Fastq insert']     = params.fastq_insert
+summary['fastq paired']     = params.fastq_insertPE
 summary['Fastq barcode']    = params.fastq_bc
 summary['design fasta']     = params.design
-summary['alignment']        = params.aligner
 summary['minimum BC cov']   = params.min_cov
 summary['map quality']      = params.mapq
 summary['base quality']     = params.baseq
 summary['cigar string']     = params.cigar
-summary['output id']        = params.out
-
-//summary['Thread fqdump']    = params.threadfqdump ? 'YES' : 'NO'
-//summary['Max CPUs']         = params.max_cpus
-//summary['Max Time']         = params.max_time
+summary['min % mapped']     = params.min_frac
 summary['Output dir']       = params.outdir
 summary['Working dir']      = workflow.workDir
 summary['Container Engine'] = workflow.containerEngine
@@ -173,6 +149,10 @@ summary['Working dir']      = workflow.workDir
 summary['Output dir']       = params.outdir
 summary['Script dir']       = workflow.projectDir
 summary['Config Profile']   = workflow.profile
+
+//summary['Thread fqdump']    = params.threadfqdump ? 'YES' : 'NO'
+//summary['Max CPUs']         = params.max_cpus
+//summary['Max Time']         = params.max_time
 
 
 if(params.email) summary['E-mail Address'] = params.email
@@ -197,8 +177,8 @@ try {
 
 
 /*
-* STEP 2 pre: count fastq and bam length
-* and make design file
+* count fastq and bam length remove the illegal regex characters
+* and make label file if missing
 */
 
 if (params.labels != 0){
@@ -219,7 +199,6 @@ if (params.labels != 0){
         file "new_design.fa" into fixed_design
         """
         #!/bin/bash
-        #source ${params.condaloc} mpraflow_py36
         cv=\$(which conda)
         cv1=\$(dirname "\$cv")
         cv2=\$(dirname "\$cv1")
@@ -227,18 +206,13 @@ if (params.labels != 0){
         echo \$cv3
         source \$cv3 mpraflow_py36
         
-                                    
-        ## UNCOMMENT FOR WORKING VERSION
-        #sed -r 's/]/_/g' $label > new_label.txt
-        #sed -r 's/]/_/g' $design > new_design.fa
-           
+        ## Get rid of illegal regex characters   
         awk '{gsub(/\\[/,"_")}1' $label > t_new_label.txt 
         awk '{gsub(/\\]/,"_")}1' t_new_label.txt > new_label.txt
         
         awk '{gsub(/\\[/,"_")}1' $design > t_new_design.txt
         awk '{gsub(/\\]/,"_")}1' t_new_design.txt > new_design.fa
                       
-        #zcat $fastq_bc | wc -l 
         zcat $fastq_bc | wc -l  > count_fastq.txt
                 
         """
@@ -247,7 +221,7 @@ if (params.labels != 0){
 }
 
 /*
-* STEP 2 pre: count fastq and bam length
+* count fastq and bam length remove the illegal regex characters
 * and make design file
 */
 if (params.labels == 0){
@@ -268,26 +242,23 @@ if (params.labels == 0){
         file "new_design.fa" into fixed_design
         """
         #!/bin/bash
-        #source ${params.condaloc} mpraflow_py36
         cv=\$(which conda)
         cv1=\$(dirname "\$cv")
         cv2=\$(dirname "\$cv1")
         cv3=\${cv2}"/bin/activate"
         echo \$cv3
         source \$cv3 mpraflow_py36
-        #
-        
-        ## UNCOMMENT FOR WORKING VERSION
         
         #CREATE LABEL FILE
         awk -F'\t' 'BEGIN {OFS = FS} NR%2==1 {print substr(\$1,2,length(\$1)),"test"}' $design > label.txt
+        
+        #remove illegal regex characters
         awk '{gsub(/\\[/,"_")}1' label.txt > t_new_label.txt
         awk '{gsub(/\\]/,"_")}1' t_new_label.txt > new_label.txt
         
         awk '{gsub(/\\[/,"_")}1' $design > t_new_design.txt
         awk '{gsub(/\\]/,"_")}1' t_new_design.txt > new_design.fa
         
-        #zcat $fastq_bc | wc -l 
         zcat $fastq_bc | wc -l  > count_fastq.txt
         
         """
@@ -305,9 +276,6 @@ process 'create_BWA_ref' {
     tag "make ref"
     label 'shorttime'
     input:
-    //file(design) from design 
-    //file(params.condaloc) 
-    //file(label) from labels 
     file(design) from fixed_design
     file(label) from fixed_label
 
@@ -319,17 +287,6 @@ process 'create_BWA_ref' {
     file "${design}.ann" into reference_ann
     file "${design}.amb" into reference_amb
     file "${design}.dict" into reference_dict
-    //file "new_label.txt" into fixed_label
-    //file "new_design.txt" into fixed_design
-    //file "new_design.txt.fai" into reference_fai
-    //file "new_design.txt.bwt" into reference_bwt
-    //file "new_design.txt.sa" into reference_sa
-    //file "new_design.txt.pac" into reference_pac
-    //file "new_design.txt.ann" into reference_ann
-    //file "new_design.txt.amb" into reference_amb
-    //file "new_design.txt.dict" into reference_dict
-    //file "new_label.txt" into fixed_label
-    //file "new_design.txt" into fixed_design
 
     script:
     """
@@ -340,36 +297,6 @@ process 'create_BWA_ref' {
     cv3=\${cv2}"/bin/activate"
     echo \$cv3
     source \$cv3 mpraflow_py36
-    ## UNCOMMENT FOR WORKING VERSION
-    #sed -r 's/]/_/g' $label > new_label.txt
-    #sed -r 's/]/_/g' $design > new_design.txt
-
-    #source ${params.condaloc} mpraflow_py36
-    #fix label and design file for picard regex issues   
-    #sed -r 's/]/_/g' $label > new_label.txt
-    #sed -r 's/[/_/g' t_new_label.txt > new_label.txt
-    
-    ## POTENTIAL WORKING
-    #awk '{gsub(/\\[/,"_")}1' $label > t_new_label.txt 
-    #awk '{gsub(/\\]/,"_")}1' t_new_label.txt > new_label.txt
-    
-    #awk '{gsub(/\\[/,"_")}1' $design > t_new_design.txt
-    #awk '{gsub(/\\]/,"_")}1' t_new_design.txt > new_design.txt
-
-
-    #cat $design > new_design.txt
-    #cat $label > new_label.txt
-
-    #sed -r 's/]/_/g' $design > new_design.txt
-    #sed -r 's/[/_/g' t_new_design.txt > new_design.txt 
-
-    #echo 'show files'
-    #head new_label.txt
-    #head new_design.txt
-
-    #bwa index -a bwtsw new_design.txt
-    #samtools faidx new_design.txt
-    #picard CreateSequenceDictionary REFERENCE=new_design.txt OUTPUT="new_design.txt.dict"
 
     bwa index -a bwtsw $design
     samtools faidx $design
@@ -393,13 +320,6 @@ if(params.fastq_insertPE != 0){
         .set{ R3_ch }
 }
 
-/*
-Channel
-    .fromPath(params.fastq_bc)
-    .splitFastq( by: params.split, file: true )
-    .set{ mybc_ch }
-*/
-
 
 
 /*
@@ -410,7 +330,6 @@ if(params.fastq_insertPE != 0){
     process 'PE_merge' {
         tag 'merge'
         label 'shorttime'
-        //publishDir params.outdir, mode:'copy'
 
         input:
         file(fastq_insert) from R1_ch
@@ -427,7 +346,6 @@ if(params.fastq_insertPE != 0){
         cv3=\${cv2}"/bin/activate"
         echo \$cv3
         source \$cv3 mpraflow_py36        
-        #source ${params.condaloc} mpraflow_py36
         
         fastq-join $fastq_insert $fastq_insertPE -o ${fastq_insert}_merged.fastq
         
@@ -446,10 +364,8 @@ if(params.fastq_insertPE != 0){
     process 'align_BWA_PE' {
         tag "align"
         label 'longtime'
-        //publishDir params.outdir, mode:'copy'    
     
         input:
-        //file(design) from design
         file(design) from fixed_design
         file(chunk) from mergedPE
         file(reference_fai) from reference_fai
@@ -467,7 +383,6 @@ if(params.fastq_insertPE != 0){
         script:
         """
         #!/bin/bash
-        #source ${params.condaloc} mpraflow_py36
         cv=\$(which conda)
         cv1=\$(dirname "\$cv")
         cv2=\$(dirname "\$cv1")
@@ -489,10 +404,8 @@ if(params.fastq_insertPE == 0){
     process 'align_BWA_S' {
         tag "align"
         label 'longtime'
-        //publishDir params.outdir, mode:'copy'
     
         input:
-        //file(design) from design
         file(design) from fixed_design
         file(chunk) from R1_ch
         file(params.out)
@@ -511,7 +424,6 @@ if(params.fastq_insertPE == 0){
         script:
         """
         #!/bin/bash
-        #source ${params.condaloc} mpraflow_py36
         cv=\$(which conda)
         cv1=\$(dirname "\$cv")
         cv2=\$(dirname "\$cv1")
@@ -546,8 +458,6 @@ process 'collect_chunks'{
     script:
     """
     #!/bin/bash
-    #source ${params.condaloc} mpraflow_py36
-
     cv=\$(which conda)
     cv1=\$(dirname "\$cv")
     cv2=\$(dirname "\$cv1")
@@ -570,7 +480,7 @@ process 'collect_chunks'{
 
 
 /*
-* STEP 2: Assign barcodes to element sequences
+* Assign barcodes to element sequences
 */
 
 process 'map_element_barcodes' {
@@ -589,16 +499,12 @@ process 'map_element_barcodes' {
 
     output:
     file "${params.out}_coords_to_barcodes.pickle" into map_ch
-    //file "${params.out}_barcodes_per_candidate.feather"
     file "${params.out}_barcodes_per_candidate-no_repeats-no_jackpots.feather" into count_table_ch
-    //file "${params.out}_barcodes_per_candidate-no_repeats.feather"
-    //file "${params.out}_barcodes_per_candidate-no_jackpots.feather"
     file "${params.out}_barcode_counts.pickle"
 
     script:
     """
     #!/bin/bash 
-    #source ${params.condaloc} mpraflow_py36
     cv=\$(which conda)
     cv1=\$(dirname "\$cv")
     cv2=\$(dirname "\$cv1")
@@ -625,7 +531,7 @@ process 'map_element_barcodes' {
 }
 
 /*
-* STEP 3: Filter barcodes for minimum coverage and unique mapping
+* Filter barcodes for minimum coverage and unique mapping
 */
 
 process 'filter_barcodes' {
@@ -648,7 +554,6 @@ process 'filter_barcodes' {
     script:
     """
     #!/bin/bash 
-    #source ${params.condaloc} mpraflow_py36
     cv=\$(which conda)
     cv1=\$(dirname "\$cv")
     cv2=\$(dirname "\$cv1")
