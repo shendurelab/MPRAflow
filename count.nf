@@ -6,8 +6,6 @@
 ========================================================================================
 MPRA Analysis Pipeline. Started 2019-07-29.
 Count Utility
-params.version="1.0"
-
 #### Homepage / Documentation
 https://github.com/shendurelab/MPRAflow 
 #### Authors
@@ -21,11 +19,8 @@ def helpMessage() {
     shendurelab/MPRAflow v${params.version}
     =========================================
     Usage:
-
     The typical command for running the pipeline is as follows:
-
     nextflow run main.nf
-
     Mandatory arguments:
       --dir                         fasta directory (must be surrounded with quotes)
       --association                 pickle dictionary from library association process
@@ -35,8 +30,8 @@ def helpMessage() {
       --m                           UMI length (default 16)
       --e                           experiment csv file
       --out                         sample id to use as prefix (default output)
+      --condaloc                    location of conda instilation activate file ex: ~/miniconda3/bin/activate (must be surrounded with quotes)
       --labels                      tsv with the oligo pool fasta and a group label (ex: positive_control) if no labels desired simply add NA instead of a label in this file
-
     Options:
       --outdir                      The output directory where the results will be saved (default outs)
       --merge_intersect             Only retain barcodes in RNA and DNA fraction (TRUE/FALSE, default: FALSE)
@@ -59,6 +54,7 @@ if (params.help){
 
 // Configurable variables
 params.name = false
+//params.multiqc_config = "$baseDir/conf/py36.yaml"
 params.email = false
 params.plaintext_email = false
 //multiqc_config = file(params.multiqc_config)
@@ -68,7 +64,7 @@ output_docs = file("$baseDir/docs/output.md")
 params.outdir="outs"
 results_path = params.outdir
 params.nf_required_version="19.07.0"
-params.out=params.outdir
+params.out="output"
 //params.condaloc='/netapp/home/ggordon/tools/miniconda3/bin/activate'
 params.sample_idx="GATCCGGTTG"
 params.s='26'
@@ -76,7 +72,6 @@ params.l='10'
 params.m='16'
 params.merge_intersect="FALSE"
 params.mpranalyze=0
-params.labels=0
 
 //params.dir="bulk_dna"
 //params.e='/wynton/group/ye/ggordon/MPRA_nextflow/barcode_matching_scripts/toy_experiment.csv'
@@ -112,16 +107,9 @@ if ( params.condaloc ){
     if( !cloc.exists() ) exit 1, "conda location not provided ${params.condaloc}"
 }
 
-/*
 if (params.labels){
     labels=file(params.labels)
-    if (!labels.exists()) exit 1, "label file not specified ${params.labels}"
-}
-*/
-
-if (params.labels !=0){
-    labels=file(params.labels)
-    if (!labels.exists()) exit 1, "label file not specified ${params.labels}"
+    if (!labels.exists()) exit 1, "label file not specified ${labels}"
 }
 
 // Create FASTQ channels
@@ -164,7 +152,6 @@ log.info """=======================================================
     |\\ | |__  __ /  ` /  \\ |__) |__         }  {
     | \\| |       \\__, \\__/ |  \\ |___     \\`-._,-`-,
                                           `._,._,\'
-
 MPRAflow v${params.version}"
 ======================================================="""
 def summary = [:]
@@ -214,39 +201,42 @@ try {
 }
 
 
+/*
+ * Parse software version numbers
+ */
+//conda??
+/*
+process get_software_versions {
+    input:
+    file(trimmomatic_jar_path)
+    output:
+    file 'software_versions_mqc.yaml' into software_versions_yaml
+    script:
+    """
+    module load sra/2.8.0
+    module load igvtools/2.3.75
+    module load fastqc/0.11.5
+    module load bedtools/2.25.0
+    module load bowtie/2.2.9
+    module load samtools/1.8
+    echo $params.version > v_pipeline.txt
+    echo $workflow.nextflow.version > v_nextflow.txt
+    fastqc --version > v_fastqc.txt
+    java -XX:ParallelGCThreads=1 -jar ${trimmomatic_jar_path} -version &> v_trimmomatic.txt
+    multiqc --version > v_multiqc.txt
+    samtools --version &> v_samtools.txt
+    bowtie2 --version &> v_bowtie2.txt
+    fastq-dump --version &> v_fastq-dump.txt
+    bedtools --version &> v_bedtools.txt
+    igvtools &> v_igv-tools.txt
+    macs2 --version &>  v_macs2.txt
+    scrape_software_versions.py > software_versions_mqc.yaml
+    """
+}
+*/
+
 
 println 'start analysis'
-
-
-/*
-*MAKE LABEL FILE IF NOT PASSED
-*/
-if(params.labels == 0){
-    process 'create_label' {
-    label 'shorttime'
-    input:
-    file(designs) from design   
- 
-    output:
-    "new_label.txt" into labels
-
-    """
-    #!/bin/bash
-    cv=\$(which conda)
-    cv1=\$(dirname "\$cv")
-    cv2=\$(dirname "\$cv1")
-    cv3=\${cv2}"/bin/activate"
-    echo \$cv3
-    source \$cv3 mpraflow_py36
-
-    awk -F'\t' 'BEGIN {OFS = FS} NR%2==1 {print substr(\$1,2,length(\$1)),"test"}' $designs > label.txt
-    awk '{gsub(/\\[/,"_")}1' label.txt > t_new_label.txt
-    awk '{gsub(/\\]/,"_")}1' t_new_label.txt > new_label.txt
-    """
-
-    }
-  
-}
 
 /*
 * STEP 1: Create BAM files 
@@ -266,8 +256,6 @@ if(params.m !=0){
         output:
         set datasetID, file("${datasetID}_index.lst") into idx_list
         set datasetID, file("${datasetID}.bam") into clean_bam
-        
-        script:
         """
         #!/bin/bash
         cv=\$(which conda)
@@ -282,12 +270,10 @@ if(params.m !=0){
         echo $params.sample_idx
       
         echo $r1_fastq
-
         new_var2=\$(echo $r1_fastq | awk -F"_R1_" '{print \$1"_R2_"\$2}')
         echo \$new_var2
         new_2=$params.dir"/"\$new_var2
         echo \$new_2
-
         new_var3=\$(echo $r1_fastq | awk -F"_R1_" '{print \$1"_R3_"\$2}')
         echo \$new_var3
         new_3=$params.dir"/"\$new_var3
@@ -301,8 +287,6 @@ if(params.m !=0){
         paste <( zcat $r1_fastq ) <(zcat \$new_3 ) <(zcat \$new_2) | awk 'BEGIN{ counter=0 }{ counter+=1; if (counter == 2) { print \$1"GATCCGGTTG"\$2\$3 } else { if (counter==4) { print \$1"IIIIIIIIII"\$2\$3; counter=0 } else { print \$1 }}}' > ${datasetID}_combined.fastq 
         python ${"$baseDir"}/src/SplitFastQdoubleIndexBAM.py -s $params.s -l $params.l -m $params.m -i ${datasetID}_index.lst --outprefix ${datasetID}_demultiplex --remove --summary ${datasetID}_combined.fastq 
         python ${"$baseDir"}/src/MergeTrimReadsBAM.py --mergeoverlap --outprefix ${datasetID} ${datasetID}_demultiplex.bam
-
-
         
         #paste <( zcat $r1_fastq ) <(zcat \$new_3 ) <(zcat \$new_2) | awk 'BEGIN{ counter=0 }{ counter+=1; if (counter == 2) { print \$1\$2 } else { if (counter==4) { print \$1\$2; counter=0 } else { print \$1 }}}' | python ${"$PWD"}/src/SplitFastQdoubleIndexBAM.py -p -s $params.s -l $params.l -m $params.m -i ${datasetID}_index.lst | python ${"$PWD"}/src/MergeTrimReadsBAM.py -p --mergeoverlap > ${datasetID}".bam"
  
@@ -342,9 +326,7 @@ if(params.m==0){
         echo \$new_var
         new_3=$params.dir"/"\$new_var
         echo \$new_3
-
         echo $params.sample_idx'        '${datasetID} >> ${datasetID}_index.lst
-
         #paste <( zcat $r1_fastq ) <(zcat \$new_3 ) | awk 'BEGIN{ counter=0 }{ counter+=1; if (counter == 2) { print \$1\$2 } else { if (counter==4) { print \$1\$2; counter=0 } else { print \$1 }}}' | python ${"$PWD"}/src/FastQ2BAM.py -p -s $params.s | python ${"$PWD"}/src/MergeTrimReadsBAM.py -p --mergeoverlap > ${datasetID}".bam" 
        
         paste <( zcat $r1_fastq ) <(zcat \$new_3 ) | awk 'BEGIN{ counter=0 }{ counter+=1; if (counter == 2) { print \$1"GATCCGGTTG"\$2 } else { if (counter==4) { print \$1"IIIIIIIIII"\$2; counter=0 } else { print \$1 }}}' > ${datasetID}_combined.fastq
@@ -352,8 +334,6 @@ if(params.m==0){
         python ${"$baseDir"}/src/MergeTrimReadsBAM.py --mergeoverlap --outprefix ${datasetID} ${datasetID}_demultiplex.bam
         
         #paste <( zcat $r1_fastq ) <(zcat \$new_3 ) | awk 'BEGIN{ counter=0 }{ counter+=1; if (counter == 2) { print \$1\$2 } else { if (counter==4) { print \$1\$2; counter=0 } else { print \$1 }}}' | python ${"$PWD"}/src/SplitFastQdoubleIndexBAM.py -p -s $params.s -l $params.l -m $params.m -i ${datasetID}_index.lst | python ${"$PWD"}/src/MergeTrimReadsBAM.py -p --mergeoverlap > ${datasetID}".bam" 
-
-
         """   
     }
 }
@@ -387,22 +367,13 @@ process 'raw_counts'{
         #source $params.condaloc mpraflow_py36
        
         samtools view -F -r $bam | awk '{print \$10}' | sort | gzip -c > ${datasetID}_raw_counts.tsv.gz 
-
         #samtools view -F -r $bam | awk '{print \$10}' | sort | uniq -c |  awk 'BEGIN{ OFS="\t" }{ print \$2,\$1 }' | gzip -c > ${datasetID}_raw_counts.tsv.gz  
-
         """
 
     else if(params.m!=0)
         """
         #!/bin/bash
-        cv=\$(which conda)
-        cv1=\$(dirname "\$cv")
-        cv2=\$(dirname "\$cv1")
-        cv3=\${cv2}"/bin/activate"
-        echo \$cv3
-        source \$cv3 mpraflow_py36
-        #source $params.condaloc mpraflow_py36
-
+        source $params.condaloc mpraflow_py36
         samtools view -F -r $bam | awk 'BEGIN{ OFS= "\t" }{ for (i=12; i<=NF; i++) { if (\$i ~ /^XJ:Z:/) print \$10,substr(\$i,6,16) }}' | sort | uniq -c | awk 'BEGIN{ OFS="\t" }{ print \$2,\$3,\$1 }' | awk '{if(\$2~"GGGGGGGGGGGGGGG" || \$2~"NNNNNN"); else{print}}' | gzip -c > ${datasetID}_raw_counts.tsv.gz
         """ 
 
@@ -433,7 +404,6 @@ process 'filter_counts'{
     #source $params.condaloc mpraflow_py36
     
     zcat $rc | grep -v "N" | awk 'BEGIN{ OFS="\t" }{ if (length(\$1) == 15) { print } }' | gzip -c > ${datasetID}_filtered_counts.tsv.gz
-
     """
 
 }
@@ -481,7 +451,6 @@ process 'final_counts'{
        
         for i in $fc; do echo \$(basename \$i); zcat \$i | cut -f 2 | sort | uniq -c | sort -nr | head; echo; done > ${params.outdir}/${datasetID}/${datasetID}_freqUMIs.txt
         zcat $fc | awk '{print \$1}' | uniq -c > ${datasetID}_counts.tsv
-
         """
 
 }
@@ -495,14 +464,12 @@ if(params.mpranalyze != 0){
     /*
     * STEP 5: Merge each DNA and RNA file
     */
-    label 'longtime'   
     process 'dna_rna_mpranalyze_merge'{
         publishDir "$params.outdir/", mode:'copy'
-    
+        label 'longtime' 
         input:
         file(clist) from final_count.collect()
-        file(e) from env   
- 
+    
         output:
         file "*tmp.csv" into merged_ch
     
@@ -516,9 +483,9 @@ if(params.mpranalyze != 0){
         source \$cv3 mpraflow_py36        
         #source $params.condaloc mpraflow_py36
         #
-        python ${"$baseDir"}/src/merge_counts.py $e ${"$baseDir"}/${params.outdir}/
+        python ${"$baseDir"}/src/merge_counts.py ${params.e} ${"$baseDir"}/${params.outdir}/
             
-        """
+            """
     }      
            
            
@@ -532,9 +499,7 @@ if(params.mpranalyze != 0){
       
         input:
         file(pairlist) from merged_ch.collect()
-        file(e) from env    
-        file(designs) from design 
-
+    
         output:
         file "*.csv" into merged_out
     
@@ -547,7 +512,7 @@ if(params.mpranalyze != 0){
         echo \$cv3
         source \$cv3 mpraflow_py36        
         #source $params.condaloc mpraflow_py36
-        python ${"$baseDir"}/src/merge_all.py $e ${"$baseDir"}/${params.outdir}/ ${params.out} $designs
+        python ${"$baseDir"}/src/merge_all.py ${params.e} ${"$baseDir"}/${params.outdir}/ ${params.out} ${params.design}
     
         """
     }
@@ -563,9 +528,7 @@ if(params.mpranalyze != 0){
     
         input:
         file(table) from merged_out
-        file(designs) from design
-        file(association) from assoc   
- 
+    
         output:
         file "*_final_labeled_counts.txt" into labeled_out
     
@@ -578,7 +541,7 @@ if(params.mpranalyze != 0){
         echo \$cv3
         source \$cv3 mpraflow_py36        
         #source $params.condaloc mpraflow_py36
-        python ${"$baseDir"}/src/label_final_count_mat.py $table $association ${params.out}"_final_labeled_counts.txt"  $design
+        python ${"$baseDir"}/src/label_final_count_mat.py $table ${params.association} ${params.out}"_final_labeled_counts.txt"  ${params.design}
         """
     }
     
@@ -623,9 +586,7 @@ if(params.mpranalyze == 0){
      
         input:
         file(clist) from final_count.collect()
-        file(e) from env        
-        file(designs) from design
-        file(association) from assoc
+    
         output:
         file "*.tsv" into merged_ch
     
@@ -638,12 +599,11 @@ if(params.mpranalyze == 0){
         cv3=\${cv2}"/bin/activate"
         echo \$cv3
         source \$cv3 mpraflow_py36        
-
         #run this in parallel not the most elegant solution, but seems to work
         iter='a'
         itera='b'
-        head -1 $e > tmp.header.txt
-        sed 1d $e | while read d; do itera=\$itera\$iter; echo \${itera}; cat tmp.header.txt > tmp.file_\${itera}.txt; echo \$d >> tmp.file_\${itera}.txt; python ${"$baseDir"}/src/merge_label.py tmp.file_\${itera}.txt ${"$baseDir"}/${params.outdir}/ $association $designs ${params.merge_intersect} & done 
+        head -1 ${params.e} > tmp.header.txt
+        sed 1d ${params.e} | while read d; do itera=\$itera\$iter; echo \${itera}; cat tmp.header.txt > tmp.file_\${itera}.txt; echo \$d >> tmp.file_\${itera}.txt; python ${"$baseDir"}/src/merge_label.py tmp.file_\${itera}.txt ${"$baseDir"}/${params.outdir}/ ${params.association} ${params.design} ${params.merge_intersect} & done 
         #python ${"$PWD"}/bin/merge_label.py ${params.e} ${"$PWD"}/${params.outdir}/	${params.association} ${params.design} ${params.merge_intersect}
         sleep 2m
         wait
@@ -666,9 +626,7 @@ if(params.mpranalyze == 0){
     
         input:
         file(pairlist) from merged_ch.collect()
-        file(label) from labels  
-        file(e) from env
- 
+    
         output:
         file "*.png"
     
@@ -682,7 +640,7 @@ if(params.mpranalyze == 0){
         echo \$cv3
         source \$cv3 mpraflow_py36
         
-        Rscript ${"$baseDir"}/src/plot_perInsertCounts_correlation.R $e ${"$baseDir"}/${params.outdir}/ ${"$baseDir"}/${params.outdir}/${params.out} $label
+        Rscript ${"$baseDir"}/src/plot_perInsertCounts_correlation.R ${params.e} ${"$baseDir"}/${params.outdir}/ ${"$baseDir"}/${params.outdir}/${params.out} ${params.labels}
     
         """
     }
@@ -696,7 +654,6 @@ if(params.mpranalyze == 0){
 
 /*
 workflow.onComplete {
-
     // Set up the e-mail variables
     def subject = "[NCBI-Hackathons/ATACFlow] Successful: $workflow.runName"
     if(!workflow.success){
@@ -724,24 +681,20 @@ workflow.onComplete {
     email_fields['summary']['Nextflow Version'] = workflow.nextflow.version
     email_fields['summary']['Nextflow Build'] = workflow.nextflow.build
     email_fields['summary']['Nextflow Compile Timestamp'] = workflow.nextflow.timestamp
-
     // Render the TXT template
     def engine = new groovy.text.GStringTemplateEngine()
     def tf = new File("$baseDir/assets/email_template.txt")
     def txt_template = engine.createTemplate(tf).make(email_fields)
     def email_txt = txt_template.toString()
-
     // Render the HTML template
     def hf = new File("$baseDir/assets/email_template.html")
     def html_template = engine.createTemplate(hf).make(email_fields)
     def email_html = html_template.toString()
-
     // Render the sendmail template
     def smail_fields = [ email: params.email, subject: subject, email_txt: email_txt, email_html: email_html, baseDir: "$baseDir", attach1: "$baseDir/results/Documentation/pipeline_report.html", attach2: "$baseDir/results/pipeline_info/NCBI-Hackathons/ATACFlow_report.html", attach3: "$baseDir/results/pipeline_info/NCBI-Hackathons/ATACFlow_timeline.html" ]
     def sf = new File("$baseDir/assets/sendmail_template.txt")
     def sendmail_template = engine.createTemplate(sf).make(smail_fields)
     def sendmail_html = sendmail_template.toString()
-
     // Send the HTML e-mail
     if (params.email) {
         try {
@@ -755,7 +708,6 @@ workflow.onComplete {
           log.info "[NCBI-Hackathons/ATACFlow] Sent summary e-mail to $params.email (mail)"
         }
     }
-
     // Write summary e-mail HTML to a file
     def output_d = new File( "${params.outdir}/Documentation/" )
     if( !output_d.exists() ) {
@@ -765,8 +717,6 @@ workflow.onComplete {
     output_hf.withWriter { w -> w << email_html }
     def output_tf = new File( output_d, "pipeline_report.txt" )
     output_tf.withWriter { w -> w << email_txt }
-
     log.info "[NCBI-Hackathons/ATACFlow] Pipeline Complete"
-
 }
 */
