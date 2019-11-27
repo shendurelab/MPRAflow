@@ -25,20 +25,22 @@ def helpMessage() {
       --dir                         fasta directory (must be surrounded with quotes)
       --association                 pickle dictionary from library association process
       --design                      fasta of ordered insert sequences
-      --s                           barcode length (default 26)          
+      --e                           experiment csv file`
+
+    Options:
+      --labels                      tsv with the oligo pool fasta and a group label (ex: positive_control), a single label will be applied if a file is not specified
+      --outdir                      The output directory where the results will be saved (default outs)
+      --s                           barcode length (default 26)
       --l                           sample index length (default 10)
       --m                           UMI length (default 16)
-      --e                           experiment csv file
-      --out                         sample id to use as prefix (default output)
-      --condaloc                    location of conda instilation activate file ex: ~/miniconda3/bin/activate (must be surrounded with quotes)
-      --labels                      tsv with the oligo pool fasta and a group label (ex: positive_control) if no labels desired simply add NA instead of a label in this file
-    Options:
-      --outdir                      The output directory where the results will be saved (default outs)
       --merge_intersect             Only retain barcodes in RNA and DNA fraction (TRUE/FALSE, default: FALSE)
       --mpranalyze                  Only generate MPRAnalyze outputs (True:1, False:0 default 0)
+      --thresh                      minimum number of observed barcodes to regain insert (default 10)
+
     Extras:
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
-      --name                         Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
+      --name                         Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.    
+
     """.stripIndent()
 }
 
@@ -73,6 +75,7 @@ params.m='16'
 params.merge_intersect="FALSE"
 params.mpranalyze=0
 params.bc_thresh=10
+params.labels=0
 
 //params.dir="bulk_dna"
 //params.e='/wynton/group/ye/ggordon/MPRA_nextflow/barcode_matching_scripts/toy_experiment.csv'
@@ -202,42 +205,39 @@ try {
 }
 
 
-/*
- * Parse software version numbers
- */
-//conda??
-/*
-process get_software_versions {
-    input:
-    file(trimmomatic_jar_path)
-    output:
-    file 'software_versions_mqc.yaml' into software_versions_yaml
-    script:
-    """
-    module load sra/2.8.0
-    module load igvtools/2.3.75
-    module load fastqc/0.11.5
-    module load bedtools/2.25.0
-    module load bowtie/2.2.9
-    module load samtools/1.8
-    echo $params.version > v_pipeline.txt
-    echo $workflow.nextflow.version > v_nextflow.txt
-    fastqc --version > v_fastqc.txt
-    java -XX:ParallelGCThreads=1 -jar ${trimmomatic_jar_path} -version &> v_trimmomatic.txt
-    multiqc --version > v_multiqc.txt
-    samtools --version &> v_samtools.txt
-    bowtie2 --version &> v_bowtie2.txt
-    fastq-dump --version &> v_fastq-dump.txt
-    bedtools --version &> v_bedtools.txt
-    igvtools &> v_igv-tools.txt
-    macs2 --version &>  v_macs2.txt
-    scrape_software_versions.py > software_versions_mqc.yaml
-    """
-}
-*/
 
 
 println 'start analysis'
+
+/*
+*MAKE LABEL FILE IF NOT PASSED
+*/
+if(params.labels == 0){
+    process 'create_label' {
+    label 'shorttime'
+    input:
+    file(designs) from (design)
+
+    output:
+    file("new_label.txt") into (labels)
+
+    """
+    #!/bin/bash
+    cv=\$(which conda)
+    cv1=\$(dirname "\$cv")
+    cv2=\$(dirname "\$cv1")
+    cv3=\${cv2}"/bin/activate"
+    echo \$cv3
+    source \$cv3 mpraflow_py36
+    
+    awk -F'\t' 'BEGIN {OFS = FS} NR%2==1 {print substr(\$1,2,length(\$1)),"test"}' $designs > label.txt
+    awk '{gsub(/\\[/,"_")}1' label.txt > t_new_label.txt
+    awk '{gsub(/\\]/,"_")}1' t_new_label.txt > new_label.txt
+    """
+    
+    }
+
+}
 
 /*
 * STEP 1: Create BAM files 
@@ -381,8 +381,9 @@ process 'raw_counts'{
         echo \$cv3
         source \$cv3 mpraflow_py36
         #source $params.condaloc mpraflow_py36
-        
-        samtools view -F -r $bam | awk 'BEGIN{ OFS= "\t" }{ for (i=12; i<=NF; i++) { if (\$i ~ /^XJ:Z:/) print \$10,substr(\$i,6,16) }}' | sort | uniq -c | awk 'BEGIN{ OFS="\t" }{ print \$2,\$3,\$1 }' | awk '{if(\$2~"GGGGGGGGGGGGGGG" || \$2~"NNNNNN"); else{print}}' | gzip -c > ${datasetID}_raw_counts.tsv.gz
+        samtools view -F -r $bam | awk 'BEGIN{ OFS= "\t" }{ for (i=12; i<=NF; i++) { if (\$i ~ /^XJ:Z:/) print \$10,substr(\$i,6,16) }}' | sort | uniq -c | awk 'BEGIN{ OFS="\t" }{ print \$2,\$3,\$1 }' | gzip -c > ${datasetID}_raw_counts.tsv.gz
+ 
+        #samtools view -F -r $bam | awk 'BEGIN{ OFS= "\t" }{ for (i=12; i<=NF; i++) { if (\$i ~ /^XJ:Z:/) print \$10,substr(\$i,6,16) }}' | sort | uniq -c | awk 'BEGIN{ OFS="\t" }{ print \$2,\$3,\$1 }' | awk '{if(\$2~"GGGGGGGGGGGGGGG" || \$2~"NNNNNN"); else{print}}' | gzip -c > ${datasetID}_raw_counts.tsv.gz
         """ 
 
 }
@@ -410,8 +411,10 @@ process 'filter_counts'{
     echo \$cv3
     source \$cv3 mpraflow_py27
     #source $params.condaloc mpraflow_py36
-    
-    zcat $rc | grep -v "N" | awk 'BEGIN{ OFS="\t" }{ if (length(\$1) == 15) { print } }' | gzip -c > ${datasetID}_filtered_counts.tsv.gz
+   
+    bc=\$(expr \$((${params.s}-11))) 
+    echo \$bc
+    zcat $rc | grep -v "N" | awk -v var="\$bc" 'BEGIN{ OFS="\t" }{ if (length(\$1) == var) { print } }' | gzip -c > ${datasetID}_filtered_counts.tsv.gz
     """
 
 }
