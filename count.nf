@@ -72,6 +72,7 @@ params.l='10'
 params.m='16'
 params.merge_intersect="FALSE"
 params.mpranalyze=0
+params.bc_thresh=10
 
 //params.dir="bulk_dna"
 //params.e='/wynton/group/ye/ggordon/MPRA_nextflow/barcode_matching_scripts/toy_experiment.csv'
@@ -373,7 +374,14 @@ process 'raw_counts'{
     else if(params.m!=0)
         """
         #!/bin/bash
-        source $params.condaloc mpraflow_py36
+        cv=\$(which conda)
+        cv1=\$(dirname "\$cv")
+        cv2=\$(dirname "\$cv1")
+        cv3=\${cv2}"/bin/activate"
+        echo \$cv3
+        source \$cv3 mpraflow_py36
+        #source $params.condaloc mpraflow_py36
+        
         samtools view -F -r $bam | awk 'BEGIN{ OFS= "\t" }{ for (i=12; i<=NF; i++) { if (\$i ~ /^XJ:Z:/) print \$10,substr(\$i,6,16) }}' | sort | uniq -c | awk 'BEGIN{ OFS="\t" }{ print \$2,\$3,\$1 }' | awk '{if(\$2~"GGGGGGGGGGGGGGG" || \$2~"NNNNNN"); else{print}}' | gzip -c > ${datasetID}_raw_counts.tsv.gz
         """ 
 
@@ -469,7 +477,8 @@ if(params.mpranalyze != 0){
         label 'longtime' 
         input:
         file(clist) from final_count.collect()
-    
+        file(e) from env
+ 
         output:
         file "*tmp.csv" into merged_ch
     
@@ -483,9 +492,9 @@ if(params.mpranalyze != 0){
         source \$cv3 mpraflow_py36        
         #source $params.condaloc mpraflow_py36
         #
-        python ${"$baseDir"}/src/merge_counts.py ${params.e} ${"$baseDir"}/${params.outdir}/
+        python ${"$baseDir"}/src/merge_counts.py $e ${"$baseDir"}/${params.outdir}/
             
-            """
+        """
     }      
            
            
@@ -499,7 +508,9 @@ if(params.mpranalyze != 0){
       
         input:
         file(pairlist) from merged_ch.collect()
-    
+        file(e) from env
+        file(des) from design
+
         output:
         file "*.csv" into merged_out
     
@@ -512,7 +523,7 @@ if(params.mpranalyze != 0){
         echo \$cv3
         source \$cv3 mpraflow_py36        
         #source $params.condaloc mpraflow_py36
-        python ${"$baseDir"}/src/merge_all.py ${params.e} ${"$baseDir"}/${params.outdir}/ ${params.out} ${params.design}
+        python ${"$baseDir"}/src/merge_all.py $e ${"$baseDir"}/${params.outdir}/ ${params.out} $des
     
         """
     }
@@ -528,7 +539,8 @@ if(params.mpranalyze != 0){
     
         input:
         file(table) from merged_out
-    
+        file(des) from design
+        file(associaiton) from assoc 
         output:
         file "*_final_labeled_counts.txt" into labeled_out
     
@@ -541,7 +553,7 @@ if(params.mpranalyze != 0){
         echo \$cv3
         source \$cv3 mpraflow_py36        
         #source $params.condaloc mpraflow_py36
-        python ${"$baseDir"}/src/label_final_count_mat.py $table ${params.association} ${params.out}"_final_labeled_counts.txt"  ${params.design}
+        python ${"$baseDir"}/src/label_final_count_mat.py $table $association ${params.out}"_final_labeled_counts.txt"  $des
         """
     }
     
@@ -580,13 +592,15 @@ if(params.mpranalyze != 0){
 if(params.mpranalyze == 0){
 
     process 'dna_rna_merge'{
-       label 'longtime' 
-       publishDir "$params.outdir/", mode:'copy'
+        label 'longtime' 
+        publishDir "$params.outdir/", mode:'copy'
        
      
         input:
         file(clist) from final_count.collect()
-    
+        file(e) from env
+        file(des) from design
+        file(association) from assoc 
         output:
         file "*.tsv" into merged_ch
     
@@ -602,8 +616,8 @@ if(params.mpranalyze == 0){
         #run this in parallel not the most elegant solution, but seems to work
         iter='a'
         itera='b'
-        head -1 ${params.e} > tmp.header.txt
-        sed 1d ${params.e} | while read d; do itera=\$itera\$iter; echo \${itera}; cat tmp.header.txt > tmp.file_\${itera}.txt; echo \$d >> tmp.file_\${itera}.txt; python ${"$baseDir"}/src/merge_label.py tmp.file_\${itera}.txt ${"$baseDir"}/${params.outdir}/ ${params.association} ${params.design} ${params.merge_intersect} & done 
+        head -1 $e > tmp.header.txt
+        sed 1d $e | while read d; do itera=\$itera\$iter; echo \${itera}; cat tmp.header.txt > tmp.file_\${itera}.txt; echo \$d >> tmp.file_\${itera}.txt; python ${"$baseDir"}/src/merge_label.py tmp.file_\${itera}.txt ${"$baseDir"}/${params.outdir}/ $association $des ${params.merge_intersect} & done 
         #python ${"$PWD"}/bin/merge_label.py ${params.e} ${"$PWD"}/${params.outdir}/	${params.association} ${params.design} ${params.merge_intersect}
         sleep 2m
         wait
@@ -626,7 +640,8 @@ if(params.mpranalyze == 0){
     
         input:
         file(pairlist) from merged_ch.collect()
-    
+        file(e) from env
+        file(lab) from labels 
         output:
         file "*.png"
     
@@ -640,10 +655,35 @@ if(params.mpranalyze == 0){
         echo \$cv3
         source \$cv3 mpraflow_py36
         
-        Rscript ${"$baseDir"}/src/plot_perInsertCounts_correlation.R ${params.e} ${"$baseDir"}/${params.outdir}/ ${"$baseDir"}/${params.outdir}/${params.out} ${params.labels}
+        Rscript ${"$baseDir"}/src/plot_perInsertCounts_correlation.R $e ${"$baseDir"}/${params.outdir}/ ${"$baseDir"}/${params.outdir}/${params.out} $lab
     
         """
     }
+
+    process 'make_master_tables' {
+        label 'shorttime'
+        publishDir "$params.outdir/", mode:'copy'
+
+        input:
+        file(pairlist) from (merged_ch.collect())
+        file(e) from (env)
+
+        output:
+        file "*.tsv"
+
+        """
+        #!/bin/bash
+        #source $params.condaloc mpraflow_py36
+        cv=\$(which conda)
+        cv1=\$(dirname "\$cv")
+        cv2=\$(dirname "\$cv1")
+        cv3=\${cv2}"/bin/activate"
+        echo \$cv3
+        source \$cv3 mpraflow_py36
+        
+        Rscript ${"$baseDir"}/src/make_master_tables.R $e ${"$baseDir"}/${params.outdir}/ $params.bc_thresh
+        """
+    } 
 
 }
 

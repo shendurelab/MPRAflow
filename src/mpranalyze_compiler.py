@@ -5,7 +5,7 @@ import re
 import sys
 from collections import defaultdict
 
-annot_pattern = re.compile("^([DR]NA).*\(condition (.*), batch (.*)\)$")
+annot_pattern = re.compile("^([DR]NA).*\(condition (.*), replicate (.*)\)$")
 def get_annot(head):
 	m = annot_pattern.match(head)
 	if m is not None:
@@ -41,7 +41,7 @@ def parse(in_path, out_directory):
 	## write output DNA annotations
 	dna_colnames = []
 	with open(os.path.join(out_directory, 'dna_annot.tsv'), 'w') as ofile:
-		ofile.write('\t'.join(["sample", "type", "condition", "batch", "barcode"]) + '\n')
+		ofile.write('\t'.join(["sample", "type", "condition", "replicate", "barcode"]) + '\n')
 		for i in range(1, n_bc + 1):
 			for x in dna_annot:
 				sample_name = '_'.join(list(x) + [str(i)])
@@ -61,7 +61,7 @@ def parse(in_path, out_directory):
 	## write output RNA annotations
 	rna_colnames = []
 	with open(os.path.join(out_directory, 'rna_annot.tsv'), 'w') as ofile:
-		ofile.write('\t'.join(["sample", "type", "condition", "batch", "barcode"]) + '\n')
+		ofile.write('\t'.join(["sample", "type", "condition", "replicate", "barcode"]) + '\n')
 		for i in range(1, n_bc + 1):
 			for x in rna_annot:
 				sample_name = '_'.join(list(x) + [str(i)])

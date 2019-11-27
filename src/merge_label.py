@@ -47,7 +47,7 @@ for k,v in assoc.items():
 #iterate though each dna rna pair, merge, and label
 for index, row in exp.iterrows():
     #get files
-    print(row['condition'], row['batch'],row['dna'],row['rna'],row['name'])
+    print(row['condition'], row['replicate'],row['dna'],row['rna'],row['name'])
     dnaloc=o+row['dna']+d+row['dna']+c
     rnaloc=o+row['rna']+d+row['rna']+c
     print(dnaloc)
