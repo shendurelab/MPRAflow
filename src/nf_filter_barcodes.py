@@ -111,7 +111,7 @@ def create_lib_plots(c_obj, plot_name, sum_name,lab_opt="FALSE"):
         #p=seaborn.barplot(data=df,x="coord", y="n_barcodes",hue="label",dodge=False)
         print('name')
         print(plot_name)
-        p.set(xticklabels=[])
+        #p.set(xticklabels=[])
         fig=p.get_figure()
         fig.savefig(plot_name)
     else:
@@ -119,7 +119,7 @@ def create_lib_plots(c_obj, plot_name, sum_name,lab_opt="FALSE"):
         violinplot
         p=seaborn.violinplot(data=df,x="label", y="n_barcodes",dodge=False)
         #p=seaborn.barplot(data=df,x="coord", y="n_barcodes",dodge=False)
-        p.set(xticklabels=[])
+        #p.set(xticklabels=[])
         fig=p.get_figure()
         fig.savefig(plot_name)
 
