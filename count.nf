@@ -39,8 +39,7 @@ def helpMessage() {
 
     Extras:
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
-      --name                         Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.    
-
+      --name                         Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
     """.stripIndent()
 }
 
@@ -56,10 +55,8 @@ if (params.help){
 
 // Configurable variables
 params.name = false
-//params.multiqc_config = "$baseDir/conf/py36.yaml"
 params.email = false
 params.plaintext_email = false
-//multiqc_config = file(params.multiqc_config)
 output_docs = file("$baseDir/docs/output.md")
 
 //defaults
@@ -77,10 +74,6 @@ params.mpranalyze=0
 params.bc_thresh=10
 params.labels=0
 
-//params.dir="bulk_dna"
-//params.e='/wynton/group/ye/ggordon/MPRA_nextflow/barcode_matching_scripts/toy_experiment.csv'
-//params.design='/wynton/group/ye/ggordon/MPRA_nextflow/lib_assoc_scripts/pilot_library_noprimer.fa'
-//params.association='/wynton/group/ye/ggordon/MPRA_nextflow/lib_assoc_scripts/outs/output_filtered_coords_to_barcodes.p'
 
 // Validate Inputs
 
@@ -279,14 +272,25 @@ if(params.m !=0){
         echo \$new_var3
         new_3=$params.dir"/"\$new_var3
         echo \$new_3
-     
+    
+        bc_t=\$(zcat $r1_fastq | head -2 | tail -1 | wc -c)
+        bc=\$(expr \$((\$bc_t-1)))
+        bc_s=\$(expr \$((\$bc+11)))
+  
+        umi_t=\$(zcat \$new_2 | head -2 | tail -1 | wc -c)
+        umi=\$(expr \$((\$umi_t-1))) 
+        
+        echo \$bc_s
+        echo \$umi
         echo $params.sample_idx'        '${datasetID} >> ${datasetID}_index.lst 
        
         #paste <( zcat $r1_fastq ) <(zcat \$new_3 ) <(zcat \$new_2) | awk 'BEGIN{ counter=0 }{ counter+=1; if (counter == 2) { print \$1\$2 } else { if (counter==4) { print \$1\$2; counter=0 } else { print \$1 }}}' | python ${"$PWD"}/src/FastQ2BAM.py -p -s $params.s -m $params.m | python ${"$PWD"}/src/MergeTrimReadsBAM.py -p --mergeoverlap > ${datasetID}".bam" 
       
-        #paste <( zcat $r1_fastq ) <(zcat \$new_3 ) <(zcat \$new_2) | awk 'BEGIN{ counter=0 }{ counter+=1; if (counter == 2) { print \$1"GATCCGGTTG"\$2\$3 } else { if (counter==4) { print \$1"IIIIIIIIII"\$2\$3; counter=0 } else { print \$1 }}' | python ${"$PWD"}/src/SplitFastQdoubleIndexBAM.py -p -s $params.s -l $params.l -m $params.m -i ${datasetID}_index.lst | python ${"$PWD"}/src/MergeTrimReadsBAM.py -p --mergeoverlap > ${datasetID}".bam" 
+        #paste <( zcat $r1_fastq ) <(zcat \$new_3 ) <(zcat \$new_2) | awk 'BEGIN{ counter=0 }{ counter+=1; if (counter == 2) { print \$1"GATCCGGTTG"\$2\$3 } else { if (counter==4) { print \$1"IIIIIIIIII"\$2\$3; counter=0 } else { print \$1 }}' | python ${"$PWD"}/src/SplitFastQdoubleIndexBAM.py -p -s $params.s -l $params.l -m $params.m -i ${datasetID}_index.lst | python ${"$PWD"}/src/MergeTrimReadsBAM.py -p --mergeoverlap > ${datasetID}".bam"
+
         paste <( zcat $r1_fastq ) <(zcat \$new_3 ) <(zcat \$new_2) | awk 'BEGIN{ counter=0 }{ counter+=1; if (counter == 2) { print \$1"GATCCGGTTG"\$2\$3 } else { if (counter==4) { print \$1"IIIIIIIIII"\$2\$3; counter=0 } else { print \$1 }}}' > ${datasetID}_combined.fastq 
-        python ${"$baseDir"}/src/SplitFastQdoubleIndexBAM.py -s $params.s -l $params.l -m $params.m -i ${datasetID}_index.lst --outprefix ${datasetID}_demultiplex --remove --summary ${datasetID}_combined.fastq 
+        python ${"$baseDir"}/src/SplitFastQdoubleIndexBAM.py -s \$bc_s -l $params.l -m \$umi -i ${datasetID}_index.lst --outprefix ${datasetID}_demultiplex --remove --summary ${datasetID}_combined.fastq
+        #python ${"$baseDir"}/src/SplitFastQdoubleIndexBAM.py -s $params.s -l $params.l -m $params.m -i ${datasetID}_index.lst --outprefix ${datasetID}_demultiplex --remove --summary ${datasetID}_combined.fastq 
         python ${"$baseDir"}/src/MergeTrimReadsBAM.py --mergeoverlap --outprefix ${datasetID} ${datasetID}_demultiplex.bam
         
         #paste <( zcat $r1_fastq ) <(zcat \$new_3 ) <(zcat \$new_2) | awk 'BEGIN{ counter=0 }{ counter+=1; if (counter == 2) { print \$1\$2 } else { if (counter==4) { print \$1\$2; counter=0 } else { print \$1 }}}' | python ${"$PWD"}/src/SplitFastQdoubleIndexBAM.py -p -s $params.s -l $params.l -m $params.m -i ${datasetID}_index.lst | python ${"$PWD"}/src/MergeTrimReadsBAM.py -p --mergeoverlap > ${datasetID}".bam"
