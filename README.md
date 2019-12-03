@@ -68,7 +68,7 @@ This pipeline expects the FASTQ files to be demultiplexed and trimmed to only in
 
 ## Quick Start
 
-1. Create an 'experiment' csv in the format below:
+1. Create an 'experiment' csv in the format below, where the FASTQ prefix includes all text before `.fastq.gz`:
  
    ```
    condition,replicate,dna,rna,name
@@ -100,9 +100,13 @@ This pipeline expects the FASTQ files to be demultiplexed and trimmed to only in
    conda activate mpraflow_py36
    nextflow run count.nf --dir "bulk_FASTQ_directory" --e "experiment.csv" --design "ordered_candidate_sequences.fa" --association "dictionary_of_candidate_sequences_to_barcodes.p"
    ```
+   Currently the program expects the following naming convention: read1 of BC `*_R1_*.fastq.gz`, read2 of BC `*_R3_*.fastq.gz`, and unique molecular identifier read (if applicable) `*_R2_*.fastq.gz`. A future update will allow flexibility in the naming conventions. 
+   
    #### ***note: This will run in local mode, please submit this command to your cluster's queue if you would like to run a parallelized version
 
 
-Example files can be found in the example folder in this repository
+
+
+## Example files can be found in the example folder in this repository
 
 ![MPRA_nextflow](https://github.com/shendurelab/MPRAflow/blob/master/MPRA_nextflow.png)
