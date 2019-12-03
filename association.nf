@@ -1,12 +1,12 @@
 #!/usr/bin/env nextflow
 
+params.version="2.0"
 /*
 ========================================================================================
                          MPRAflow
 ========================================================================================
 MPRA Analysis Pipeline. Started 2019-07-29.
 Library Association package 
-params.version="2.0"
 
 #### Homepage / Documentation
 https://github.com/shendurelab/MPRAflow

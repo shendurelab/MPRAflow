@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-params.v=2.0
+params.version=2.0
 /*
 ========================================================================================
                          MPRAflow
@@ -31,12 +31,10 @@ def helpMessage() {
     Options:
       --labels                      tsv with the oligo pool fasta and a group label (ex: positive_control), a single label will be applied if a file is not specified
       --outdir                      The output directory where the results will be saved (default outs)
-      --s                           barcode length (default 26)
-      --l                           sample index length (default 10)
-      --m                           UMI length (default 16)
+      --m                           UMI present in experiment (True:1, Fasle:0, default 1)
       --merge_intersect             Only retain barcodes in RNA and DNA fraction (TRUE/FALSE, default: FALSE)
       --mpranalyze                  Only generate MPRAnalyze outputs (True:1, False:0 default 0)
-      --thresh                      minimum number of observed barcodes to regain insert (default 10)
+      --thresh                      minimum number of observed barcodes to retain insert (default 10)
 
     Extras:
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
