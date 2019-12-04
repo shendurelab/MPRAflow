@@ -86,13 +86,22 @@ This pipeline expects the FASTQ files to be demultiplexed and trimmed to only in
    ```
    The insert names must exactly match the names in the design FASTA file.
 
-3. Run Association if using a design with randomly paired candidate sequences and barcodes
+3. Run Association 
+   If using a design with randomly paired candidate sequences and barcodes run:
 
    ```bash 
    conda activate mpraflow_py36
    nextflow run association.nf --fastq_insert "${fastq_prefix}_R1_001.fastq.gz" --design "ordered_candidate_sequences.fa" --fastq_bc "${fastq_prefix}_R2_001.fastq.gz"
    ```
    #### ***note: This will run in local mode, please submit this command to your cluster's queue if you would like to run a parallelized version
+   
+   If using a design where candidate sequences and barcodes are synthesized together run:
+   
+   ```bash
+   conda activate mpraflow_py36
+   python <path to install>/MPRAflow/src/mk_dict_from_designed_bc_fasta.py barcode_position barcode_length reocord_id_bc_specific_suffix_length input_fasta desired_output_pickle_name
+   ```
+   e.g. For barcode_length reocord_id_bc_specific_suffix_length, if the naming format is CRS_name:001 where :001 designates a specific barcode sequence, this value would be 4.
    
 4. Run Count
 
