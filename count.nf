@@ -549,7 +549,7 @@ if(params.mpranalyze != 0){
         input:
         file(table) from merged_out
         file(des) from design
-        file(associaiton) from assoc 
+        file(association) from assoc 
         output:
         file "*_final_labeled_counts.txt" into labeled_out
     
