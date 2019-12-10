@@ -11,6 +11,9 @@ test_data/
 tmp/
 HK_inputs/
 
+# c compiled python
+src/*.pyc
+
 .sam
 .bam
 .sorted.bam
