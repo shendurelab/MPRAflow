@@ -18,26 +18,26 @@ outfile=sys.argv[3]
 d='/'
 c='_counts.tsv'
 end='_tmp.csv'
-dk_full_df= None 
+dk_full_df= None
 iter=1
 for index, row in exp.iterrows():
-    print(row['condition'], row['replicate'],row['dna'],row['rna'],row['name'])
+    print(row['Condition'], row['Replicate'],row['Name'])
     #dnaloc=o+row['dna']+d+row['dna']+c
     #rnaloc=o+row['rna']+d+row['rna']+c
-    df_loc=o+row['name']+end
+    df_loc=o+row['Name']+end
     print(df_loc)
-    
+
 
     #DNA 1 (condition A, replicate 1)
-    colnames=["Barcode", "DNA "+str(iter)+" (condition "+str(row['condition'])+', replicate '+str(row['replicate'])+")","RNA "+str(iter)+" (condition "+str(row['condition'])+', replicate '+str(row['replicate'])+")"]
+    colnames=["Barcode", "DNA "+str(iter)+" (condition "+str(row['Condition'])+', replicate '+str(row['Replicate'])+")","RNA "+str(iter)+" (condition "+str(row['Condition'])+', replicate '+str(row['Replicate'])+")"]
     cur=pd.DataFrame(pd.read_csv(df_loc,header='infer'))
     print(cur.head())
     cur.columns=colnames
     cur_dk=dd.from_pandas(cur,npartitions=1)
-    print(cur.head()) 
+    print(cur.head())
 
     if (dk_full_df is not None):
-        
+
         tmp=dd.merge(dk_full_df,cur_dk, on=["Barcode"],how='outer')
         dk_full_df=tmp
     else:
@@ -47,15 +47,12 @@ for index, row in exp.iterrows():
     print(dk_full_df.head())
 
     iter+=1
-   
+
 
 dk_full_df=dk_full_df[sorted(dk_full_df.columns)]
 print(dk_full_df.head())
-    
+
 def name(i):
     return str(outfile)
 
 dk_full_df.to_csv('*.csv', index=False,name_function=name)
-
-
-
