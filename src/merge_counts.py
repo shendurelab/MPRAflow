@@ -5,21 +5,14 @@ import pandas as pd
 import numpy as np
 import dask.dataframe as dd
 
-cond=sys.argv[1]
-rep=sys.argv[2]
-#BCs=pd.DataFrame(pd.read_csv(mutual_BCS.txt))
+if (sys.argv[1]=="DNA"):
+    dnaloc=sys.argv[2]
+    rnaloc=sys.argv[3]
+else:
+    dnaloc=sys.argv[3]
+    rnaloc=sys.argv[2]
 
-
-#HepG2      1  RZ_H1
-o=sys.argv[2]
-d='/'
-c='_counts.tsv'
-
-name=[cond,rep].join("_")
-name_dna=[name,"DNA"].join("_")
-name_rna=[name,"RNA"].join("_")
-dnaloc=o+name_dna+d+name_dna+c
-rnaloc=o+name_rna+d+name_rna+c
+outfile=sys.argv[4]
 print(dnaloc)
 print(rnaloc)
 
@@ -38,6 +31,4 @@ out=dd.merge(dk_dna,dk_rna, on=['BC'],how='outer')
 out=out[sorted(out.columns)]
 print(out.head())
 
-def name(i):
-    return (label_name+'_tmp')
-out.to_csv('*.csv', index=False,name_function=name)
+out.to_csv([outfile], index=False)

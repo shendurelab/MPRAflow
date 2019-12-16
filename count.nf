@@ -437,18 +437,18 @@ if(params.mpranalyze != 0){
     * STEP 5: Merge each DNA and RNA file
     */
     process 'dna_rna_mpranalyze_merge'{
-        publishDir "$params.outdir/", mode:'copy'
+        // publishDir "$params.outdir/", mode:'copy'
         label 'longtime'
 
         conda 'conf/mpraflow_py36.yml'
 
         input:
-            tuple val(cond), val(rep),val(typeA),val(typeB),val(datasetIDA),val(datasetIDB),file(countA),file(countB) from final_count.groupTuple(by: [0,1]).map{i -> i.flatten()}
+            tuple val(cond),val(rep),val(typeA),val(typeB),val(datasetIDA),val(datasetIDB),file(countA),file(countB) from final_count.groupTuple(by: [0,1]).map{i -> i.flatten()}
         output:
-            file "*tmp.csv" into merged_ch
+            tuple val(cond), val(rep), file("${cond}_${rep}_counts.tmp.csv") into merged_ch
         shell:
             """
-            python ${"$baseDir"}/src/merge_counts.py ${cond} ${rep}
+            python ${"$baseDir"}/src/merge_counts.py ${typeA} ${countA} ${countB} ${cond}_${rep}_counts.tmp.csv
             """
     }
 
@@ -464,7 +464,7 @@ if(params.mpranalyze != 0){
         conda 'conf/mpraflow_py36.yml'
 
         input:
-            file(pairlist) from merged_ch.collect()
+            tuple val(cond),val(rep),val(merge) from merged_ch
             file(e) from env
             file(des) from design
         output:
