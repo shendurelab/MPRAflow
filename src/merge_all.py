@@ -5,32 +5,21 @@ import pandas as pd
 import numpy as np
 import dask.dataframe as dd
 
-exp=pd.DataFrame(pd.read_csv(sys.argv[1]))
-#BCs=pd.DataFrame(pd.read_csv(mutual_BCS.txt))
 
-print(exp)
+cond=sys.argv[1]
+outfile=sys.argv[2]
 
-
-#HepG2      1  RZ_H1
-#out directory
-o=sys.argv[2]
-outfile=sys.argv[3]
-d='/'
-c='_counts.tsv'
-end='_tmp.csv'
 dk_full_df= None
-iter=1
-for index, row in exp.iterrows():
-    print(row['Condition'], row['Replicate'],row['Name'])
-    #dnaloc=o+row['dna']+d+row['dna']+c
-    #rnaloc=o+row['rna']+d+row['rna']+c
-    df_loc=o+row['Name']+end
-    print(df_loc)
 
+replicates=((len(sys.argv)-3)/2)
+for (i in range(3,(len(sys.argv)-replicates-1))){
+   file=sys.argv[i]
+   rep=sys.argv[i+replicates]
 
     #DNA 1 (condition A, replicate 1)
-    colnames=["Barcode", "DNA "+str(iter)+" (condition "+str(row['Condition'])+', replicate '+str(row['Replicate'])+")","RNA "+str(iter)+" (condition "+str(row['Condition'])+', replicate '+str(row['Replicate'])+")"]
-    cur=pd.DataFrame(pd.read_csv(df_loc,header='infer'))
+    colnames=["Barcode", "DNA %s (condition %s, replicate %s)" % (rep,cond,rep),
+                         "RNA %s (condition %s, replicate %s)" % (rep,cond,rep)]
+    cur=pd.DataFrame(pd.read_csv(file,header='infer'))
     print(cur.head())
     cur.columns=colnames
     cur_dk=dd.from_pandas(cur,npartitions=1)
@@ -46,13 +35,9 @@ for index, row in exp.iterrows():
 
     print(dk_full_df.head())
 
-    iter+=1
-
 
 dk_full_df=dk_full_df[sorted(dk_full_df.columns)]
 print(dk_full_df.head())
 
-def name(i):
-    return str(outfile)
 
-dk_full_df.to_csv('*.csv', index=False,name_function=name)
+dk_full_df.to_csv([outfile], index=False)

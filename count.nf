@@ -437,7 +437,7 @@ if(params.mpranalyze != 0){
     * STEP 5: Merge each DNA and RNA file
     */
     process 'dna_rna_mpranalyze_merge'{
-        // publishDir "$params.outdir/", mode:'copy'
+        publishDir "$params.outdir/$cond/$rep", mode:'copy'
         label 'longtime'
 
         conda 'conf/mpraflow_py36.yml'
@@ -445,10 +445,10 @@ if(params.mpranalyze != 0){
         input:
             tuple val(cond),val(rep),val(typeA),val(typeB),val(datasetIDA),val(datasetIDB),file(countA),file(countB) from final_count.groupTuple(by: [0,1]).map{i -> i.flatten()}
         output:
-            tuple val(cond), val(rep), file("${cond}_${rep}_counts.tmp.csv") into merged_ch
+            tuple val(cond), val(rep), file("${cond}_${rep}_counts.csv") into merged_ch
         shell:
             """
-            python ${"$baseDir"}/src/merge_counts.py ${typeA} ${countA} ${countB} ${cond}_${rep}_counts.tmp.csv
+            python ${"$baseDir"}/src/merge_counts.py ${typeA} ${countA} ${countB} ${cond}_${rep}_counts.csv
             """
     }
 
@@ -459,19 +459,25 @@ if(params.mpranalyze != 0){
 
     process 'final_merge'{
         label 'longtime'
-        publishDir "$params.outdir/"
+        publishDir "$params.outdir/$cond", mode:'copy'
 
         conda 'conf/mpraflow_py36.yml'
 
+        result = merged_ch.groupTuple(by: 0).fork{i ->
+                                  cond: i[0]
+                                  replicate: i[1].join(" ")
+                                  files: i[2]
+                                }
+
         input:
-            tuple val(cond),val(rep),val(merge) from merged_ch
-            file(e) from env
-            file(des) from design
+            file(pairlist) from result.files
+            val(replicate) from result.replicate
+            val(cond) from result.cond
         output:
-            file "*.csv" into merged_out
+            tuple val(cond),val("${cond}_count.csv") into merged_out
         shell:
             """
-            python ${"$baseDir"}/src/merge_all.py $e ${"$baseDir"}/${params.outdir}/ ${params.out} $des
+            python ${"$baseDir"}/src/merge_all.py $cond "${cond}_count.csv" $pairlist $replicate
             """
     }
 
@@ -482,19 +488,19 @@ if(params.mpranalyze != 0){
 
     process 'final_label'{
         label 'shorttime'
-        publishDir "$params.outdir/", mode:'copy'
+        publishDir "$params.outdir/$cond", mode:'copy'
 
         conda 'conf/mpraflow_py36.yml'
 
         input:
-            file(table) from merged_out
+            tuple val(cond),val(table) from merged_out
             file(des) from design
             file(associaiton) from assoc
         output:
-            file "*_final_labeled_counts.txt" into labeled_out
+            file "${cond}_final_labeled_counts.txt" into labeled_out
         shell:
             """
-            python ${"$baseDir"}/src/label_final_count_mat.py $table $association ${params.out}"_final_labeled_counts.txt"  $des
+            python ${"$baseDir"}/src/label_final_count_mat.py $table $association "${cond}_final_labeled_counts.txt"  $des
             """
     }
 
@@ -504,15 +510,18 @@ if(params.mpranalyze != 0){
 
     process 'gen_mpranalyze'{
         label 'shorttime'
-        publishDir "$params.outdir/", mode:'copy'
+        publishDir "$params.outdir/$cond", mode:'copy'
 
         conda 'conf/mpraflow_py36.yml'
 
         input:
-            file(t) from labeled_out
+            file("rna_counts.tsv") from labeled_out_rna
+            file("dna_counts.tsv") from labeled_out_rna
+            file("rna_annot.tsv") from labeled_out_rna
+            file("dna_annot.tsv") from labeled_out_dna
         shell:
             """
-            python ${"$baseDir"}/src/mpranalyze_compiler.py $t ${"$baseDir"}/$params.outdir/
+            python ${"$baseDir"}/src/mpranalyze_compiler.py $t
             """
     }
 
