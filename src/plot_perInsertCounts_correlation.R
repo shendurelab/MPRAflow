@@ -1,4 +1,4 @@
-#adapted from Vikram Agarwal
+#adapted from Vikram Agarwal by Gracie Gordon
 list.of.packages <- c("ggplot2")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)

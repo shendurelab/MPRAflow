@@ -1,3 +1,4 @@
+#Author: Gracie Gordon 2019
 #merge tables
 
 import sys
