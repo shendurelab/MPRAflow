@@ -1,3 +1,5 @@
+#Author Gracie Gordon 2019
+
 import pickle as p
 import pandas as pd
 import numpy as np

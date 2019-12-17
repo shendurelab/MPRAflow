@@ -419,7 +419,7 @@ if(params.fastq_insertPE == 0){
     
         output:
         file "${params.out}.${chunk}.sorted.bam" into s_bam
-        file '${chunk}_count_bam.txt' into bam_ch
+        file '*${chunk}_count_bam.txt' into bam_ch
     
         script:
         """
