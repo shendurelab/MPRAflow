@@ -1,4 +1,6 @@
-#adapted from Vikram Agarwal
+
+#adapted from Vikram Agarwal by Gracie Gordon
+
 library(ggplot2)
 library(dplyr)
 
