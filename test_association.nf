@@ -332,7 +332,7 @@ if (params.variants != 0){
         cv2=\$(dirname "\$cv1")
         cv3=\${cv2}"/bin/activate"
         echo \$cv3
-        source \$cv3 MPRAflow
+        source \$cv3 mpraflow_py36
         
         bowtie2-build $design mpra_ref
         """
@@ -380,7 +380,7 @@ if(params.fastq_insertPE != 0){
         cv2=\$(dirname "\$cv1")
         cv3=\${cv2}"/bin/activate"
         echo \$cv3
-        source \$cv3 MPRAflow        
+        source \$cv3 mpraflow_py36        
         
         fastq-join $fastq_insert $fastq_insertPE -o ${fastq_insert}_merged.fastq
         
@@ -424,7 +424,7 @@ if (params.variants==0){
             cv2=\$(dirname "\$cv1")
             cv3=\${cv2}"/bin/activate"
             echo \$cv3
-            source \$cv3 MPRAflow
+            source \$cv3 mpraflow_py36
             
             bwa mem $design $chunk | samtools sort - -o ${params.out}.${chunk}.sorted.bam
             echo 'bam made'
@@ -505,7 +505,7 @@ if (params.variants!=0){
         cv2=\$(dirname "\$cv1")
         cv3=\${cv2}"/bin/activate"
         echo \$cv3
-        source \$cv3 MPRAflow
+        source \$cv3 mpraflow_py36
 
         bowtie2 \
             --very-sensitive \
@@ -550,7 +550,7 @@ if (params.variants!=0){
         cv2=\$(dirname "\$cv1")
         cv3=\${cv2}"/bin/activate"
         echo \$cv3
-        source \$cv3 MPRAflow
+        source \$cv3 mpraflow_py36
 
         bowtie2 \
             --very-sensitive \
@@ -588,7 +588,7 @@ process 'collect_chunks'{
     cv2=\$(dirname "\$cv1")
     cv3=\${cv2}"/bin/activate"
     echo \$cv3
-    source \$cv3 MPRAflow
+    source \$cv3 mpraflow_py36
 
     #collect sorted bams into one file
     samtools merge all.bam ${sbam_list}
@@ -653,7 +653,7 @@ if (params.variants!=0){
 }
 
 if (params.variants==0){
-    process 'map_element_barcodes' {
+    process 'map_var_element_barcodes' {
         tag "assign"
         label "shorttime"
         publishDir params.outdir, mode:'copy'
@@ -699,6 +699,7 @@ if (params.variants==0){
         
     } 
 }
+
 /*
 * Filter barcodes for minimum coverage and unique mapping
 */
@@ -707,12 +708,14 @@ process 'filter_barcodes' {
     tag "$filter"
     label "shorttime"
     publishDir params.outdir, mode:'copy'
+
     input:
     params.min_cov
     params.out
     file(map) from map_ch
     file(table) from count_table_ch
     file(label) from fixed_label
+
     output:
     file "${params.out}_filtered_coords_to_barcodes.pickle"
     file "${params.out}_original_counts.png"
