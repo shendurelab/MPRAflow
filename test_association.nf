@@ -106,6 +106,10 @@ if (params.labels !=0){
     if (!labels.exists()) exit 1, "label file not specified ${params.labels}"
 }
 
+if (params.variants != 0){
+    variants=file(params.variants)
+}
+
 // Has the run name been specified by the user?
 //  this has the bonus effect of catching both -name and --name
 custom_runName = params.name
@@ -618,6 +622,7 @@ if (params.variants!=0){
         file count_fastq from bc_ch
         file count_bam from ch_merge
         file bam from s_merge
+        file(vars) from variants
     
         output:
         file "${params.out}_coords_to_barcodes.pickle" into map_ch
@@ -646,7 +651,7 @@ if (params.variants!=0){
         cat ${count_fastq}
         cat ${count_bam}
     
-        python ${"$baseDir"}/src/nf_map_barcodes_vars.py ${"$baseDir"} ${fastq_bc} ${count_fastq} $bam ${variants} ${params.out} ${params.baseq}
+        python ${"$baseDir"}/src/nf_map_barcodes_vars.py ${"$baseDir"} ${fastq_bc} ${count_fastq} $bam ${vars} ${params.out} ${params.mapq} ${params.baseq}
         """
     
     }

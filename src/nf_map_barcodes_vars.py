@@ -32,7 +32,8 @@ n_fastq_f=sys.argv[3]
 library_bam_fn=sys.argv[4]
 variants_fn=sys.argv[5]
 pref=sys.argv[6]
-baseq=sys.argv[7]
+mapq=sys.argv[7]
+baseq=sys.argv[8]
 
 query_to_coords = {} # holds barcode associations
 #library_bam_fn = f'{config["index_dir"]}/library.bam' # filename of aligned reads (paired ends first merged to single end)
