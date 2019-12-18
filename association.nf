@@ -33,6 +33,7 @@ def helpMessage() {
 
     Options:
       --fastq_insertPE              Full path to library association fastq for read2 if the library is paired end (must be surrounded with quotes)
+      --variants                    tsv with reference_name variant_positions ref_bases alt_bases, only input for variant analyses workflow
       --min_cov                     minimum coverage of bc to count it (default 3)
       --min_frac                    minimum fraction of bc map to single insert (default 0.5)
       --mapq                        map quality (default 30)
@@ -78,7 +79,7 @@ params.nf_required_version="19.07.0"
 params.fastq_insertPE=0
 params.split=2000000
 params.labels=0
-
+params.variants=0
 
 // Validate inputs
 if ( params.fastq_insert ){
@@ -149,7 +150,7 @@ summary['Working dir']      = workflow.workDir
 summary['Output dir']       = params.outdir
 summary['Script dir']       = workflow.projectDir
 summary['Config Profile']   = workflow.profile
-
+summary['varaint file']     = params.variants
 //summary['Thread fqdump']    = params.threadfqdump ? 'YES' : 'NO'
 //summary['Max CPUs']         = params.max_cpus
 //summary['Max Time']         = params.max_time
@@ -269,41 +270,70 @@ if (params.labels == 0){
 
 /*
 * STEP 1: Align
-* Process 1A: create BWA reference
+* Process 1A: create BWA/bowtie reference
 */
 
-process 'create_BWA_ref' {
-    tag "make ref"
-    label 'shorttime'
-    input:
-    file(design) from fixed_design
-    file(label) from fixed_label
-
-    output:
-    file "${design}.fai" into reference_fai
-    file "${design}.bwt" into reference_bwt
-    file "${design}.sa" into reference_sa
-    file "${design}.pac" into reference_pac
-    file "${design}.ann" into reference_ann
-    file "${design}.amb" into reference_amb
-    file "${design}.dict" into reference_dict
-
-    script:
-    """
-    #!/bin/bash
-    cv=\$(which conda)
-    cv1=\$(dirname "\$cv")
-    cv2=\$(dirname "\$cv1")
-    cv3=\${cv2}"/bin/activate"
-    echo \$cv3
-    source \$cv3 mpraflow_py36
-
-    bwa index -a bwtsw $design
-    samtools faidx $design
-    picard CreateSequenceDictionary REFERENCE=$design OUTPUT=$design".dict"
-    """
+if (params.variants==0){
+    process 'create_BWA_ref' {
+        tag "make ref"
+        label 'shorttime'
+        input:
+        file(design) from fixed_design
+        file(label) from fixed_label
+    
+        output:
+        file "${design}.fai" into reference_fai
+        file "${design}.bwt" into reference_bwt
+        file "${design}.sa" into reference_sa
+        file "${design}.pac" into reference_pac
+        file "${design}.ann" into reference_ann
+        file "${design}.amb" into reference_amb
+        file "${design}.dict" into reference_dict
+    
+        script:
+        """
+        #!/bin/bash
+        cv=\$(which conda)
+        cv1=\$(dirname "\$cv")
+        cv2=\$(dirname "\$cv1")
+        cv3=\${cv2}"/bin/activate"
+        echo \$cv3
+        source \$cv3 mpraflow_py36
+    
+        bwa index -a bwtsw $design
+        samtools faidx $design
+        picard CreateSequenceDictionary REFERENCE=$design OUTPUT=$design".dict"
+        """
+    }
 }
 
+if (params.variants != 0){
+    process 'create_bowtie_ref' {
+        tag 'mk ref'
+        label 'shorttime'
+        
+        input:
+        file(design) from fixed_design
+        file(label) from fixed_label
+
+        output:
+        
+        
+        script:
+        """
+        #!/bin/bash
+        cv=\$(which conda)
+        cv1=\$(dirname "\$cv")
+        cv2=\$(dirname "\$cv1")
+        cv3=\${cv2}"/bin/activate"
+        echo \$cv3
+        source \$cv3 mpraflow_py36
+        
+        bowtie2-build $design mpra_ref
+        """
+    }
+
+}
 /*
 *CHUNKING FASTQ
 */
@@ -359,84 +389,100 @@ if(params.fastq_insertPE != 0){
 * Process 1C: align with BWA
 */
 
-//paired ends
-if(params.fastq_insertPE != 0){
-    process 'align_BWA_PE' {
-        tag "align"
-        label 'longtime'
-    
-        input:
-        file(design) from fixed_design
-        file(chunk) from mergedPE
-        file(reference_fai) from reference_fai
-        file reference_bwt from reference_bwt
-        file reference_sa from reference_sa
-        file reference_pac from reference_pac
-        file reference_ann from reference_ann
-        file reference_amb from reference_amb
-        file reference_dict from reference_dict
-    
-        output:
-        file "${params.out}.${chunk}.sorted.bam" into s_bam
-        file '*count_bam.txt' into bam_ch
-    
-        script:
-        """
-        #!/bin/bash
-        cv=\$(which conda)
-        cv1=\$(dirname "\$cv")
-        cv2=\$(dirname "\$cv1")
-        cv3=\${cv2}"/bin/activate"
-        echo \$cv3
-        source \$cv3 mpraflow_py36
+if (params.variants==0){
+    //paired ends
+    if(params.fastq_insertPE != 0){
+        process 'align_BWA_PE' {
+            tag "align"
+            label 'longtime'
         
-        bwa mem $design $chunk | samtools sort - -o ${params.out}.${chunk}.sorted.bam
-        echo 'bam made'
-        samtools view ${params.out}.${chunk}.sorted.bam | head
-        samtools view ${params.out}.${chunk}.sorted.bam | wc -l > ${chunk}.count_bam.txt       
-
-        """
+            input:
+            file(design) from fixed_design
+            file(chunk) from mergedPE
+            file(reference_fai) from reference_fai
+            file reference_bwt from reference_bwt
+            file reference_sa from reference_sa
+            file reference_pac from reference_pac
+            file reference_ann from reference_ann
+            file reference_amb from reference_amb
+            file reference_dict from reference_dict
+        
+            output:
+            file "${params.out}.${chunk}.sorted.bam" into s_bam
+            file '*count_bam.txt' into bam_ch
+        
+            script:
+            """
+            #!/bin/bash
+            cv=\$(which conda)
+            cv1=\$(dirname "\$cv")
+            cv2=\$(dirname "\$cv1")
+            cv3=\${cv2}"/bin/activate"
+            echo \$cv3
+            source \$cv3 mpraflow_py36
+            
+            bwa mem $design $chunk | samtools sort - -o ${params.out}.${chunk}.sorted.bam
+            echo 'bam made'
+            samtools view ${params.out}.${chunk}.sorted.bam | head
+            samtools view ${params.out}.${chunk}.sorted.bam | wc -l > ${chunk}.count_bam.txt       
+    
+            """
+        }
+    }
+    
+    //single end
+    if(params.fastq_insertPE == 0){
+        process 'align_BWA_S' {
+            tag "align"
+            label 'longtime'
+        
+            input:
+            file(design) from fixed_design
+            file(chunk) from R1_ch
+            file(params.out)
+            file(reference_fai) from reference_fai
+            file reference_bwt from reference_bwt
+            file reference_sa from reference_sa
+            file reference_pac from reference_pac
+            file reference_ann from reference_ann
+            file reference_amb from reference_amb
+            file reference_dict from reference_dict
+        
+            output:
+            file "${params.out}.${chunk}.sorted.bam" into s_bam
+            file '*${chunk}_count_bam.txt' into bam_ch
+        
+            script:
+            """
+            #!/bin/bash
+            cv=\$(which conda)
+            cv1=\$(dirname "\$cv")
+            cv2=\$(dirname "\$cv1")
+            cv3=\${cv2}"/bin/activate"
+            echo \$cv3
+            source \$cv3 mpraflow_py36
+     
+            bwa mem $design $chunk | samtools sort - -o ${params.out}.${chunk}.sorted.bam
+            echo 'bam made'
+            samtools view ${params.out}.${chunk}.sorted.bam | head
+            samtools view ${params.out}.${chunk}.sorted.bam | wc -l > ${chunk}_count_bam.txt
+     
+            """
+        }
     }
 }
 
-//single end
-if(params.fastq_insertPE == 0){
-    process 'align_BWA_S' {
-        tag "align"
-        label 'longtime'
+//OR ALIGN BOWTIE2
+if (params.variants!=0){
+    //paired end
+    if(params.fastq_insertPE != 0){
     
-        input:
-        file(design) from fixed_design
-        file(chunk) from R1_ch
-        file(params.out)
-        file(reference_fai) from reference_fai
-        file reference_bwt from reference_bwt
-        file reference_sa from reference_sa
-        file reference_pac from reference_pac
-        file reference_ann from reference_ann
-        file reference_amb from reference_amb
-        file reference_dict from reference_dict
-    
-        output:
-        file "${params.out}.${chunk}.sorted.bam" into s_bam
-        file '*${chunk}_count_bam.txt' into bam_ch
-    
-        script:
-        """
-        #!/bin/bash
-        cv=\$(which conda)
-        cv1=\$(dirname "\$cv")
-        cv2=\$(dirname "\$cv1")
-        cv3=\${cv2}"/bin/activate"
-        echo \$cv3
-        source \$cv3 mpraflow_py36
- 
-        bwa mem $design $chunk | samtools sort - -o ${params.out}.${chunk}.sorted.bam
-        echo 'bam made'
-        samtools view ${params.out}.${chunk}.sorted.bam | head
-        samtools view ${params.out}.${chunk}.sorted.bam | wc -l > ${chunk}_count_bam.txt
- 
-        """
+
+    }
+
+    //single end
+    if(params.fastq_insertPE == 0){
+
     }
 }
 
