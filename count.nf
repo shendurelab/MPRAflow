@@ -575,7 +575,7 @@ if(params.mpranalyze == 0){
             file(lab) from labels
         output:
             file "*.png"
-            file "*.correlation.txt"
+            file "*_correlation.txt"
         shell:
             """
             Rscript ${"$baseDir"}/src/plot_perInsertCounts_correlation.R $cond $lab $pairlist $replicate
