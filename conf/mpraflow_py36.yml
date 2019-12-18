@@ -14,10 +14,11 @@ dependencies:
   - blas=1.0=mkl
   - bleach=1.4.2=py36_0
   - bokeh=1.3.4=py36_0
+  - bowtie2=2.3.5=py36he860b03_0
   - bwa=0.7.17=h84994c4_5
   - bzip2=1.0.8=h7b6447c_0
-  - ca-certificates=2019.10.16=0
-  - certifi=2019.9.11=py36_0
+  - ca-certificates=2019.11.27=0
+  - certifi=2019.11.28=py36_0
   - click=7.0=py36_0
   - cloudpickle=1.2.1=py_0
   - coreutils=8.25=1
@@ -135,7 +136,7 @@ dependencies:
   - qt=5.9.7=h5867ecd_1
   - qtconsole=4.5.1=py_0
   - readline=7.0=h7b6447c_5
-  - samtools=1.9=h8571acd_11
+  - samtools=1.9=h10a08f8_12
   - scikit-learn=0.21.2=py36hd81dba3_0
   - scipy=1.3.0=py36h7c811a0_0
   - seaborn=0.9.0=py36_0
@@ -147,6 +148,7 @@ dependencies:
   - sortedcontainers=2.1.0=py36_0
   - sqlite=3.29.0=h7b6447c_0
   - statsmodels=0.10.0=py36hdd07704_0
+  - tbb=2019.8=hfd86e86_0
   - tblib=1.4.0=py_0
   - terminado=0.8.2=py36_0
   - testpath=0.4.2=py36_0
@@ -167,4 +169,5 @@ dependencies:
   - zict=1.0.0=py_0
   - zlib=1.2.11=h7b6447c_3
   - zstd=1.3.7=h0b5b093_0
+prefix: /netapp/home/ggordon/tools/miniconda3/envs/mpraflow_py36
 
