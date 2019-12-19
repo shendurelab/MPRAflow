@@ -74,11 +74,11 @@ This pipeline expects the FASTQ files to be demultiplexed and trimmed to only in
 1. Create an 'experiment' csv in the format below, including the header. `DNA_R1` or `RNA_R1` is name of the gziped fastq of the forward read of the DNA or RNA from the defined condition and replicate. `DNA_R2` or `RNA_R2` is the corresponding index read with UMIs (excluding sample barcodes) and `DNA_R3` or `RNA_R3` of the reverse read. If you do not have UMIs remove the columns `DNA_R2` and `RNA_R2` or leave them empty.
 
    ```
-   Condition,Replicate,DNA_R1,DNA_R2,DNA_R3,RNA_R1,RNA_R2,RNA_R3,Name
-   condition1,1,cond1_rep1_DNA_FWD_reads.fastq.gz,cond1_rep1_DNA_IDX_reads.fastq.gz,cond1_rep1_DNA_REV_reads.fastq.gz,cond1_rep1_RNA_FWD_reads.fastq.gz,cond1_rep1_RNA_IDX_reads.fastq.gz,cond1_rep1_RNA_REV_reads.fastq.gz,desired name
-   condition1,2,cond1_rep2_DNA_FWD_reads.fastq.gz,cond1_rep2_DNA_IDX_reads.fastq.gz,cond1_rep2_DNA_REV_reads.fastq.gz,cond1_rep2_RNA_FWD_reads.fastq.gz,cond1_rep2_RNA_IDX_reads.fastq.gz,cond1_rep2_RNA_REV_reads.fastq.gz,desired name
-   condition2,1,cond2_rep1_DNA_FWD_reads.fastq.gz,cond2_rep1_DNA_IDX_reads.fastq.gz,cond2_rep1_DNA_REV_reads.fastq.gz,cond2_rep1_RNA_FWD_reads.fastq.gz,cond2_rep1_RNA_IDX_reads.fastq.gz,cond2_rep1_RNA_REV_reads.fastq.gz,desired name
-   condition2,2,cond2_rep2_DNA_FWD_reads.fastq.gz,cond2_rep2_DNA_IDX_reads.fastq.gz,cond2_rep2_DNA_REV_reads.fastq.gz,cond2_rep2_RNA_FWD_reads.fastq.gz,cond2_rep2_RNA_IDX_reads.fastq.gz,cond2_rep2_RNA_REV_reads.fastq.gz,desired name
+   Condition,Replicate,DNA_R1,DNA_R2,DNA_R3,RNA_R1,RNA_R2,RNA_R3
+   condition1,1,cond1_rep1_DNA_FWD_reads.fastq.gz,cond1_rep1_DNA_IDX_reads.fastq.gz,cond1_rep1_DNA_REV_reads.fastq.gz,cond1_rep1_RNA_FWD_reads.fastq.gz,cond1_rep1_RNA_IDX_reads.fastq.gz,cond1_rep1_RNA_REV_reads.fastq.gz
+   condition1,2,cond1_rep2_DNA_FWD_reads.fastq.gz,cond1_rep2_DNA_IDX_reads.fastq.gz,cond1_rep2_DNA_REV_reads.fastq.gz,cond1_rep2_RNA_FWD_reads.fastq.gz,cond1_rep2_RNA_IDX_reads.fastq.gz,cond1_rep2_RNA_REV_reads.fastq.gz
+   condition2,1,cond2_rep1_DNA_FWD_reads.fastq.gz,cond2_rep1_DNA_IDX_reads.fastq.gz,cond2_rep1_DNA_REV_reads.fastq.gz,cond2_rep1_RNA_FWD_reads.fastq.gz,cond2_rep1_RNA_IDX_reads.fastq.gz,cond2_rep1_RNA_REV_reads.fastq.gz
+   condition2,2,cond2_rep2_DNA_FWD_reads.fastq.gz,cond2_rep2_DNA_IDX_reads.fastq.gz,cond2_rep2_DNA_REV_reads.fastq.gz,cond2_rep2_RNA_FWD_reads.fastq.gz,cond2_rep2_RNA_IDX_reads.fastq.gz,cond2_rep2_RNA_REV_reads.fastq.gz
    ```
 
 2. If you would like each insert to be colored based on different user-specified categories, such as "positive control", "negative control", "shuffled control", and "putative enhancer", to assess the overall quality the user can create a 'label' tsv in the format below that maps the name to category:
@@ -93,7 +93,7 @@ This pipeline expects the FASTQ files to be demultiplexed and trimmed to only in
 
    ```bash
    conda activate MPRAflow
-   nextflow run association.nf --fastq_insert "${fastq_prefix}_R1_001.fastq.gz" --design "ordered_candidate_sequences.fa" --fastq_bc "${fastq_prefix}_R2_001.fastq.gz"
+   nextflow run association.nf --fastq-insert "${fastq_prefix}_R1_001.fastq.gz" --design "ordered_candidate_sequences.fa" --fastq-bc "${fastq_prefix}_R2_001.fastq.gz"
    ```
     **NOTE:** This will run in local mode, please submit this command to your cluster's queue if you would like to run a parallelized version.
 
@@ -103,7 +103,7 @@ This pipeline expects the FASTQ files to be demultiplexed and trimmed to only in
    conda activate MPRAflow
    nextflow run count.nf --dir "bulk_FASTQ_directory" --e "experiment.csv" --design "ordered_candidate_sequences.fa" --association "dictionary_of_candidate_sequences_to_barcodes.p"
    ```
-   Be sure that the `experiment.csv` is correct. All fastq files must be in the same folder given by the `--dir` option. If you do not have UMIs please use the option `-m 0`.
+   Be sure that the `experiment.csv` is correct. All fastq files must be in the same folder given by the `--dir` option. If you do not have UMIs please use the option `--no-umi`.
 
 
   **NOTE***: This will run in local mode, please submit this command to your cluster's queue if you would like to run a parallelized version

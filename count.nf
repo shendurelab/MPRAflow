@@ -91,7 +91,7 @@ if ( params.containsKey("design")){
     exit 1, "Design file not specified with --design"
 }
 
-// Association file
+// Association file in params.association_file
 if ( params.containsKey("association")){
     params.association_file=file(params.association)
     if( !params.association_file.exists() ) exit 1, "Association pickle ${params.association_file} does not exist"
@@ -99,7 +99,7 @@ if ( params.containsKey("association")){
     exit 1, "Association file not specified with --association"
 }
 
-// label file saved inparams.label_file
+// label file saved in label_file
 if (params.containsKey("labels")){
     label_file=file(params.labels)
     if (!label_file.exists()) exit 1, "Label file ${label_file} does not exist"
