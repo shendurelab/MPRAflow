@@ -1,6 +1,10 @@
 
 #adapted from Vikram Agarwal by Gracie Gordon
 
+cpath <- grep('conda', .libPaths(), value=TRUE, ignore.case=TRUE)
+.libPaths(cpath)
+
+
 library(ggplot2)
 library(dplyr)
 
