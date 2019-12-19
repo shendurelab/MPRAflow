@@ -50,7 +50,12 @@ if(data %>% nrow >1){
     data1<-data1 %>% filter(n_obs_bc > thresh, name != 'no_BC')
     data2<-data2 %>% filter(n_obs_bc > thresh, name != 'no_BC')
 
-    res <- data1 %>% inner_join(data2,by=c('name')) %>% inner_join(label_f, by=c('name'))
+    res <- data1 %>% inner_join(data2,by=c('name'))
+    if (label_f$name[1] != 'na'){
+      res <- res %>% inner_join(label_f, by=c('name'))
+    } else {
+      res$label = 'na'
+    }
 
     dna_p <- ggplot(res, aes(log2(dna_count.x), log2(dna_count.y))) +
                 geom_point(aes(colour = label), show.legend = TRUE) +
@@ -134,12 +139,16 @@ for(n in 1:(data%>%nrow)){
 
  }
  #all=as.data.frame(cbind(((dname)),as.numeric(dlog)))
- all1=as.data.frame(cbind((as.character(dname)),as.character(dlog)))
- print(head(label_f))
- label_t=label_f
- colnames(all1)=c('name','log2')
- print(head(all1))
- all=merge(all1,label_t, by="name")
+ all=as.data.frame(cbind((as.character(dname)),as.character(dlog)))
+ colnames(all)=c('name','log2')
+ print(head(all))
+
+ if (label_f$name[1] != 'na'){
+   all <- all %>% inner_join(label_f, by=c('name'))
+ } else {
+   all$label = 'na'
+ }
+
  print('merged')
  print(head(all))
  all$name <- factor(all$name)
