@@ -1,16 +1,18 @@
 #!/usr/bin/env nextflow
 
-params.version=2.0
+params.version=2.1
 /*
 ========================================================================================
                          MPRAflow
 ========================================================================================
-MPRA Analysis Pipeline. Started 2019-07-29.
+MPRA Analysis Pipeline.
+Started 2019-07-29.
 Count Utility
 #### Homepage / Documentation
 https://github.com/shendurelab/MPRAflow
 #### Authors
 Gracie Gordon <gracie.gordon@ucsf.edu>
+Max Schubach <max.schubach@bihealth.de>
 ----------------------------------------------------------------------------------------
 */
 
@@ -26,19 +28,20 @@ def helpMessage() {
       --dir                         fasta directory (must be surrounded with quotes)
       --association                 pickle dictionary from library association process
       --design                      fasta of ordered insert sequences
-      --e                           experiment csv file`
+      --e, --experiment-file        experiment csv file
 
     Options:
       --labels                      tsv with the oligo pool fasta and a group label (ex: positive_control), a single label will be applied if a file is not specified
       --outdir                      The output directory where the results will be saved (default outs)
-      --m                           UMI present in experiment (True:1, False:0, default 1)
+      --no-umi                      Use this flag if no UMI is present in the experiment (default with UMI)
       --merge_intersect             Only retain barcodes in RNA and DNA fraction (TRUE/FALSE, default: FALSE)
-      --mpranalyze                  Only generate MPRAnalyze outputs (True:1, False:0 default 0)
+      --mpranalyze                  Only generate MPRAnalyze outputs
       --thresh                      minimum number of observed barcodes to retain insert (default 10)
 
     Extras:
+      --h, --help                   Print this help message
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
-      --name                         Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
+      --name                        Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
     """.stripIndent()
 }
 
@@ -47,7 +50,7 @@ def helpMessage() {
 */
 
 // Show help message
-if (params.help){
+if (params.containsKey('h') || params.containsKey('help')){
     helpMessage()
     exit 0
 }
@@ -61,48 +64,72 @@ output_docs = file("$baseDir/docs/output.md")
 //defaults
 params.outdir="outs"
 results_path = params.outdir
-params.nf_required_version="19.07.0"
-params.out="output"
-params.s ='26'
-params.m ='16'
-params.merge_intersect="FALSE"
-params.mpranalyze=0
-params.bc_thresh=10
-params.labels=0
+params.nf_required_version="19.10"
 
+params.merge_intersect=false
+params.mpranalyze=false
+params.thresh=10
 
 // Validate Inputs
 
-/*
-if ( params.out ){
-    out= params.out
-    if( !out.exists() ) exit 1, "prefix not specified: ${params.out}"
+// experiment file saved in params.experiment_file
+if (params.containsKey('e')){
+    params.experiment_file=file(params.e)
+} else if (params.containsKey("experiment-file")) {
+    params.experiment_file=file(params["experiment-file"])
+} else {
+    exit 1, "Experiment file not specified with --e or --experiment-file"
 }
-*/
+if( !params.experiment_file.exists()) exit 1, "Experiment file ${params.experiment_file} does not exist"
 
-if (params.e){
-    env=file(params.e)
-    if( !env.exists() ) exit 1, "environment file not specified ${params.e}"
-}
-
-if ( params.design ){
-    design=file(params.design)
-    if( !design.exists() ) exit 1, "design file not specified ${params.design}"
-}
-
-if ( params.association ){
-    assoc=file(params.association)
-    if( !assoc.exists() ) exit 1, "association pickle not specified ${params.association}"
+// design file saved in params.design_file
+if ( params.containsKey("design")){
+    params.design_file=file(params.design)
+    if( !params.design_file.exists() ) exit 1, "Design file ${params.design} does not exist"
+} else {
+    exit 1, "Design file not specified with --design"
 }
 
-if (params.labels){
-    labels=file(params.labels)
-    if (!labels.exists()) exit 1, "label file not specified ${labels}"
+// Association file
+if ( params.containsKey("association")){
+    params.association_file=file(params.association)
+    if( !params.association_file.exists() ) exit 1, "Association pickle ${params.association_file} does not exist"
+} else {
+    exit 1, "Association file not specified with --association"
+}
+
+// label file saved inparams.label_file
+if (params.containsKey("labels")){
+    params.label_file=file(params.labels)
+    if (!params.label_file.exists()) exit 1, "Label file ${params.label_file} does not exist"
+}
+
+// check if UMIs or not are present
+if (params.containsKey("no-umi")){
+    println "params.no_umi"
+    params.no_umi = true
+} else {
+    params.no_umi = false
 }
 
 // Create FASTQ channels
-if (params.m != 0) {
-  reads = Channel.fromPath(params.e).splitCsv(header: true).flatMap{
+if (params.no_umi) {
+  reads_noUMI = Channel.fromPath(params.experiment_file).splitCsv(header: true).flatMap{
+    row -> [
+      tuple(row.Condition,row.Replicate,"DNA",
+        [row.Condition,row.Replicate,"DNA"].join("_"),
+        file([params.dir,"/",row.dna,row.DNA_R1].join()),
+        file([params.dir,"/",row.dna,row.DNA_R2].join())
+      ),
+      tuple(row.Condition,row.Replicate,"RNA",
+        [row.Condition,row.Replicate,"RNA"].join("_"),
+        file([params.dir,"/",row.rna,row.RNA_R1].join()),
+        file([params.dir,"/",row.rna,row.RNA_R3].join())
+      )
+    ]
+  }
+} else {
+  reads = Channel.fromPath(params.experiment_file).splitCsv(header: true).flatMap{
     row -> [
       [row.Condition, row.Replicate, "DNA",
         [row.Condition,row.Replicate,"DNA"].join("_"),
@@ -120,37 +147,6 @@ if (params.m != 0) {
   }
 }
 
-if (params.m == 0) {
-  reads_noUMI = Channel.fromPath(params.e).splitCsv(header: true).flatMap{
-    row -> [
-      tuple(row.Condition,row.Replicate,"DNA",
-        [row.Condition,row.Replicate,"DNA"].join("_"),
-        file([params.dir,"/",row.dna,row.DNA_R1].join()),
-        file([params.dir,"/",row.dna,row.DNA_R2].join())
-      ),
-      tuple(row.Condition,row.Replicate,"RNA",
-        [row.Condition,row.Replicate,"RNA"].join("_"),
-        file([params.dir,"/",row.rna,row.RNA_R1].join()),
-        file([params.dir,"/",row.rna,row.RNA_R3].join())
-      )
-    ]
-  }
-}
-
-//if(params.m !=0){
-//    println 'test'
-//    R2_fastq = Channel
-//        .fromPath( r2 )
-//        .map { file -> tuple(file.simpleName, file) }
-//}
-
-//R3_fastq = Channel
-//    .fromPath( r3 )
-//    .map { file -> tuple(file.simpleName, file) }
-
-
-//R1_fastq.subscribe { println "value: $it" }
-//R3_fastq.subscribe { println "value: $it" }
 
 // Has the run name been specified by the user?
 //  this has the bonus effect of catching both -name and --name
@@ -174,7 +170,6 @@ def summary = [:]
 summary['Pipeline Name']    = 'shendurelab/MPRAflow'
 summary['Pipeline Version'] = params.version
 summary['Run Name']         = custom_runName ?: workflow.runName
-summary['output id']        = params.out
 
 //summary['Thread fqdump']    = params.threadfqdump ? 'YES' : 'NO'
 summary['Max CPUs']         = params.max_cpus
@@ -190,12 +185,12 @@ summary['Working dir']      = workflow.workDir
 summary['Output dir']       = params.outdir
 summary['Script dir']       = workflow.projectDir
 summary['Config Profile']   = workflow.profile
-summary['Experiment File']  = params.e
-summary['design file']      = params.design
-summary['reads']            = (params.m != 0 ? reads : reads_noUMI)
-//summary['r2']               = r2
-//summary['r3']               = r3
-summary['m']                = (params.m != 0 ? "Reads with UMI" : "Reads without UMI")
+summary['Experiment File']  = params.experiment_file
+summary['design file']      = params.design_file
+summary['reads']            = (params.no_umi ? reads_noUMI : reads)
+summary['UMIs']             = (params.no_umi ? "Reads without UMI" : "Reads with UMI")
+summary['BC threshold']     = params.thresh
+summary['mprAnalyze']       = params.mpranalyze
 
 if(params.email) summary['E-mail Address'] = params.email
 log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
@@ -225,11 +220,11 @@ process 'create_label' {
     label 'shorttime'
 
     input:
-        file designs from design
+        file designs from params.design_file
     output:
-        file "label.txt" into labels
+        file "label.txt" into params.label_file
     when:
-        params.labels == 0
+        params.containsKey("label_file")
     // FIXME the -5 is a hack because the :001 :002,... ist not available anymore in the association file.
     // We have to find a better solution for that!
     shell:
@@ -242,7 +237,7 @@ process 'create_label' {
 * STEP 1: Create BAM files
 */
 //if UMI
-if (params.m !=0) {
+if (!params.no_umi) {
     process 'create_BAM' {
         tag "make idx"
         label 'longtime'
@@ -254,7 +249,7 @@ if (params.m !=0) {
         output:
             tuple val(cond), val(rep), val(type),val(datasetID),file("${datasetID}.bam") into clean_bam
         when:
-            params.m !=0
+            !params.no_umi
         shell:
             """
             echo $datasetID
@@ -285,7 +280,7 @@ if (params.m !=0) {
 }
 
 //if no UMI
-if (params.m==0) {
+if (params.no_umi) {
     process 'create_BAM_noUMI' {
         tag "make idx"
         label 'longtime'
@@ -297,7 +292,7 @@ if (params.m==0) {
         output:
             tuple val(cond), val(rep),val(type),val(datasetID),file("${datasetID}.bam") into clean_bam
         when:
-            params.m==0
+            params.no_umi
         shell:
             """
             echo $datasetID
@@ -339,7 +334,7 @@ process 'raw_counts'{
     output:
         tuple val(cond), val(rep),val(type),val(datasetID),file("${datasetID}_raw_counts.tsv.gz") into raw_ct
     script:
-        if(params.m==0)
+        if(params.no_umi)
             """
             #!/bin/bash
 
@@ -349,7 +344,7 @@ process 'raw_counts'{
             gzip -c > ${datasetID}_raw_counts.tsv.gz
             """
 
-        else if(params.m!=0)
+        else
             """
             #!/bin/bash
 
@@ -404,7 +399,7 @@ process 'final_counts'{
     output:
         tuple val(cond), val(rep),val(type),val(datasetID),file("${datasetID}_counts.tsv") into final_count
     script:
-        if(params.m==0)
+        if(params.no_umi)
             """
             #!/bin/bash
 
@@ -412,7 +407,7 @@ process 'final_counts'{
             uniq -c > ${datasetID}_counts.tsv
 
             """
-        else if(params.m!=0)
+        else
             """
             #!/bin/bash
 
@@ -432,7 +427,7 @@ process 'final_counts'{
 */
 
 //MPRAnalyze option
-if(params.mpranalyze != 0){
+if(params.mpranalyze){
     /*
     * STEP 5: Merge each DNA and RNA file
     */
@@ -494,8 +489,8 @@ if(params.mpranalyze != 0){
 
         input:
             tuple val(cond),val(table) from merged_out
-            file(des) from design
-            file(associaiton) from assoc
+            file(des) from params.design_file
+            file(associaiton) from params.association_file
         output:
             file "${cond}_final_labeled_counts.txt" into labeled_out
         shell:
@@ -508,20 +503,22 @@ if(params.mpranalyze != 0){
     * STEP 8: Generate inputs
     */
 
-    process 'gen_mpranalyze'{
+    process 'generate_mpranalyze_inputs'{
         label 'shorttime'
         publishDir "$params.outdir/$cond", mode:'copy'
 
         conda 'conf/mpraflow_py36.yml'
 
         input:
-            file("rna_counts.tsv") from labeled_out_rna
-            file("dna_counts.tsv") from labeled_out_rna
-            file("rna_annot.tsv") from labeled_out_rna
-            file("dna_annot.tsv") from labeled_out_dna
+            file(labeled_file) from labeled_out
+        output:
+            file("rna_counts.tsv") into mpranalyze_rna_counts
+            file("dna_counts.tsv") into mpranalyze_dna_counts
+            file("rna_annot.tsv") into mpranalyze_rna_annotation
+            file("dna_annot.tsv") into mpranalyze_fna_annotation
         shell:
             """
-            python ${"$baseDir"}/src/mpranalyze_compiler.py $t
+            python ${"$baseDir"}/src/mpranalyze_compiler.py $labeled_file
             """
     }
 
@@ -532,7 +529,7 @@ if(params.mpranalyze != 0){
 * STEP 5: Merge each DNA and RNA file label with sequence and insert and normalize
 */
 //merge and normalize
-if(params.mpranalyze == 0){
+if(!params.mpranalyze){
 
     process 'dna_rna_merge'{
         label 'longtime'
@@ -542,8 +539,8 @@ if(params.mpranalyze == 0){
 
         input:
             tuple val(cond), val(rep),val(typeA),val(typeB),val(datasetIDA),val(datasetIDB),file(countA),file(countB) from final_count.groupTuple(by: [0,1]).map{i -> i.flatten()}
-            file(des) from design
-            file(association) from assoc
+            file(des) from params.design_file
+            file(association) from params.association_file
         output:
              tuple val(cond), val(rep), file("${cond}_${rep}_counts.tsv") into merged_ch, merged_ch2
         shell:
@@ -572,7 +569,7 @@ if(params.mpranalyze == 0){
             file(pairlist) from result.files
             val(replicate) from result.replicate
             val(cond) from result.cond
-            file(lab) from labels
+            file(lab) from params.label_file
         output:
             file "*.png"
             file "*_correlation.txt"
@@ -603,7 +600,7 @@ if(params.mpranalyze == 0){
             file "allreps.tsv"
         shell:
             """
-            Rscript ${"$baseDir"}/src/make_master_tables.R $cond $params.bc_thresh allreps.tsv average_allreps.tsv $pairlist $replicate
+            Rscript ${"$baseDir"}/src/make_master_tables.R $cond $params.thresh allreps.tsv average_allreps.tsv $pairlist $replicate
             """
     }
 

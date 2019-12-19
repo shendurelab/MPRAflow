@@ -13,9 +13,9 @@ outfile=sys.argv[2]
 dk_full_df= None
 
 replicates=((len(sys.argv)-3)/2)
-for (i in range(3,(len(sys.argv)-replicates-1))){
-   file=sys.argv[i]
-   rep=sys.argv[i+replicates]
+for i in range(3,(len(sys.argv)-replicates-1)):
+    file=sys.argv[i]
+    rep=sys.argv[i+replicates]
 
     #DNA 1 (condition A, replicate 1)
     colnames=["Barcode", "DNA %s (condition %s, replicate %s)" % (rep,cond,rep),
