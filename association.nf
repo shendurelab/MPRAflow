@@ -201,15 +201,13 @@ if (params.label_file != null) {
         input:
             file(fastq_bc) from params.fastq_bc_file
             file(design) from params.design_file
-            file(label) from params.label_file
+            file(labels) from params.label_file
         output:
             file 'count_fastq.txt' into bc_ch
             file "label_rmIllegalChars.txt" into fixed_label
             file "design_rmIllegalChars.fa" into fixed_design
         shell:
             """
-            #!/bin/bash
-
             ## Get rid of illegal regex characters
             awk '{gsub(/[\\[/\\]],"_")}1' $labels > label_rmIllegalChars.txt
             awk '{gsub(/[\\[/\\]],"_")}1' $design > design_rmIllegalChars.fa
@@ -239,7 +237,6 @@ if (params.label_file == null) {
             file "design_rmIllegalChars.fa" into fixed_design
         shell:
             """
-
             #CREATE LABEL FILE
             awk -F'\t' 'BEGIN {OFS = FS} NR%2==1 {print substr(\$1,2,length(\$1)),"na"}' $design > label.txt
 
@@ -489,8 +486,6 @@ process 'filter_barcodes' {
         python ${"$baseDir"}/src/nf_filter_barcodes.py ${out} ${map} ${table} \
         ${min_cov} ${min_frac} $label
         """
-
-
 }
 
 
