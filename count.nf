@@ -55,6 +55,7 @@ if (params.containsKey('h') || params.containsKey('help')){
     exit 0
 }
 
+
 // Configurable variables
 params.name = false
 params.email = false
@@ -100,8 +101,10 @@ if ( params.containsKey("association")){
 
 // label file saved inparams.label_file
 if (params.containsKey("labels")){
-    params.label_file=file(params.labels)
-    if (!params.label_file.exists()) exit 1, "Label file ${params.label_file} does not exist"
+    label_file=file(params.labels)
+    if (!label_file.exists()) exit 1, "Label file ${label_file} does not exist"
+} else {
+    label_file=null
 }
 
 // check if UMIs or not are present
@@ -216,21 +219,21 @@ println 'start analysis'
 *MAKE LABEL FILE IF NOT PASSED
 */
 
-process 'create_label' {
-    label 'shorttime'
+if (label_file==null) {
+  process 'create_label' {
+      label 'shorttime'
 
-    input:
-        file designs from params.design_file
-    output:
-        file "label.txt" into params.label_file
-    when:
-        params.containsKey("label_file")
-    // FIXME the -5 is a hack because the :001 :002,... ist not available anymore in the association file.
-    // We have to find a better solution for that!
-    shell:
-        """
-        awk -F'\t' 'BEGIN {OFS = FS} NR%2==1 {print substr(\$1,2,length(\$1)-5),"na"}' $designs > label.txt
-        """
+      input:
+          file designs from params.design_file
+      output:
+          file "label.txt" into label_file
+      // FIXME the -5 is a hack because the :001 :002,... ist not available anymore in the association file.
+      // We have to find a better solution for that!
+      shell:
+          """
+          awk -F'\t' 'BEGIN {OFS = FS} NR%2==1 {print substr(\$1,2,length(\$1)-5),"na"}' $designs > label.txt
+          """
+  }
 }
 
 /*
@@ -569,7 +572,7 @@ if(!params.mpranalyze){
             file(pairlist) from result.files
             val(replicate) from result.replicate
             val(cond) from result.cond
-            file(lab) from params.label_file
+            file(lab) from label_file
         output:
             file "*.png"
             file "*_correlation.txt"
