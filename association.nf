@@ -192,7 +192,7 @@ try {
 * and make label file if missing
 */
 
-if (label_file != null) {
+if (params.label_file != null) {
     process 'count_bc' {
         tag 'count'
         label 'shorttime'
@@ -201,7 +201,7 @@ if (label_file != null) {
         input:
             file(fastq_bc) from params.fastq_bc_file
             file(design) from params.design_file
-            file(label) from label_file
+            file(label) from params.label_file
         output:
             file 'count_fastq.txt' into bc_ch
             file "label_rmIllegalChars.txt" into fixed_label
