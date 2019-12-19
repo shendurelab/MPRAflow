@@ -490,7 +490,7 @@ if(params.mpranalyze){
         input:
             tuple val(cond),val(table) from merged_out
             file(des) from params.design_file
-            file(associaiton) from params.association_file
+            file(association) from params.association_file
         output:
             file "${cond}_final_labeled_counts.txt" into labeled_out
         shell:
