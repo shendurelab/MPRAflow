@@ -3,4 +3,4 @@ Association workflow
 =====================
 
 .. todo::
-  Document associaction workflow
+  Document association workflow
