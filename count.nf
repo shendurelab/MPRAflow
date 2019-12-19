@@ -469,7 +469,7 @@ if(params.mpranalyze){
             val(replicate) from result.replicate
             val(cond) from result.cond
         output:
-            tuple val(cond),val("${cond}_count.csv") into merged_out
+            tuple val(cond),file("${cond}_count.csv") into merged_out
         shell:
             """
             python ${"$baseDir"}/src/merge_all.py $cond "${cond}_count.csv" $pairlist $replicate
@@ -488,14 +488,14 @@ if(params.mpranalyze){
         conda 'conf/mpraflow_py36.yml'
 
         input:
-            tuple val(cond),val(table) from merged_out
+            tuple val(cond), file(table) from merged_out
             file(des) from params.design_file
             file(association) from params.association_file
         output:
-            file "${cond}_final_labeled_counts.txt" into labeled_out
+            tuple val(cond), file("${cond}_final_labeled_counts.txt") into labeled_out
         shell:
             """
-            python ${"$baseDir"}/src/label_final_count_mat.py $table $association "${cond}_final_labeled_counts.txt"  $des
+            python ${"$baseDir"}/src/label_final_count_mat.py $table $association "${cond}_final_labeled_counts.txt" $des
             """
     }
 
@@ -510,7 +510,7 @@ if(params.mpranalyze){
         conda 'conf/mpraflow_py36.yml'
 
         input:
-            file(labeled_file) from labeled_out
+            tuple val(cond),file(labeled_file) from labeled_out
         output:
             file("rna_counts.tsv") into mpranalyze_rna_counts
             file("dna_counts.tsv") into mpranalyze_dna_counts
