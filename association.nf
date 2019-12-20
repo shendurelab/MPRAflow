@@ -28,6 +28,7 @@ def helpMessage() {
       --fastq-insert                Full path to library association fastq for insert (must be surrounded with quotes)
       --fastq-bc                    Full path to library association fastq for bc (must be surrounded with quotes)
       --design                      Full path to fasta of ordered oligo sequences (must be surrounded with quotes)
+      --name                        Name of the association. Files will be named after this.
 
     Options:
       --fastq-insertPE              Full path to library association fastq for read2 if the library is paired end (must be surrounded with quotes)
@@ -43,7 +44,6 @@ def helpMessage() {
     Extras:
       --h, --help                   Print this help message
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
-      --name                        Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
     """.stripIndent()
 }
 
@@ -58,7 +58,6 @@ if (params.containsKey('h') || params.containsKey('help')){
 }
 
 // Configurable variables
-params.name = false
 params.email = false
 params.plaintext_email = false
 output_docs = file("$baseDir/docs/output.md")
@@ -70,12 +69,15 @@ params.baseq="30"
 params.mapq="30"
 params.cigar="n"
 params.outdir="outs"
-params.out=params.outdir
 params.nf_required_version="19.10"
 params.split=2000000
 
 
 // Validate inputs
+if ( !params.containsKey("name") ){
+    exit 1, "Pleas especify a name of this workflow using --name"
+}
+
 if ( params.containsKey("fastq-insert") ){
     params.fastq_insert_file = file(params['fastq-insert'])
     if( !params.fastq_insert_file.exists() ) exit 1, "Fastq insert file not found: ${params.fastq_insert_file}"
@@ -136,7 +138,6 @@ MPRAflow v${params.version}"
 def summary = [:]
 summary['Pipeline Name']    = 'MPRAflow'
 summary['Pipeline Version'] = params.version
-summary['Run Name']         = custom_runName ?: workflow.runName
 summary['Fastq insert']     = params.fastq_insert_file
 summary['fastq paired']     = params.fastq_insertPE_file
 summary['Fastq barcode']    = params.fastq_bc_file
@@ -147,6 +148,7 @@ summary['base quality']     = params.baseq
 summary['cigar string']     = params.cigar
 summary['min % mapped']     = params.min_frac
 summary['Output dir']       = params.outdir
+summary['Run name'] = params.name
 summary['Working dir']      = workflow.workDir
 summary['Container Engine'] = workflow.containerEngine
 if(workflow.containerEngine) summary['Container'] = workflow.container
@@ -154,8 +156,6 @@ summary['Current home']     = "$HOME"
 summary['Current user']     = "$USER"
 summary['Current path']     = "$PWD"
 summary['base directory']   = "$baseDir"
-summary['Working dir']      = workflow.workDir
-summary['Output dir']       = params.outdir
 summary['Script dir']       = workflow.projectDir
 summary['Config Profile']   = workflow.profile
 
@@ -194,7 +194,7 @@ if (params.label_file != null) {
     process 'count_bc' {
         tag 'count'
         label 'shorttime'
-        publishDir params.outdir, mode:'copy'
+        publishDir "${params.outdir}/${params.name}", mode:'copy'
 
         input:
             file(fastq_bc) from params.fastq_bc_file
@@ -224,7 +224,7 @@ if (params.label_file == null) {
     process 'count_bc_nolab' {
         tag 'count'
         label 'shorttime'
-        publishDir params.outdir, mode:'copy'
+        publishDir "${params.outdir}/${params.name}", mode:'copy'
 
         input:
             file(fastq_bc) from params.fastq_bc_file
@@ -235,12 +235,10 @@ if (params.label_file == null) {
             file "design_rmIllegalChars.fa" into fixed_design
         shell:
             """
-            #CREATE LABEL FILE
-            awk -F'\t' 'BEGIN {OFS = FS} NR%2==1 {print substr(\$1,2,length(\$1)),"na"}' $design > label.txt
-
-            #remove illegal regex characters
-            awk '{gsub(/[\\[/\\]],"_")}1' label.txt > label_rmIllegalChars.txt
-            awk '{gsub(/[\\[/\\]],"_")}1' $design > design_rmIllegalChars.fa
+            #CREATE LABEL FILE and remove illegal regex characters
+            awk -F'\t' 'BEGIN {OFS = FS} NR%2==1 {print substr(\$1,2,length(\$1)),"na"}' $design |
+            awk '{gsub(/[\\[/\\]]/,"_")}1' > label_rmIllegalChars.txt
+            awk '{gsub(/[\\[/\\]]/,"_")}1' $design > design_rmIllegalChars.fa
 
             zcat $fastq_bc | wc -l  > count_fastq.txt
             """
@@ -289,7 +287,7 @@ Channel
 
 if (params.fastq_insertPE_file != null) {
     Channel
-        .fromPath(params.fastq_insertPE_file != null)
+        .fromPath(params.fastq_insertPE_file)
         .splitFastq( by: params.split, file: true )
         .set{ R3_ch }
 }
@@ -334,6 +332,7 @@ if (params.fastq_insertPE_file != null) {
         input:
             file(design) from fixed_design
             file(chunk) from mergedPE
+            val(name) from params.name
             file(reference_fai) from reference_fai
             file reference_bwt from reference_bwt
             file reference_sa from reference_sa
@@ -342,14 +341,19 @@ if (params.fastq_insertPE_file != null) {
             file reference_amb from reference_amb
             file reference_dict from reference_dict
         output:
-            file "${params.out}.${chunk}.sorted.bam" into s_bam
+            file "${name}.${chunk}.sorted.bam" into s_bam
             file '*count_bam.txt' into bam_ch
         shell:
             """
-            bwa mem $design $chunk | samtools sort - -o ${params.out}.${chunk}.sorted.bam
+            bwa mem $design $chunk | \
+            samtools sort - -o ${name}.${chunk}.sorted.bam
+
             echo 'bam made'
-            samtools view ${params.out}.${chunk}.sorted.bam | head
-            samtools view ${params.out}.${chunk}.sorted.bam | wc -l > ${chunk}.count_bam.txt
+
+            samtools view ${name}.${chunk}.sorted.bam | head
+
+            samtools view ${name}.${chunk}.sorted.bam | \
+            wc -l > ${chunk}.count_bam.txt
             """
     }
 } else {
@@ -363,7 +367,7 @@ if (params.fastq_insertPE_file != null) {
         input:
             file(design) from fixed_design
             file(chunk) from R1_ch
-            file(params.out)
+            val(name) from params.name
             file(reference_fai) from reference_fai
             file reference_bwt from reference_bwt
             file reference_sa from reference_sa
@@ -372,14 +376,14 @@ if (params.fastq_insertPE_file != null) {
             file reference_amb from reference_amb
             file reference_dict from reference_dict
         output:
-            file "${params.out}.${chunk}.sorted.bam" into s_bam
+            file "${name}.${chunk}.sorted.bam" into s_bam
             file '${chunk}_count_bam.txt' into bam_ch
         shell:
             """
-            bwa mem $design $chunk | samtools sort - -o ${params.out}.${chunk}.sorted.bam
+            bwa mem $design $chunk | samtools sort - -o ${name}.${chunk}.sorted.bam
             echo 'bam made'
-            samtools view ${params.out}.${chunk}.sorted.bam | head
-            samtools view ${params.out}.${chunk}.sorted.bam | wc -l > ${chunk}_count_bam.txt
+            samtools view ${name}.${chunk}.sorted.bam | head
+            samtools view ${name}.${chunk}.sorted.bam | wc -l > ${chunk}_count_bam.txt
             """
     }
 }
@@ -402,12 +406,12 @@ process 'collect_chunks'{
     shell:
         """
         #collect sorted bams into one file
-        samtools merge all.bam ${sbam_list}
+        samtools merge all.bam $sbam_list
         samtools sort all.bam -o s_merged.bam
 
         #collect bam counts into one file
 
-        samtools view $s_merge | wc -l > count_merged.txt
+        samtools view s_merged.bam | wc -l > count_merged.txt
         """
 }
 
@@ -421,11 +425,12 @@ process 'collect_chunks'{
 process 'map_element_barcodes' {
     tag "assign"
     label "shorttime"
-    publishDir params.outdir, mode:'copy'
+    publishDir "${params.outdir}/${params.name}", mode:'copy'
 
     conda 'conf/mpraflow_py36.yml'
 
     input:
+        val(name) from params.name
         val(mapq) from params.mapq
         val(baseq) from params.baseq
         val(cigar) from params.cigar
@@ -434,9 +439,9 @@ process 'map_element_barcodes' {
         file count_bam from ch_merge
         file bam from s_merge
     output:
-        file "${params.out}_coords_to_barcodes.pickle" into map_ch
-        file "${params.out}_barcodes_per_candidate-no_repeats-no_jackpots.feather" into count_table_ch
-        file "${params.out}_barcode_counts.pickle"
+        file "${name}_coords_to_barcodes.pickle" into map_ch
+        file "${name}_barcodes_per_candidate-no_repeats-no_jackpots.feather" into count_table_ch
+        file "${name}_barcode_counts.pickle"
     shell:
         """
         echo "test assign inputs"
@@ -451,7 +456,7 @@ process 'map_element_barcodes' {
         cat ${count_bam}
 
         python ${"$baseDir"}/src/nf_ori_map_barcodes.py ${"$baseDir"} ${fastq_bc} ${count_fastq} \
-        $bam ${count_bam} ${params.out} ${mapq} ${baseq} ${cigar}
+        $bam ${count_bam} ${name} ${mapq} ${baseq} ${cigar}
         """
 }
 
@@ -462,21 +467,22 @@ process 'map_element_barcodes' {
 process 'filter_barcodes' {
     tag "$filter"
     label "shorttime"
-    publishDir params.outdir, mode:'copy'
+    publishDir "${params.outdir}/${params.name}", mode:'copy'
 
     conda 'conf/mpraflow_py36.yml'
 
     input:
         val(min_cov) from params.min_cov
-        val(out) from params.out
+        val(min_frac) from params.min_frac
+        val(out) from params.name
         file(map) from map_ch
         file(table) from count_table_ch
         file(label) from fixed_label
     output:
-        file "${params.out}_filtered_coords_to_barcodes.pickle"
-        file "${params.out}_original_counts.png"
+        file "${out}_filtered_coords_to_barcodes.pickle"
+        file "${out}_original_counts.png"
         file "original_count_summary.txt"
-        file "${params.out}_filtered_counts.png"
+        file "${out}_filtered_counts.png"
         file "filtered_count_summary.txt"
 
     shell:
