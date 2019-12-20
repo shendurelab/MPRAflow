@@ -28,3 +28,6 @@ input_files/
 #.nextflow.log
 #
 #.ipynb_checkpoints/
+
+# Sphinx documentation
+_build
