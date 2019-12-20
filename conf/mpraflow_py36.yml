@@ -1,4 +1,3 @@
-name: /fast/work/groups/ag_kircher/MPRA/MPRAflow/results/association/work/conda/mpraflow_py36-8ef4b6385d35543052a1f6cae3e9faf2
 channels:
   - conda-forge
   - bioconda
@@ -142,5 +141,3 @@ dependencies:
   - zict=1.0.0=py_0
   - zlib=1.2.11=h7b6447c_3
   - zstd=1.3.7=h0b5b093_0
-prefix: /fast/work/groups/ag_kircher/MPRA/MPRAflow/results/association/work/conda/mpraflow_py36-8ef4b6385d35543052a1f6cae3e9faf2
-
