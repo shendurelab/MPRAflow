@@ -15,8 +15,14 @@ args <- commandArgs(trailingOnly = TRUE)
 # condition
 cond=args[1]
 # labels
-label_f=as.data.frame(read.table(args[2],sep='\t',header=T,stringsAsFactors = F))
-colnames(label_f)=c('name','label')
+if (file.exists(args[2])) {
+  label_f=as.data.frame(read.table(args[2],sep='\t',header=T,stringsAsFactors = F))
+  colnames(label_f)=c('name','label')
+  useLabels=TRUE
+} else {
+  useLabels=FALSE
+}
+
 
 # replicates and count files
 num_replicates=((length(args)-2)/2)
@@ -51,10 +57,10 @@ if(data %>% nrow >1){
     data2<-data2 %>% filter(n_obs_bc > thresh, name != 'no_BC')
 
     res <- data1 %>% inner_join(data2,by=c('name'))
-    if (label_f$name[1] != 'na'){
+    if (useLabels){
       res <- res %>% inner_join(label_f, by=c('name'))
     } else {
-      res$label = 'na'
+      res$label = args[2]
     }
 
     dna_p <- ggplot(res, aes(log2(dna_count.x), log2(dna_count.y))) +
@@ -143,10 +149,10 @@ for(n in 1:(data%>%nrow)){
  colnames(all)=c('name','log2')
  print(head(all))
 
- if (label_f$name[1] != 'na'){
+ if (useLabels){
    all <- all %>% inner_join(label_f, by=c('name'))
  } else {
-   all$label = 'na'
+   all$label = args[2]
  }
 
  print('merged')
