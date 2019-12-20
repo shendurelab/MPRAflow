@@ -25,10 +25,10 @@ def helpMessage() {
     The typical command for running the pipeline is as follows:
     nextflow run main.nf
     Mandatory arguments:
-      --dir                         fasta directory (must be surrounded with quotes)
-      --association                 pickle dictionary from library association process
-      --design                      fasta of ordered insert sequences
-      --e, --experiment-file        experiment csv file
+      --dir                         Fasta directory (must be surrounded with quotes)
+      --association                 Pickle dictionary from library association process
+      --design                      Fasta of ordered insert sequences
+      --e, --experiment-file        Experiment csv file
 
     Options:
       --labels                      tsv with the oligo pool fasta and a group label (ex: positive_control), a single label will be applied if a file is not specified
@@ -102,9 +102,12 @@ if ( params.containsKey("association")){
 // label file saved in label_file
 if (params.containsKey("labels")){
     label_file=file(params.labels)
-    if (!label_file.exists()) exit 1, "Label file ${label_file} does not exist"
+    if (!label_file.exists()) {
+      println "Label file ${label_file} does not exist. Use NA as label!"
+      label_file=file("NA")
+    }
 } else {
-    label_file=null
+    label_file=file("NA")
 }
 
 // check if UMIs or not are present
@@ -214,27 +217,6 @@ try {
 }
 
 println 'start analysis'
-
-/*
-*MAKE LABEL FILE IF NOT PASSED
-*/
-
-if (label_file==null) {
-  process 'create_label' {
-      label 'shorttime'
-
-      input:
-          file designs from params.design_file
-      output:
-          file "label.txt" into label_file
-      // FIXME the -5 is a hack because the :001 :002,... ist not available anymore in the association file.
-      // We have to find a better solution for that!
-      shell:
-          """
-          awk -F'\t' 'BEGIN {OFS = FS} NR%2==1 {print substr(\$1,2,length(\$1)-5),"na"}' $designs > label.txt
-          """
-  }
-}
 
 /*
 * STEP 1: Create BAM files
@@ -400,7 +382,7 @@ process 'final_counts'{
     input:
         tuple val(cond), val(rep),val(type),val(datasetID),file(fc) from filter_ct
     output:
-        tuple val(cond), val(rep),val(type),val(datasetID),file("${datasetID}_counts.tsv") into final_count
+        tuple val(cond), val(rep),val(type),val(datasetID),file("${datasetID}_counts.tsv") into final_count, final_count_satMut
     script:
         if(params.no_umi)
             """
@@ -428,6 +410,27 @@ process 'final_counts'{
 /*
 * STEP 5: MPRAnalyze input generation (if option selected)
 */
+process 'dna_rna_merge_counts'{
+    publishDir "$params.outdir/$cond/$rep", mode:'copy'
+    label 'shorttime'
+
+    conda 'conf/mpraflow_py36.yml'
+
+    input:
+        tuple val(cond),val(rep),val(typeA),val(typeB),val(datasetIDA),val(datasetIDB),file(countA),file(countB) from final_count_satMut.groupTuple(by: [0,1]).map{i -> i.flatten()}
+    output:
+        tuple val(cond), val(rep), file("${cond}_${rep}_counts.tsv.gz") into merged_dna_rna
+    script:
+        def dna = typeA == 'DNA' ? countA : countB
+        def rna = typeA == 'DNA' ? countB : countA
+        """
+        join -1 1 -2 1 -t"\$(echo -e '\\t')" \
+        <( cat  $dna | awk 'BEGIN{ OFS="\\t" }{ print \$2,\$1 }' | sort ) \
+        <( cat $rna | awk 'BEGIN{ OFS="\\t" }{ print \$2, \$1 }' | sort) | \
+        gzip -c > ${cond}_${rep}_counts.tsv.gz
+        """
+}
+
 
 //MPRAnalyze option
 if(params.mpranalyze){
@@ -576,9 +579,10 @@ if(!params.mpranalyze){
         output:
             file "*.png"
             file "*_correlation.txt"
-        shell:
+        script:
+            def label = lab.exists() ? lab : lab.name
             """
-            Rscript ${"$baseDir"}/src/plot_perInsertCounts_correlation.R $cond $lab $pairlist $replicate
+            Rscript ${"$baseDir"}/src/plot_perInsertCounts_correlation.R $cond $label $pairlist $replicate
             """
     }
 
