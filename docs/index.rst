@@ -23,8 +23,9 @@ Project Information
 Quick Example
 -------------
 
-.. parsed-literal::
-  $  nextflow run count.nf --dir "fastQFolder" --experiment-file "experiment.csv" --design "design.fa" --association "bc_map.pickle" --m 1 -resume --mpranalyze --outdir "output"
+.. code-block:: bash
+
+    nextflow run count.nf --dir "fastQFolder" --experiment-file "experiment.csv" --design "design.fa" --association "bc_map.pickle" --m 1 -resume --mpranalyze --outdir "output"
 
 
 --------
@@ -80,6 +81,7 @@ Indices and tables
 
     association_example1
     count_example1
+    count_example2
     saturation_mutagenesis_example1
 
 

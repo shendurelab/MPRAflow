@@ -126,22 +126,22 @@ We created a conda environment to work with the actual documentation.
 
 Use the following steps for installing Sphinx and the dependencies for building the MPRAflow documentation:
 
-.. code-block:: console
+.. code-block:: bash
 
-    $ cd MPRAflow/docs
-    $ conda env create -f environment.yml -n sphinx
-    $ conda activate sphinx
+    cd MPRAflow/docs
+    conda env create -f environment.yml -n sphinx
+    conda activate sphinx
 
 Use the following for building the documentation.
 The first two lines is only required for loading the virtualenv.
 Afterwards, you can always use ``make html`` for building.
 
-.. code-block:: console
+.. code-block:: bash
 
-    $ cd MPRAflow/docs
-    $ conda activate sphinx
-    $ make html  # rebuild for changed files only
-    $ make clean && make html  # force rebuild
+    cd MPRAflow/docs
+    conda activate sphinx
+    make html  # rebuild for changed files only
+    make clean && make html  # force rebuild
 
 
 ------------
@@ -154,28 +154,28 @@ First, create your Documentation development setup.
 1. Fork the `MPRAflow` repo on GitHub.
 2. Clone your fork locally::
 
-    $ git clone git@github.com:your_name_here/MPRAflow.git
+    git clone git@github.com:your_name_here/MPRAflow.git
 
 3. Create a branch for local development::
 
-    $ git checkout -b name-of-your-bugfix-or-feature
+    git checkout -b name-of-your-bugfix-or-feature
 
    Now you can make your changes locally.
 
 5. When you're done making your changes, make sure that nextflow runs properly
    For nextflow:
 
-    $ nextflow run <your_nextflow_pipeline>
+    nextflow run <your_nextflow_pipeline>
 
    For documentation:
 
-    $ make clean && make html
+    make clean && make html
 
 6. Commit your changes and push your branch to GitHub::
 
-    $ git add <your_new_file> # or git stage <your_edited_file>
-    $ git commit -m "Your detailed description of your changes."
-    $ git push origin name-of-your-bugfix-or-feature
+    git add <your_new_file> # or git stage <your_edited_file>
+    git commit -m "Your detailed description of your changes."
+    git push origin name-of-your-bugfix-or-feature
 
 7. Submit a pull request through the GitHub website.
 

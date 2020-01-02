@@ -1,5 +1,5 @@
 =======================
-Count workflow example
+Count example
 =======================
 
 

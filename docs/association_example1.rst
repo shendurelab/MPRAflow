@@ -1,5 +1,5 @@
 =============================
-Association workflow example
+Association example
 =============================
 
 

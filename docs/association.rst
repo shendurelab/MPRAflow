@@ -1,5 +1,5 @@
 =====================
-Association workflow
+Association
 =====================
 
 .. todo::
