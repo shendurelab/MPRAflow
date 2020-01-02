@@ -6,8 +6,8 @@
 Merge/Adapter trim reads stored in BAM
 
 :Author: Martin Kircher
-:Contact: Martin.Kircher@eva.mpg.de
-:Date: *19.09.2011
+:Contact: martin.kircher@bihealth.de
+:Date: *19.04.2018
 :Type: tool
 :Input: BAM
 :Output: BAM
@@ -182,12 +182,12 @@ for filename in files:
       if options.verbose: sys.stderr.write("Creating: %s\n"%outfilename)
       outfile = pysam.Samfile( outfilename, fileflags, header = cheader)
 
-  bread = None
+  bread = pysam.AlignedRead()
   for read in infile:
-    if read.is_paired and bread == None:
+    if read.is_paired and bread.qname == "":
       bread = read
       continue
-    elif read.is_paired and bread != None:
+    elif read.is_paired and bread.qname != "":
       if read.qname == bread.qname:
         count_all += 1
         # SAVE SEQUENCES IN MERGING VARIABLES
@@ -345,7 +345,7 @@ for filename in files:
             if flag == '': count_nothing += 1
             outfile.write(bread)
             outfile.write(read)
-        bread = None
+        bread = pysam.AlignedRead()
       else:
         if options.verbose: 
           sys.stderr.write('Warning: Skipping read from incomplete pair\n')

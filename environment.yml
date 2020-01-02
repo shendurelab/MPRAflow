@@ -1,0 +1,22 @@
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - _libgcc_mutex=0.1=main
+  - ca-certificates=2019.11.27=0
+  - coreutils=8.25=1
+  - curl=7.67.0=hbc83047_0
+  - krb5=1.16.1=h173b8e3_7
+  - libcurl=7.67.0=h20c2e04_0
+  - libedit=3.1.20181209=hc058e9b_0
+  - libgcc=7.2.0=h69d50b8_2
+  - libgcc-ng=9.1.0=hdf63c60_0
+  - libssh2=1.8.2=h1ba5d50_0
+  - libstdcxx-ng=9.1.0=hdf63c60_0
+  - ncurses=6.1=he6710b0_1
+  - nextflow=19.10.0=hecc5488_0
+  - openjdk=8.0.152=h46b5887_1
+  - openssl=1.1.1d=h7b6447c_3
+  - tk=8.6.8=hbc83047_0
+  - zlib=1.2.11=h7b6447c_3
