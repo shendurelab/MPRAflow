@@ -1,4 +1,4 @@
-sic count workflow
+.. _Basic count workflow:
 
 .. role:: bash(code)
       :language: bash
