@@ -237,6 +237,7 @@ if (!params.no_umi) {
             !params.no_umi
         shell:
             """
+            #!/bin/bash
             echo $datasetID
 
             echo $r1_fastq
@@ -251,15 +252,7 @@ if (!params.no_umi) {
             echo \$bc_s
             echo \$umi
 
-            paste <( zcat $r1_fastq ) <(zcat $r3_fastq  ) <(zcat $r2_fastq ) | \
-            awk '{
-                if (NR % 4 == 2 || NR % 4 == 0) {
-                  print \$1\$2\$3
-                } else {
-                  print \$1
-                }}' | \
-            python ${"$baseDir"}/src/FastQ2doubleIndexBAM.py -p -s \$bc_s -l 0 -m \$umi --RG ${datasetID} | \
-            python ${"$baseDir"}/src/MergeTrimReadsBAM.py -p --mergeoverlap > ${datasetID}.bam
+            paste <( zcat $r1_fastq ) <( zcat $r3_fastq  ) <( zcat $r2_fastq ) | awk '{if (NR % 4 == 2 || NR % 4 == 0) {print \$1\$2\$3} else {print \$1}}' | python ${"$baseDir"}/src/FastQ2doubleIndexBAM.py -p -s \$bc_s -l 0 -m \$umi --RG ${datasetID} | python ${"$baseDir"}/src/MergeTrimReadsBAM.py -p --mergeoverlap > ${datasetID}.bam
             """
     }
 }
