@@ -92,7 +92,7 @@ Save it into the :code:`Count_Basic/data` folder under :code:`experiment.csv`.
 Run nextflow
 ------------------------------
 
-Now we have everything at hand to run the count MPRAflow pripeline. Therefore we have to be in the cloned MPRAflow folder. But we will change the working and output directory to the :code:`Count_TERT` folder. The MPRAflow count command is:
+Now we have everything at hand to run the count MPRAflow pripeline. Therefore we have to be in the cloned MPRAflow folder. But we will change the working and output directory to the :code:`Count_Basic` folder. The MPRAflow count command is:
 
 
 .. code-block:: bash
