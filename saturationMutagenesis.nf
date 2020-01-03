@@ -210,9 +210,26 @@ process 'statsWithCoefficient' {
   shell:
     """
     (
-      echo -e "#Position\\tBarcodes\\tDNA\\tRNA\\tCoefficient\\tStdError\\ttValue\\tpValue";
+      echo -e "Position\\tBarcodes\\tDNA\\tRNA\\tCoefficient\\tStdError\\ttValue\\tpValue";
       join -t"\$(echo -e '\\t')" <(sort $statsFile) <( sed s/^X//g $modelCoefFile | sort );
     ) > ${cond}_${rep}.${type}.ModelCoefficientsVsStats.txt;
+    """
+}
+
+process 'plotStatsWithCoefficient' {
+  publishDir "$params.outdir/$cond/$rep", mode:'copy'
+  label 'shorttime'
+
+  conda 'conf/mpraflow_r.yml'
+
+  input:
+    tuple val(cond), val(rep), val(type), file(results) from variantMatrixModelCoefficientsVsStats
+  output:
+    tuple val(cond), val(rep), val(type), file("${cond}.${type}.saturationMutagenesis.png") into satMutPlot
+  shell:
+    """
+    Rscript ${"$baseDir"}/src/satMut/plotElements.R $results ${cond}_${rep}.${type} 10 1e-5 ${cond}.${type}.saturationMutagenesis.png
+
     """
 }
 
@@ -223,12 +240,12 @@ process 'fitModelCombined' {
 
   conda 'conf/mpraflow_r.yml'
 
-    result = variantMatrixCombined.concat(variantMatrix1bpDelCombined).groupTuple(by: [0,2]).fork{i ->
-                              cond: i[0]
-                              type: i[2]
-                              replicate: i[1].join(" ")
-                              files: i[3]
-                            }
+  result = variantMatrixCombined.concat(variantMatrix1bpDelCombined).groupTuple(by: [0,2]).fork{i ->
+                            cond: i[0]
+                            type: i[2]
+                            replicate: i[1].join(" ")
+                            files: i[3]
+                          }
 
   input:
     val(cond) from result.cond
@@ -247,6 +264,8 @@ process 'fitModelCombined' {
 process 'combinedStats' {
   publishDir "$params.outdir/$cond", mode:'copy'
   label 'shorttime'
+
+  conda 'conf/mpraflow_r.yml'
 
   result = variantMatrixModelCoefficientsStatsForCombined.groupTuple(by: [0,2]).fork{i ->
                             cond: i[0]
@@ -288,8 +307,25 @@ process 'statsWithCoefficientCombined' {
   shell:
     """
     (
-      echo -e "#Position\\tBarcodes\\tDNA\\tRNA\\tCoefficient\\tStdError\\ttValue\\tpValue";
+      echo -e "Position\\tBarcodes\\tDNA\\tRNA\\tCoefficient\\tStdError\\ttValue\\tpValue";
       join -t"\$(echo -e '\\t')" <(sort $stat | sort) <( sed s/^X//g $model | sort );
     ) > ${cond}.Combined.${type}.ModelCoefficientsVsStats.txt;
+    """
+}
+
+
+process 'plotStatsWithCoefficientCombined' {
+  publishDir "$params.outdir/$cond", mode:'copy'
+  label 'shorttime'
+
+  conda 'conf/mpraflow_r.yml'
+
+  input:
+    tuple val(cond), val(type), file(results) from variantMatrixModelCoefficientsVsStatsCombined
+  output:
+    tuple val(cond), val(type), file("${cond}.Combined.${type}.saturationMutagenesis.png") into combinedSatMutPlot
+  shell:
+    """
+    Rscript ${"$baseDir"}/src/satMut/plotElements.R $results ${cond}.Combined.${type} 10 1e-5 ${cond}.Combined.${type}.saturationMutagenesis.png
     """
 }
