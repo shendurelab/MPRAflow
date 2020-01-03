@@ -25,11 +25,12 @@ def helpMessage() {
     Mandatory arguments:
       --dir                         Directory of count files (must be surrounded with quotes)
       --assignment                  Variant assignment file
-      --e, --experiment-file        experiment csv file`
+      --e, --experiment-file        Experiment csv file
 
     Options:
       --outdir                      The output directory where the results will be saved (default outs)
-      --thresh                      minimum number of observed barcodes to retain insert (default 10)
+      --thresh                      Minimum number of observed barcodes to retain variant (default 10)
+      --pvalue                      pValue cutoff for significant different cvariant effects. For variant effect plots only. (default 1e-5)
     """.stripIndent()
 }
 
@@ -48,6 +49,8 @@ if (params.containsKey('h') || params.containsKey('help')){
 //defaults
 results_path = params.outdir
 params.nf_required_version="19.10"
+params.thresh = 10
+params.pvalue = 1e-5
 
 // Validate Inputs
 
@@ -206,13 +209,42 @@ process 'statsWithCoefficient' {
   input:
     tuple val(cond), val(rep), val(type), file(modelCoefFile), file(statsFile) from variantMatrixModelCoefficientsStats
   output:
-    tuple val(cond), val(rep), val(type), file("${cond}_${rep}.${type}.ModelCoefficientsVsStats.txt") into variantMatrixModelCoefficientsVsStats
+    tuple val(cond), val(rep), val(type), file("${cond}_${rep}.${type}.ModelCoefficientsVsStats.txt") into variantMatrixModelCoefficientsVsStats, variantMatrixModelCoefficientsVsStats2
   shell:
     """
     (
       echo -e "Position\\tBarcodes\\tDNA\\tRNA\\tCoefficient\\tStdError\\ttValue\\tpValue";
       join -t"\$(echo -e '\\t')" <(sort $statsFile) <( sed s/^X//g $modelCoefFile | sort );
     ) > ${cond}_${rep}.${type}.ModelCoefficientsVsStats.txt;
+    """
+}
+
+List combinationsOf(List list, int r) {
+    assert (0..<list.size()).contains(r) // validate input
+    def combs = [] as Set
+    list.eachPermutation {
+        combs << it.subList(0, r).sort { a, b -> a <=> b }
+    }
+    combs as List
+}
+
+test = testIn.groupTuple(by: [0]).map{n -> [n[0],combinationsOf(n[1],2),combinationsOf(n[2],2)]}.transpose(by:[1,2])
+
+process 'plotCorrelation' {
+  publishDir "$params.outdir/$cond", mode:'copy'
+  label 'shorttime'
+
+  conda 'conf/mpraflow_r.yml'
+
+  result = variantMatrixModelCoefficientsVsStats2.groupTuple(by: [0,2]).map{n -> [n[0],n[2],combinationsOf(n[1],2),combinationsOf(n[3],2)]}.transpose(by:[2,3]).map{n -> [n[0],n[1],n[2][0],n[2][1],n[3][0],n[3][1]]}
+  input:
+    tuple val(cond), val(type), val(rep1), val(rep2), file(results1), file(results2) from result
+    val(thresh) from params.thresh
+  output:
+    tuple val(cond), val(type), file("${cond}.${type}.${rep1}_${rep2}.correlation.png") into correlations
+  shell:
+    """
+    Rscript ${"$baseDir"}/src/satMut/plotCorrelation.R $results1 $results2 ${cond}.${type}.Replicate_${rep1} ${cond}.${type}.Replicate_${rep2} "${cond}.${type}.${rep1}_${rep2}.correlation.png"
     """
 }
 
@@ -322,10 +354,12 @@ process 'plotStatsWithCoefficientCombined' {
 
   input:
     tuple val(cond), val(type), file(results) from variantMatrixModelCoefficientsVsStatsCombined
+    val(thresh) from params.thresh
+    val(pvalue) from params.pvalue
   output:
     tuple val(cond), val(type), file("${cond}.Combined.${type}.saturationMutagenesis.png") into combinedSatMutPlot
   shell:
     """
-    Rscript ${"$baseDir"}/src/satMut/plotElements.R $results ${cond}.Combined.${type} 10 1e-5 ${cond}.Combined.${type}.saturationMutagenesis.png
+    Rscript ${"$baseDir"}/src/satMut/plotElements.R $results ${cond}.Combined.${type} $thresh $pvalue ${cond}.Combined.${type}.saturationMutagenesis.png
     """
 }

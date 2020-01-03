@@ -26,9 +26,11 @@ def helpMessage() {
     nextflow run main.nf
     Mandatory arguments:
       --dir                         Fasta directory (must be surrounded with quotes)
-      --association                 Pickle dictionary from library association process
-      --design                      Fasta of ordered insert sequences
       --e, --experiment-file        Experiment csv file
+
+    Recommended (Needed for the full count workflow. Can be neglected when only counts for saturation mutagenesis are needed):
+      --design                      Fasta of ordered insert sequences.
+      --association                 Pickle dictionary from library association process.
 
     Options:
       --labels                      tsv with the oligo pool fasta and a group label (ex: positive_control), a single label will be applied if a file is not specified
@@ -87,16 +89,21 @@ if( !params.experiment_file.exists()) exit 1, "Experiment file ${params.experime
 if ( params.containsKey("design")){
     params.design_file=file(params.design)
     if( !params.design_file.exists() ) exit 1, "Design file ${params.design} does not exist"
+    if( !params.containsKey("association") ) exit 1, "Association file has to be specified with --association when using option --design"
+} else if (params.mpranalyze) {
+    exit 1, "Design file has to be specified with --association when using flag --mpranalyze"
 } else {
-    exit 1, "Design file not specified with --design"
+    log.info("Running MPRAflow count without design file.")
 }
 
 // Association file in params.association_file
-if ( params.containsKey("association")){
+if (params.containsKey("association")){
     params.association_file=file(params.association)
     if( !params.association_file.exists() ) exit 1, "Association pickle ${params.association_file} does not exist"
+} else if (params.mpranalyze) {
+    exit 1, "Association file has to be specified with --association when using flag --mpranalyze"
 } else {
-    exit 1, "Association file not specified with --association"
+    log.info("Running MPRAflow count without association file.")
 }
 
 // label file saved in label_file
@@ -528,7 +535,7 @@ if(params.mpranalyze){
 * STEP 5: Merge each DNA and RNA file label with sequence and insert and normalize
 */
 //merge and normalize
-if(!params.mpranalyze){
+if(!params.mpranalyze && params.containsKey("association")){
 
     process 'dna_rna_merge'{
         label 'longtime'
