@@ -7,7 +7,7 @@
 Basic association workflow
 ============================
 
-This example runs the association workflow on 5'/5' WT MRPA data in the HEPG2 cell line from `Klein J., Agarwal, V., Keith, A., et al. 2019 < https://www.biorxiv.org/content/10.1101/576405v1.full.pdf>`_. 
+This example runs the association workflow on 5'/5' WT MRPA data in the HEPG2 cell line from `Klein J., Agarwal, V., Keith, A., et al. 2019 <https://www.biorxiv.org/content/10.1101/576405v1.full.pdf>`_. 
 
 Prerequirements
 ======================
