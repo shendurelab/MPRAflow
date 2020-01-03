@@ -28,7 +28,7 @@ Reads
 
 We have two conditions (HEK293T and GBM cells). Each of them has three technical replicates and one replicate exists of forward, reverse and index reads for DNA and RNA. These data has to be downloaded. All data is public available on the short read archive (SRA). We will use the SRA-tools to download the reads.
 
-.. note:: You need at least XX GB disk space to download the data!
+.. note:: You need 16 GB disk space to download the data!
 
 .. code-block:: bash
 
@@ -52,7 +52,69 @@ the folder should look like this:
 
 .. code-block:: text
 
-    tree data
+    data
+    ├── SRR8647059_1.fastq.gz
+    ├── SRR8647059_2.fastq.gz
+    ├── SRR8647059_3.fastq.gz
+    ├── SRR8647060_1.fastq.gz
+    ├── SRR8647060_2.fastq.gz
+    ├── SRR8647060_3.fastq.gz
+    ├── SRR8647061_1.fastq.gz
+    ├── SRR8647061_2.fastq.gz
+    ├── SRR8647061_3.fastq.gz
+    ├── SRR8647062_1.fastq.gz
+    ├── SRR8647062_2.fastq.gz
+    ├── SRR8647062_3.fastq.gz
+    ├── SRR8647063_1.fastq.gz
+    ├── SRR8647063_2.fastq.gz
+    ├── SRR8647063_3.fastq.gz
+    ├── SRR8647064_1.fastq.gz
+    ├── SRR8647064_2.fastq.gz
+    ├── SRR8647064_3.fastq.gz
+    ├── SRR8647119_1.fastq.gz
+    ├── SRR8647119_2.fastq.gz
+    ├── SRR8647119_3.fastq.gz
+    ├── SRR8647120_1.fastq.gz
+    ├── SRR8647120_2.fastq.gz
+    ├── SRR8647120_3.fastq.gz
+    ├── SRR8647120_4.fastq.gz
+    ├── SRR8647121_1.fastq.gz
+    ├── SRR8647121_2.fastq.gz
+    ├── SRR8647121_3.fastq.gz
+    ├── SRR8647122_1.fastq.gz
+    ├── SRR8647122_2.fastq.gz
+    ├── SRR8647122_3.fastq.gz
+    ├── SRR8647122_4.fastq.gz
+    ├── SRR8647123_1.fastq.gz
+    ├── SRR8647123_2.fastq.gz
+    ├── SRR8647123_3.fastq.gz
+    ├── SRR8647124_1.fastq.gz
+    ├── SRR8647124_2.fastq.gz
+    ├── SRR8647124_3.fastq.gz
+    ├── SRR8647124_4.fastq.gz
+    ├── SRR8647125_1.fastq.gz
+    ├── SRR8647125_2.fastq.gz
+    ├── SRR8647125_3.fastq.gz
+    ├── SRR8647126_1.fastq.gz
+    ├── SRR8647126_2.fastq.gz
+    ├── SRR8647126_3.fastq.gz
+    ├── SRR8647126_4.fastq.gz
+    ├── SRR8647127_1.fastq.gz
+    ├── SRR8647127_2.fastq.gz
+    ├── SRR8647127_3.fastq.gz
+    ├── SRR8647128_1.fastq.gz
+    ├── SRR8647128_2.fastq.gz
+    ├── SRR8647128_3.fastq.gz
+    ├── SRR8647128_4.fastq.gz
+    ├── SRR8647129_1.fastq.gz
+    ├── SRR8647129_2.fastq.gz
+    ├── SRR8647129_3.fastq.gz
+    ├── SRR8647130_1.fastq.gz
+    ├── SRR8647130_2.fastq.gz
+    ├── SRR8647130_3.fastq.gz
+    └── SRR8647130_4.fastq.gz
+
+    0 directories, 60 files
 
 
 
@@ -80,19 +142,17 @@ Here is an overview of the files:
 
 .. code-block:: bash
 
-
-
 Also two different sequencing runs where made in condition TERT-HEK. Therefore We have to combine the reads:
 
 .. code-block:: bash
 
     for i in 1 2 3; do
-       zcat {SRR8647119,SRR8647120}_$i.fastq.gz | gzip -c > SRR8647119_SRR8647120_$i.fastq.gz;
-       zcat {SRR8647121,SRR8647122}_$i.fastq.gz | gzip -c > SRR8647121_SRR8647122_$i.fastq.gz;
-       zcat {SRR8647123,SRR8647124}_$i.fastq.gz | gzip -c > SRR8647123_SRR8647124_$i.fastq.gz;
-       zcat {SRR8647125,SRR8647126}_$i.fastq.gz | gzip -c > SRR8647125_SRR8647126_$i.fastq.gz;
-       zcat {SRR8647127,SRR8647128}_$i.fastq.gz | gzip -c > SRR8647127_SRR8647128_$i.fastq.gz;
-       zcat {SRR8647129,SRR8647130}_$i.fastq.gz | gzip -c > SRR8647129_SRR8647130_$i.fastq.gz;
+       zcat data/{SRR8647119,SRR8647120}_$i.fastq.gz | gzip -c > data/SRR8647119_SRR8647120_$i.fastq.gz;
+       zcat data/{SRR8647121,SRR8647122}_$i.fastq.gz | gzip -c > data/SRR8647121_SRR8647122_$i.fastq.gz;
+       zcat data/{SRR8647123,SRR8647124}_$i.fastq.gz | gzip -c > data/SRR8647123_SRR8647124_$i.fastq.gz;
+       zcat data/{SRR8647125,SRR8647126}_$i.fastq.gz | gzip -c > data/SRR8647125_SRR8647126_$i.fastq.gz;
+       zcat data/{SRR8647127,SRR8647128}_$i.fastq.gz | gzip -c > data/SRR8647127_SRR8647128_$i.fastq.gz;
+       zcat data/{SRR8647129,SRR8647130}_$i.fastq.gz | gzip -c > data/SRR8647129_SRR8647130_$i.fastq.gz;
     done
 
 MPRAflow
@@ -100,31 +160,42 @@ MPRAflow
 
 Now we are close to start MPRAflow and count the number of barcodes. But before we need to generate an environment csv file to tell nextflow the conditions, replicates and the corresponding reads.
 
-Create environment.csv
+Create experiment.csv
 ---------------------------
 
-Our environment file looks exactly like this:
+Our experiment file looks exactly like this:
 
 .. code-block:: text
 
-  Condition,Replicate,DNA_R1,DNA_R2,DNA_R3,RNA_R1,RNA_R2,RNA_R3
-  TERT-GBM, 1, SRR8647059_1.fastq.gz,SRR8647059_2.fastq.gz,SRR8647059_3.fastq.gz, SRR8647062_1.fastq.gz,SRR8647062_2.fastq.gz,SRR8647062_3.fastq.gz
-  TERT-GBM, 2, SRR8647060_1.fastq.gz,SRR8647060_2.fastq.gz,SRR8647060_3.fastq.gz, SRR8647063_1.fastq.gz,SRR8647063_2.fastq.gz,SRR8647063_3.fastq.gz
-  TERT-GBM, 3, SRR8647061_1.fastq.gz,SRR8647061_2.fastq.gz,SRR8647061_3.fastq.gz, SRR8647064_1.fastq.gz,SRR8647064_2.fastq.gz,SRR8647064_3.fastq.gz
-  TERT-HEK, 1,
-  TERT-HEK, 2,
-  TERT-HEK, 3,
+    Condition,Replicate,DNA_R1,DNA_R2,DNA_R3,RNA_R1,RNA_R2,RNA_R3
+    TERT-GBM,1,SRR8647059_1.fastq.gz,SRR8647059_2.fastq.gz,SRR8647059_3.fastq.gz,SRR8647062_1.fastq.gz,SRR8647062_2.fastq.gz,SRR8647062_3.fastq.gz
+    TERT-GBM,2,SRR8647060_1.fastq.gz,SRR8647060_2.fastq.gz,SRR8647060_3.fastq.gz,SRR8647063_1.fastq.gz,SRR8647063_2.fastq.gz,SRR8647063_3.fastq.gz
+    TERT-GBM,3,SRR8647061_1.fastq.gz,SRR8647061_2.fastq.gz,SRR8647061_3.fastq.gz,SRR8647064_1.fastq.gz,SRR8647064_2.fastq.gz,SRR8647064_3.fastq.gz
+    TERT-HEK,1,SRR8647119_SRR8647120_1.fastq.gz,SRR8647119_SRR8647120_2.fastq.gz,SRR8647119_SRR8647120_3.fastq.gz,SRR8647125_SRR8647126_1.fastq.gz,SRR8647125_SRR8647126_2.fastq.gz,SRR8647125_SRR8647126_3.fastq.gz
+    TERT-HEK,2,SRR8647121_SRR8647122_1.fastq.gz,SRR8647121_SRR8647122_2.fastq.gz,SRR8647121_SRR8647122_3.fastq.gz,SRR8647127_SRR8647128_1.fastq.gz,SRR8647127_SRR8647128_2.fastq.gz,SRR8647127_SRR8647128_3.fastq.gz
+    TERT-HEK,3,SRR8647123_SRR8647124_1.fastq.gz,SRR8647123_SRR8647124_2.fastq.gz,SRR8647123_SRR8647124_3.fastq.gz,SRR8647129_SRR8647130_1.fastq.gz,SRR8647129_SRR8647130_2.fastq.gz,SRR8647129_SRR8647130_3.fastq.gz
 
-Save it into the :code:`Count_TERT/data` folder under :code:`environment.csv`
+Save it into the :code:`Count_TERT/data` folder under :code:`experiment.csv`.
 
 Run nextflow
 ------------------------------
+
+Now we have everything at hand to run the count MPRAflow pripeline. Therefore we have to be in the cloned MPRAflow folder. But we will change the working and output directory to the :code:`Count_TERT` folder. The MPRAflow count command is:
+
+
+.. code-block:: bash
+
+    cd <path/to/MPRAflow>/MPRAflow
+    conda activate MPRAflow
+    nextflow run -resume -w <path/to/TERT>/Count_TERT/work  count.nf --experiment-file "<path/to/TERT>/Count_TERT/data/experiment.csv" --dir "<path/to/TERT>/Count_TERT/data" --outdir "<path/to/TERT>/Count_TERT/output"
+
+.. note:: Please check your :code:`nextflow.config` file if it is correctly configured (e.g. with your SGE cluster commands).
+
+If everything works fine the following 5 processes will run: :code:`create_BAM (make idx)` :code_`raw_counts`, :code:`filter_counts`, :code:`final_counts`, :code:`dna_rna_merge_counts`.
+
 
 
 Results
 -----------------
 
-
-
-.. todo::
-  add count satMut example
+All needed output files will be in the :code:`Count_TERT/output` folder. In this tutorial we are only interested in the counts per barcode, because we can use these outputs in the :ref:`Saturation mutagenesis of the TERT promoter` tutorial.
