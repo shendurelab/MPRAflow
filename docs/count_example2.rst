@@ -180,14 +180,14 @@ Save it into the :code:`Count_TERT/data` folder under :code:`experiment.csv`.
 Run nextflow
 ------------------------------
 
-Now we have everything at hand to run the count MPRAflow pripeline. Therefore we have to be in the cloned MPRAflow folder. But we will change the working and output directory to the TERT folder. The MPRAflow count command is:
+Now we have everything at hand to run the count MPRAflow pripeline. Therefore we have to be in the cloned MPRAflow folder. But we will change the working and output directory to the :code:`Count_TERT` folder. The MPRAflow count command is:
 
 
 .. code-block:: bash
 
     cd <path/to/MPRAflow>/MPRAflow
     conda activate MPRAflow
-    nextflow run -resume -w <path/to/TERT>/TERT/work  count.nf --experiment-file "<path/to/TERT>/data/experiment.csv" --dir "<path/to/TERT>/data" --outdir "<path/to/TERT>/output"
+    nextflow run -resume -w <path/to/TERT>/Count_TERT/work  count.nf --experiment-file "<path/to/TERT>/Count_TERT/data/experiment.csv" --dir "<path/to/TERT>/Count_TERT/data" --outdir "<path/to/TERT>/Count_TERT/output"
 
 .. note:: Please check your :code:`nextflow.config` file if it is correctly configured (e.g. with your SGE cluster commands).
 
@@ -198,4 +198,4 @@ If everything works fine the following 5 processes will run: :code:`create_BAM (
 Results
 -----------------
 
-All needed output files will be in the :code:`TERT/output` folder. In this tutorial we are only interested in the counts per barcode, because we can use these outputs in the :ref:`Saturation mutagenesis of the TERT promoter` tutorial.
+All needed output files will be in the :code:`Count_TERT/output` folder. In this tutorial we are only interested in the counts per barcode, because we can use these outputs in the :ref:`Saturation mutagenesis of the TERT promoter` tutorial.
