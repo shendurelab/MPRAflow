@@ -206,9 +206,14 @@ if (params.label_file != null) {
             file "design_rmIllegalChars.fa" into fixed_design
         shell:
             """
+            #!/bin/bash
             ## Get rid of illegal regex characters
-            awk '{gsub(/[\\[/\\]],"_")}1' $labels > label_rmIllegalChars.txt
-            awk '{gsub(/[\\[/\\]],"_")}1' $design > design_rmIllegalChars.fa
+            awk '{gsub(/\\[/,"_")}1' $labels > t_new_label.txt
+            awk '{gsub(/\\]/,"_")}1' t_new_label.txt > label_rmIllegalChars.txt
+            
+            
+            awk '{gsub(/\\[/,"_")}1' $design > t_new_design.txt
+            awk '{gsub(/\\]/,"_")}1' t_new_design.txt > design_rmIllegalChars.fa
 
             zcat $fastq_bc | wc -l  > count_fastq.txt
             """
@@ -235,10 +240,15 @@ if (params.label_file == null) {
             file "design_rmIllegalChars.fa" into fixed_design
         shell:
             """
+            #!/bin/bash
             #CREATE LABEL FILE and remove illegal regex characters
             awk -F'\t' 'BEGIN {OFS = FS} NR%2==1 {print substr(\$1,2,length(\$1)),"na"}' $design |
-            awk '{gsub(/[\\[/\\]]/,"_")}1' > label_rmIllegalChars.txt
-            awk '{gsub(/[\\[/\\]]/,"_")}1' $design > design_rmIllegalChars.fa
+            awk '{gsub(/\\[/,"_")}1' $labels > t_new_label.txt
+            awk '{gsub(/\\]/,"_")}1' t_new_label.txt > label_rmIllegalChars.txt
+
+
+            awk '{gsub(/\\[/,"_")}1' $design > t_new_design.txt
+            awk '{gsub(/\\]/,"_")}1' t_new_design.txt > design_rmIllegalChars.fa
 
             zcat $fastq_bc | wc -l  > count_fastq.txt
             """
@@ -270,6 +280,7 @@ process 'create_BWA_ref' {
         file "${design}.dict" into reference_dict
     shell:
         """
+        #!/bin/bash
         bwa index -a bwtsw $design
         samtools faidx $design
         picard CreateSequenceDictionary REFERENCE=$design OUTPUT=$design".dict"
