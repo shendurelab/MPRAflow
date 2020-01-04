@@ -20,6 +20,18 @@ Installation of MPRAflow
 
 Please install conda, the MPRAflow environment and clone the actual MPRAflow master branch. You will find more help under :ref:`Installation`.
 
+Meta Data
+___________
+
+It is necessary to get the ordered oligo array so that each enhancer sequence can be labeled in the analysis and to trim any adaptors still in the sequence, in this case we trim off 15bp from the end of each sequence
+
+.. code-block:: bash
+    mkdir -p Assoc_Basic/data
+    cd Assoc_Basic/data
+    wget ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM4237nnn/GSM4237954/suppl/GSM4237954_9MPRA_elements.fa.gz
+    
+    zcat GSM4237954_9MPRA_elements.fa.gz |awk '{ count+=1; if (count == 1) { print } else { print substr($1,1,171)}; if (count == 2) { count=0 } }' > design.fa
+    
 Reads
 ----------
 
@@ -30,7 +42,6 @@ There is one set of association sequencing for this data, which contains a forwa
 .. code-block:: bash
 
     conda install sra-tools
-    mkdir -p Assoc_Basic/data
     cd Assoc_Basic/data
     fastq-dump --gzip --split-files SRR10800986
     cd ..
