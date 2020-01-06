@@ -35,6 +35,8 @@ def helpMessage() {
     Options:
       --labels                      tsv with the oligo pool fasta and a group label (ex: positive_control), a single label will be applied if a file is not specified
       --outdir                      The output directory where the results will be saved (default outs)
+      --bc-length                   Barcode length (default 15)
+      --umi-length                  UMI length (default 10)
       --no-umi                      Use this flag if no UMI is present in the experiment (default with UMI)
       --merge_intersect             Only retain barcodes in RNA and DNA fraction (TRUE/FALSE, default: FALSE)
       --mpranalyze                  Only generate MPRAnalyze outputs
@@ -119,10 +121,22 @@ if (params.containsKey("labels")){
 
 // check if UMIs or not are present
 if (params.containsKey("no-umi")){
-    println "params.no_umi"
     params.no_umi = true
 } else {
     params.no_umi = false
+}
+
+// BC length
+if (params.containsKey("bc-length")){
+    params.bc_length = params["bc-length"]
+} else {
+    params.bc_length = 15
+}
+// UMI length
+if (params.containsKey("umi-length")){
+    params.umi_length = params["umi-length"]
+} else {
+    params.umi_length = 10
 }
 
 // Create FASTQ channels
@@ -202,6 +216,7 @@ summary['Experiment File']  = params.experiment_file
 summary['design file']      = params.design_file
 summary['reads']            = (params.no_umi ? reads_noUMI : reads)
 summary['UMIs']             = (params.no_umi ? "Reads without UMI" : "Reads with UMI")
+summary['BC length']        = params.bc_length
 summary['BC threshold']     = params.thresh
 summary['mprAnalyze']       = params.mpranalyze
 
@@ -238,10 +253,9 @@ if (!params.no_umi) {
 
         input:
             tuple val(cond), val(rep), val(type),val(datasetID), file(r1_fastq), file(r2_fastq), file(r3_fastq) from reads
+            val(bc_length) from params.bc_length
         output:
             tuple val(cond), val(rep), val(type),val(datasetID),file("${datasetID}.bam") into clean_bam
-        when:
-            !params.no_umi
         shell:
             """
             #!/bin/bash
@@ -251,7 +265,8 @@ if (!params.no_umi) {
             echo $r2_fastq
             echo $r3_fastq
 
-            bc_s=`zcat $r1_fastq | head -2 | tail -1 | wc -c`
+            bc_length=$bc_length
+            bc_s=\$(expr \$((\$bc_length+1)))
 
             umi_t=`zcat $r2_fastq | head -2 | tail -1 | wc -c`
             umi=\$(expr \$((\$umi_t-1)))
@@ -274,6 +289,7 @@ if (params.no_umi) {
 
         input:
             tuple val(cond), val(rep),val(type),val(datasetID),file(r1_fastq), file(r3_fastq) from reads_noUMI
+            val(bc_length) from params.bc_length
         output:
             tuple val(cond), val(rep),val(type),val(datasetID),file("${datasetID}.bam") into clean_bam
         when:
@@ -285,7 +301,8 @@ if (params.no_umi) {
             echo $r1_fastq
             echo $r3_fastq
 
-            bc_s=`zcat $r1_fastq | head -2 | tail -1 | wc -c`
+            bc_length=$bc_length
+            bc_s=\$(expr \$((\$bc_length+1)))
 
             echo \$bc_s
 
@@ -316,6 +333,7 @@ process 'raw_counts'{
 
     input:
         tuple val(cond), val(rep),val(type),val(datasetID),file(bam) from clean_bam
+        val(umi_length) from params.umi_length
     output:
         tuple val(cond), val(rep),val(type),val(datasetID),file("${datasetID}_raw_counts.tsv.gz") into raw_ct
     script:
@@ -335,7 +353,7 @@ process 'raw_counts'{
 
             samtools view -F -r $bam | \
             awk -v 'OFS=\t' '{ for (i=12; i<=NF; i++) {
-              if (\$i ~ /^XJ:Z:/) print \$10,substr(\$i,6,16)
+              if (\$i ~ /^XJ:Z:/) print \$10,substr(\$i,6,$umi_length)
             }}' | \
             sort | uniq -c | \
             awk -v 'OFS=\t' '{ print \$2,\$3,\$1 }' | \
@@ -348,8 +366,6 @@ process 'raw_counts'{
 * STEP 3: Filter counts for correct barcode length
 */
 
-bc_length=Channel.from{15}
-
 process 'filter_counts'{
     label 'shorttime'
     publishDir "$params.outdir/$cond/$rep"
@@ -358,11 +374,12 @@ process 'filter_counts'{
 
     input:
         tuple val(cond), val(rep),val(type),val(datasetID),file(rc) from raw_ct
+        val(bcLength) from params.bc_length
     output:
         tuple val(cond), val(rep),val(type),val(datasetID),file("${datasetID}_filtered_counts.tsv.gz") into filter_ct
     shell:
         """
-        bc=15
+        bc=$bcLength
         echo \$bc
         zcat $rc | grep -v "N" | \
         awk -v var="\$bc" -v 'OFS=\t' '{ if (length(\$1) == var) { print } }' | \
