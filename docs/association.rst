@@ -4,7 +4,7 @@
 Association
 =====================
 
-.. image:: https://github.com/shendurelab/MPRAflow/blob/master/MPRA_nextflow.png
+.. image:: https://github.com/shendurelab/MPRAflow/blob/master/association_util.pdf
 
 Input files
 ===============
