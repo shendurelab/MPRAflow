@@ -4,7 +4,7 @@
 Saturation mutagenesis
 ================================
 
-.. figure:: https://github.com/shendurelab/MPRAflow/blob/master/SaturationMut_util.png
+.. figure:: https://github.com/shendurelab/MPRAflow/blob/master/SaturationMut.png
 
 
 Input files
