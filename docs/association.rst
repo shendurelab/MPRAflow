@@ -17,7 +17,7 @@ Experiment file
 ---------------------
 
 
-Count.nf
+association.nf
 ============================
 
 Options
