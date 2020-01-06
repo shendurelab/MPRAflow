@@ -158,7 +158,7 @@ Also two different sequencing runs where made in condition TERT-HEK. Therefore W
 MPRAflow
 =================================
 
-Now we are close to start MPRAflow and count the number of barcodes. But before we need to generate an environment csv file to tell nextflow the conditions, replicates and the corresponding reads.
+Now we are close to start MPRAflow and count the number of barcodes. But before we need to generate an :code:`environment.csv` file to tell nextflow the conditions, replicates and the corresponding reads.
 
 Create experiment.csv
 ---------------------------
@@ -180,22 +180,77 @@ Save it into the :code:`Count_TERT/data` folder under :code:`experiment.csv`.
 Run nextflow
 ------------------------------
 
-Now we have everything at hand to run the count MPRAflow pripeline. Therefore we have to be in the cloned MPRAflow folder. But we will change the working and output directory to the :code:`Count_TERT` folder. The MPRAflow count command is:
+Now we have everything at hand to run the count MPRAflow pripeline. Therefore we have to be in the cloned MPRAflow folder. But we will change the working and output directory to the :code:`Count_TERT` folder. For the TERT example the barcode length is 20 bp and the UMI length 10. The MPRAflow count command is:
 
 
 .. code-block:: bash
 
     cd <path/to/MPRAflow>/MPRAflow
     conda activate MPRAflow
-    nextflow run -resume -w <path/to/TERT>/Count_TERT/work  count.nf --experiment-file "<path/to/TERT>/Count_TERT/data/experiment.csv" --dir "<path/to/TERT>/Count_TERT/data" --outdir "<path/to/TERT>/Count_TERT/output"
+    nextflow run -resume -w <path/to/TERT>/Count_TERT/work  count.nf --experiment-file "<path/to/TERT>/Count_TERT/data/experiment.csv" --dir "<path/to/TERT>/Count_TERT/data" --outdir "<path/to/TERT>/Count_TERT/output" --bc-length 20 --umi-length 10
 
 .. note:: Please check your :code:`nextflow.config` file if it is correctly configured (e.g. with your SGE cluster commands).
 
-If everything works fine the following 5 processes will run: :code:`create_BAM (make idx)` :code_`raw_counts`, :code:`filter_counts`, :code:`final_counts`, :code:`dna_rna_merge_counts`.
+If everything works fine the following 5 processes will run: :code:`create_BAM (make idx)` :code:`raw_counts`, :code:`filter_counts`, :code:`final_counts`, :code:`dna_rna_merge_counts`.
 
+..code-block:: text
+
+    [49/53495c] process > create_BAM (make idx)    [100%] 12 of 12 ✔
+    [92/f2a68d] process > raw_counts (12)          [100%] 12 of 12 ✔
+    [af/398836] process > filter_counts (12)       [100%] 12 of 12 ✔
+    [63/fb29b6] process > final_counts (12)        [100%] 12 of 12 ✔
+    [75/f412e8] process > dna_rna_merge_counts (5) [100%] 6 of 6 ✔
+    Completed at: 03-Jan-2020 19:55:10
+    Duration    : 6h 16m 17s
+    CPU hours   : 34.6
+    Succeeded   : 54
 
 
 Results
 -----------------
 
 All needed output files will be in the :code:`Count_TERT/output` folder. In this tutorial we are only interested in the counts per barcode, because we can use these outputs in the :ref:`Saturation mutagenesis of the TERT promoter` tutorial.
+
+.. code-block:: bash
+
+    cd <path/to/TERT>/Count_TERT
+    tree output -P "*[123]_counts.tsv.gz"
+
+.. code-block:: text
+
+    output
+    ├── TERT-GBM
+    │   ├── 1
+    │   │   └── TERT-GBM_1_counts.tsv.gz
+    │   ├── 2
+    │   │   └── TERT-GBM_2_counts.tsv.gz
+    │   └── 3
+    │       └── TERT-GBM_3_counts.tsv.gz
+    └── TERT-HEK
+        ├── 1
+        │   └── TERT-HEK_1_counts.tsv.gz
+        ├── 2
+        │   └── TERT-HEK_2_counts.tsv.gz
+        └── 3
+            └── TERT-HEK_3_counts.tsv.gz
+
+    8 directories, 6 files
+
+The count files are tab separated and contain the barcode, the number number of unique UMI DNA counts and teh umber of unique RNA counts. E.g. this is an example count file:
+
+.. code-block:: bash
+
+     zcat output/TERT-GBM/1/TERT-GBM_1_counts.tsv.gz | head
+
+.. code-block:: text
+
+    AAAAAAAAAAAAAAA 2       76
+    AAAAAAAAAAAAAAC 1       2
+    AAAAAAAAAAAAAAT 1       7
+    AAAAAAAAAAAAAGA 1       5
+    AAAAAAAAAAAAATA 2       7
+    AAAAAAAAAAAAATG 2       6
+    AAAAAAAAAAAAATT 1       2
+    AAAAAAAAAAAATGA 3       1
+    AAAAAAAAAAAATGG 1       3
+    AAAAAAAAAAAATTA 1       2

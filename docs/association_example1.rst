@@ -7,7 +7,7 @@
 Basic association workflow
 ============================
 
-This example runs the association workflow on 5'/5' WT MRPA data in the HEPG2 cell line from `Klein J., Agarwal, V., Keith, A., et al. 2019 <https://www.biorxiv.org/content/10.1101/576405v1.full.pdf>`_. 
+This example runs the association workflow on 5'/5' WT MRPA data in the HEPG2 cell line from `Klein J., Agarwal, V., Keith, A., et al. 2019 <https://www.biorxiv.org/content/10.1101/576405v1.full.pdf>`_.
 
 Prerequirements
 ======================
@@ -26,12 +26,13 @@ ___________
 It is necessary to get the ordered oligo array so that each enhancer sequence can be labeled in the analysis and to trim any adaptors still in the sequence, in this case we trim off 15bp from the end of each sequence
 
 .. code-block:: bash
+
     mkdir -p Assoc_Basic/data
     cd Assoc_Basic/data
     wget ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM4237nnn/GSM4237954/suppl/GSM4237954_9MPRA_elements.fa.gz
-    
+
     zcat GSM4237954_9MPRA_elements.fa.gz |awk '{ count+=1; if (count == 1) { print } else { print substr($1,1,171)}; if (count == 2) { count=0 } }' > design.fa
-    
+
 Reads
 ----------
 
@@ -57,7 +58,7 @@ With
 
 the folder should look like this:
 
-.. code-black:: text
+.. code-block:: text
 
     data
 
@@ -73,7 +74,7 @@ Here is an overview of the files:
 MPRAflow
 =================================
 
-Now we are ready to run MPRAflow and create CRS-barcode mappings. 
+Now we are ready to run MPRAflow and create CRS-barcode mappings.
 
 Run nextflow
 ------------------------------
@@ -95,7 +96,4 @@ If everything works fine the following 7 processes will run: :code:`count_bc_nol
 Results
 -----------------
 
-All needed output files will be in the :code:`Assoc_Basic/output` folder. 
-
-
-
+All needed output files will be in the :code:`Assoc_Basic/output` folder.
