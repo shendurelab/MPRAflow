@@ -236,7 +236,7 @@ All needed output files will be in the :code:`Count_TERT/output` folder. In this
 
     8 directories, 6 files
 
-The count files are tab separated and contain the barcode, the number number of unique UMI DNA counts and teh umber of unique RNA counts. E.g. this is an example count file:
+The count files are tab separated and contain the barcode, the number number of unique UMI DNA counts and the umber of unique RNA counts. E.g. this is an example count file:
 
 .. code-block:: bash
 

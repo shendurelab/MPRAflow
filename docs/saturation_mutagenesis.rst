@@ -1,3 +1,5 @@
+.. _Saturation mutagenesis:
+
 ================================
 Saturation mutagenesis
 ================================
