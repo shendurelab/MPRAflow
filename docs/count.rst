@@ -4,6 +4,8 @@
 Count
 =====================
 
+.. figure:: https://github.com/shendurelab/MPRAflow/blob/master/Count_util.png
+
 Input files
 ===============
 
