@@ -4,6 +4,8 @@
 Association
 =====================
 
+![MPRA_nextflow](https://github.com/shendurelab/MPRAflow/blob/master/MPRA_nextflow.png)
+
 Input files
 ===============
 
