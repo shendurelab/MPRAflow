@@ -1,4 +1,5 @@
 library(dplyr)
+library(tidyr)
 library(ggplot2)
 
 args <- commandArgs(trailingOnly = TRUE)
@@ -19,8 +20,7 @@ standard_style <- theme_bw() + theme( plot.title = element_text(size = size.titl
 colours=c("#333399","#339966")
 
 readData <- function(file, name, threshold) {
-
-  data <- read.table(args[1],as.is=T,header=T,sep="\t") %>%
+  data <- read.table(file,as.is=T,header=T,sep="\t") %>%
             separate('Position', c("Position","Ref","Alt"), sep = "([\\_\\.])") %>%
             mutate(Alt = if_else(Alt == 'd', '-', Alt)) %>%
             mutate(Type=if_else(Alt=="-","1 bp deletions", "SNVs")) %>%
@@ -31,7 +31,7 @@ readData <- function(file, name, threshold) {
 }
 
 getPlot <- function(file1,file2, name1,name2, threshold) {
-  data <- readData(file1,name1,threshold) %>% inner_join(readData(file2,name2,threshold),by=c("Positions","Ref, Alt","Type"))
+  data <- readData(file1,name1,threshold) %>% inner_join(readData(file2,name2,threshold),by=c("Position", "Ref", "Alt", "Type"))
 
   correlation <- round(cor.test(data$Coefficient.x,data$Coefficient.y)$estimate,3)
 
@@ -48,11 +48,11 @@ file1 <- args[1]
 file2 <- args[2]
 name1 <- args[3]
 name2 <- args[4]
-threshold <- args[5]
+threshold <- as.double(args[5])
 
 output <- args[6]
 
 p <- getPlot(file1,file2,name1,name2,threshold)
 
 
-ggsave(output,plot=p,height=10,width=10)
+ggsave(output,plot=p,height=20,width=20)

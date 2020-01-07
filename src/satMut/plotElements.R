@@ -68,8 +68,8 @@ getPlot <- function(data,name) {
 
 file <- args[1]
 name <- args[2]
-barcodes <- args[3]
-significance <- args[4]
+barcodes <- as.double(args[3])
+significance <- as.double(args[4])
 output <- args[5]
 
 input <- read.table(args[1],as.is=T,header=T,sep="\t") %>%

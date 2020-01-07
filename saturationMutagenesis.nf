@@ -168,7 +168,7 @@ process 'calc_assign_variantMatrixWith1bpDel' {
 
 process 'fitModel' {
   publishDir "$params.outdir/$cond/$rep", mode:'copy'
-  label 'shorttime'
+  label 'longtime'
 
   conda 'conf/mpraflow_r.yml'
 
@@ -228,8 +228,6 @@ List combinationsOf(List list, int r) {
     combs as List
 }
 
-test = testIn.groupTuple(by: [0]).map{n -> [n[0],combinationsOf(n[1],2),combinationsOf(n[2],2)]}.transpose(by:[1,2])
-
 process 'plotCorrelation' {
   publishDir "$params.outdir/$cond", mode:'copy'
   label 'shorttime'
@@ -244,7 +242,7 @@ process 'plotCorrelation' {
     tuple val(cond), val(type), file("${cond}.${type}.${rep1}_${rep2}.correlation.png") into correlations
   shell:
     """
-    Rscript ${"$baseDir"}/src/satMut/plotCorrelation.R $results1 $results2 ${cond}.${type}.Replicate_${rep1} ${cond}.${type}.Replicate_${rep2} "${cond}.${type}.${rep1}_${rep2}.correlation.png"
+    Rscript ${"$baseDir"}/src/satMut/plotCorrelation.R $results1 $results2 ${cond}.${type}.Replicate_${rep1} ${cond}.${type}.Replicate_${rep2} $thresh "${cond}.${type}.${rep1}_${rep2}.correlation.png"
     """
 }
 
@@ -256,11 +254,13 @@ process 'plotStatsWithCoefficient' {
 
   input:
     tuple val(cond), val(rep), val(type), file(results) from variantMatrixModelCoefficientsVsStats
+    val(threshhold) from params.thresh
+    val(pvalue) from params.pvalue
   output:
     tuple val(cond), val(rep), val(type), file("${cond}.${type}.saturationMutagenesis.png") into satMutPlot
   shell:
     """
-    Rscript ${"$baseDir"}/src/satMut/plotElements.R $results ${cond}_${rep}.${type} 10 1e-5 ${cond}.${type}.saturationMutagenesis.png
+    Rscript ${"$baseDir"}/src/satMut/plotElements.R $results ${cond}_${rep}.${type} $threshhold $pvalue ${cond}.${type}.saturationMutagenesis.png
 
     """
 }
@@ -268,7 +268,7 @@ process 'plotStatsWithCoefficient' {
 
 process 'fitModelCombined' {
   publishDir "$params.outdir/$cond", mode:'copy'
-  label 'shorttime'
+  label 'longtime'
 
   conda 'conf/mpraflow_r.yml'
 
