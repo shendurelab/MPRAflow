@@ -99,7 +99,7 @@ Now we have everything at hand to run the count MPRAflow pripeline. Therefore we
 
     cd <path/to/MPRAflow>/MPRAflow
     conda activate MPRAflow
-    nextflow run  -w <path/to/Basic>/Count_Basic/work count.nf --experiment-file "<path/to/Basic>/Count_Basic/data/experiment.csv" --dir "<path/to/Basic>/Count_Basic/data" --outdir "<path/to/Basic>/Count_Basic/output"
+    nextflow run count.nf -w <path/to/Basic>/Count_Basic/work --experiment-file "<path/to/Basic>/Count_Basic/data/experiment.csv" --dir "<path/to/Basic>/Count_Basic/data" --outdir "<path/to/Basic>/Count_Basic/output"
 
 .. note:: Please check your :code:`nextflow.config` file if it is correctly configured (e.g. with your SGE cluster commands).
 
