@@ -180,7 +180,7 @@ Save it into the :code:`Count_TERT/data` folder under :code:`experiment.csv`.
 Run nextflow
 ------------------------------
 
-Now we have everything at hand to run the count MPRAflow pripeline. Therefore we have to be in the cloned MPRAflow folder. But we will change the working and output directory to the :code:`Count_TERT` folder. For the TERT example the barcode length is 20 bp and the UMI length 10. The MPRAflow count command is:
+Now we have everything at hand to run the count MPRAflow pipeline. Therefore we have to be in the cloned MPRAflow folder. But we will change the working and output directory to the :code:`Count_TERT` folder. For the TERT example the barcode length is 20 bp and the UMI length 10. The MPRAflow count command is:
 
 
 .. code-block:: bash
@@ -193,7 +193,7 @@ Now we have everything at hand to run the count MPRAflow pripeline. Therefore we
 
 If everything works fine the following 5 processes will run: :code:`create_BAM (make idx)` :code:`raw_counts`, :code:`filter_counts`, :code:`final_counts`, :code:`dna_rna_merge_counts`.
 
-..code-block:: text
+.. code-block:: text
 
     [49/53495c] process > create_BAM (make idx)    [100%] 12 of 12 ✔
     [92/f2a68d] process > raw_counts (12)          [100%] 12 of 12 ✔

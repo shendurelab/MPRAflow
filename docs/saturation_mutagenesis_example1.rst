@@ -89,7 +89,7 @@ Save it into the :code:`SatMut_TERT/data` folder under :code:`experiment.csv`.
 
 Run nextflow
 ------------------------------
-Now we have everything at hand to run the saturation mutagenesis MPRAflow pripeline. Therefore we have to be in the cloned MPRAflow folder. But we will change the working and output directory to the :code:`SatMut_TERT` folder. The MPRAflow saturation mutagenesis command is:
+Now we have everything at hand to run the saturation mutagenesis MPRAflow pipeline. Therefore we have to be in the cloned MPRAflow folder. But we will change the working and output directory to the :code:`SatMut_TERT` folder. The MPRAflow saturation mutagenesis command is:
 
 
 .. code-block:: bash
@@ -100,19 +100,25 @@ Now we have everything at hand to run the saturation mutagenesis MPRAflow pripel
 
 .. note:: Please check your :code:`nextflow.config` file if it is correctly configured (e.g. with your SGE cluster commands).
 
-If everything works fine the following 5 processes will run: :code:`create_BAM (make idx)` :code:`raw_counts`, :code:`filter_counts`, :code:`final_counts`, :code:`dna_rna_merge_counts`.
+If everything works fine the following 11 processes will run: :code:`calc_assign_variantMatrix` :code:`calc_assign_variantMatrixWith1bpDel`, :code:`fitModel`, :code:`summarizeVariantMatrix`, :code:`statsWithCoefficient`, :code:`plotCorrelation`, :code:`plotStatsWithCoefficient`, :code:`fitModelCombined`, :code:`combinedStats`, :code:`statsWithCoefficientCombined`, and :code:`plotStatsWithCoefficientCombined`.
 
 ..code-block:: text
 
-    [49/53495c] process > create_BAM (make idx)    [100%] 12 of 12 ✔
-    [92/f2a68d] process > raw_counts (12)          [100%] 12 of 12 ✔
-    [af/398836] process > filter_counts (12)       [100%] 12 of 12 ✔
-    [63/fb29b6] process > final_counts (12)        [100%] 12 of 12 ✔
-    [75/f412e8] process > dna_rna_merge_counts (5) [100%] 6 of 6 ✔
-    Completed at: 03-Jan-2020 19:55:10
-    Duration    : 6h 16m 17s
-    CPU hours   : 34.6
-    Succeeded   : 54
+    [3c/835d00] process > calc_assign_variantMatrix (1)           [100%] 6 of 6 ✔
+    [7a/887135] process > calc_assign_variantMatrixWith1bpDel (1) [100%] 6 of 6 ✔
+    [ca/a90b00] process > fitModel (8)                            [100%] 12 of 12 ✔
+    [67/3a3e8a] process > summarizeVariantMatrix (12)             [100%] 12 of 12 ✔
+    [56/846670] process > statsWithCoefficient (12)               [100%] 12 of 12 ✔
+    [74/466bfb] process > plotCorrelation (1)                     [100%] 12 of 12 ✔
+    [a5/baf1ef] process > plotStatsWithCoefficient (12)           [100%] 12 of 12 ✔
+    [ac/d38378] process > fitModelCombined (3)                    [100%] 4 of 4 ✔
+    [0b/600d8b] process > combinedStats (2)                       [100%] 4 of 4 ✔
+    [32/80f6a6] process > statsWithCoefficientCombined (2)        [100%] 4 of 4 ✔
+    [2f/817e76] process > plotStatsWithCoefficientCombined (1)    [100%] 4 of 4 ✔
+    Completed at: 07-Jan-2020 11:31:00
+    Duration    : 22m 41s
+    CPU hours   : 1.0
+    Succeeded   : 88
 
 
 Results
