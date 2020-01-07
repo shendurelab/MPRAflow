@@ -35,10 +35,9 @@ getPlot <- function(file1,file2, name1,name2, threshold) {
 
   correlation <- round(cor.test(data$Coefficient.x,data$Coefficient.y)$estimate,3)
 
-
   p <- ggplot(data, aes(x=data$Coefficient.x,y=data$Coefficient.y,colour=Type)) + geom_abline(intercept=0, colour="gray") +
       geom_point(size=3)  +
-      ggtitle(paste(name1,"vs.",name2,"(rho_p",paste0(correlation, ")" ))) + labs(x = paste0("Log2 variant effect\n",name1), y= paste0(name2,"\nLog2 variant effect")) +
+      ggtitle(paste(paste(name1,"vs."),name2,paste0("(rho_p ",correlation, ")" ),sep="\n")) + labs(x = paste0("Log2 variant effect\n",name1), y= paste0(name2,"\nLog2 variant effect")) +
       standard_style + scale_colour_manual(values = colours) + guides(colour = guide_legend(override.aes = list(size=5)))
   return(p)
 }
@@ -55,4 +54,4 @@ output <- args[6]
 p <- getPlot(file1,file2,name1,name2,threshold)
 
 
-ggsave(output,plot=p,height=20,width=20)
+ggsave(output,plot=p,height=12,width=12)
