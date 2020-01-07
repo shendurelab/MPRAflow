@@ -114,6 +114,7 @@ All output files will be in the :code:`Count_Basic/output` folder.
 We expect the program to output the following status when complete:
 
 .. code-block:: text 
+
     start analysis
     executor >  sge (32)
     [23/09474b] process > create_BAM (make idx)    [100%] 6 of 6 ✔
@@ -124,4 +125,8 @@ We expect the program to output the following status when complete:
     [29/0813f8] process > dna_rna_merge (3)        [100%] 3 of 3 ✔
     [1d/4e7d56] process > calc_correlations (1)    [100%] 1 of 1 ✔
     [9c/4714cb] process > make_master_tables (1)   [100%] 1 of 1 ✔
-
+    Completed at: 07-Jan-2020 04:29:07
+    Duration    : 11h 28m 5s
+    CPU hours   : 41.5
+    Succeeded   : 32
+    
