@@ -99,7 +99,7 @@ Now we have everything at hand to run the count MPRAflow pripeline. Therefore we
 
     cd <path/to/MPRAflow>/MPRAflow
     conda activate MPRAflow
-    nextflow run count.nf -w <path/to/Basic>/Count_Basic/work --experiment-file "<path/to/Basic>/Count_Basic/data/experiment.csv" --dir "<path/to/Basic>/Count_Basic/data" --outdir "<path/to/Basic>/Count_Basic/output"
+    nextflow run count.nf -w <path/to/Basic>/Count_Basic/work --experiment-file "<path/to/Basic>/Count_Basic/data/experiment.csv" --dir "<path/to/Basic>/Count_Basic/data" --outdir "<path/to/Basic>/Count_Basic/output" --design "<path/to/design/fasta/design.fa" --association "<path/to/association/pickle/SRR10800986_filtered_coords_to_barcodes.pickle" 
 
 .. note:: Please check your :code:`nextflow.config` file if it is correctly configured (e.g. with your SGE cluster commands).
 
@@ -110,4 +110,18 @@ Results
 -----------------
 
 All output files will be in the :code:`Count_Basic/output` folder. 
+
+We expect the program to output the following status when complete:
+
+.. code-block:: bash 
+      start analysis
+      executor >  sge (32)
+      [23/09474b] process > create_BAM (make idx)    [100%] 6 of 6 ✔
+      [0f/4ee034] process > raw_counts (6)           [100%] 6 of 6 ✔
+      [01/6ac02f] process > filter_counts (6)        [100%] 6 of 6 ✔
+      [4f/b23748] process > final_counts (6)         [100%] 6 of 6 ✔
+      [86/4ded79] process > dna_rna_merge_counts (3) [100%] 3 of 3 ✔
+      [29/0813f8] process > dna_rna_merge (3)        [100%] 3 of 3 ✔
+      [1d/4e7d56] process > calc_correlations (1)    [100%] 1 of 1 ✔
+      [9c/4714cb] process > make_master_tables (1)   [100%] 1 of 1 ✔
 
