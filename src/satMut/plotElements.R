@@ -68,7 +68,7 @@ getPlot <- function(data,name) {
 
 file <- args[1]
 name <- args[2]
-barcodes <- as.double(args[3])
+barcodes <- as.integer(args[3])
 significance <- as.double(args[4])
 output <- args[5]
 

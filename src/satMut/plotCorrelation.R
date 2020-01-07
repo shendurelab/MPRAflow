@@ -48,7 +48,7 @@ file1 <- args[1]
 file2 <- args[2]
 name1 <- args[3]
 name2 <- args[4]
-threshold <- as.double(args[5])
+threshold <- as.integer(args[5])
 
 output <- args[6]
 
