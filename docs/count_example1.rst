@@ -113,7 +113,7 @@ All output files will be in the :code:`Count_Basic/output` folder.
 
 We expect the program to output the following status when complete:
 
-.. code-block:: bash 
+.. code-block:: text 
       start analysis
       executor >  sge (32)
       [23/09474b] process > create_BAM (make idx)    [100%] 6 of 6 ✔
