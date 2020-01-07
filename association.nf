@@ -242,8 +242,8 @@ if (params.label_file == null) {
             """
             #!/bin/bash
             #CREATE LABEL FILE and remove illegal regex characters
-            awk -F'\t' 'BEGIN {OFS = FS} NR%2==1 {print substr(\$1,2,length(\$1)),"na"}' $design |
-            awk '{gsub(/\\[/,"_")}1' $labels > t_new_label.txt
+            awk -F'\t' 'BEGIN {OFS = FS} NR%2==1 {print substr(\$1,2,length(\$1)),"na"}' $design > labels.txt
+            awk '{gsub(/\\[/,"_")}1' labels.txt > t_new_label.txt
             awk '{gsub(/\\]/,"_")}1' t_new_label.txt > label_rmIllegalChars.txt
 
 
