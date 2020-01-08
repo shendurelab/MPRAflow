@@ -167,20 +167,21 @@ Our experiment file looks exactly like this:
 
 .. code-block:: text
 
-    Condition,Replicate,DNA_R1,DNA_R2,DNA_R3,RNA_R1,RNA_R2,RNA_R3
-    TERT-GBM,1,SRR8647059_1.fastq.gz,SRR8647059_2.fastq.gz,SRR8647059_3.fastq.gz,SRR8647062_1.fastq.gz,SRR8647062_2.fastq.gz,SRR8647062_3.fastq.gz
-    TERT-GBM,2,SRR8647060_1.fastq.gz,SRR8647060_2.fastq.gz,SRR8647060_3.fastq.gz,SRR8647063_1.fastq.gz,SRR8647063_2.fastq.gz,SRR8647063_3.fastq.gz
-    TERT-GBM,3,SRR8647061_1.fastq.gz,SRR8647061_2.fastq.gz,SRR8647061_3.fastq.gz,SRR8647064_1.fastq.gz,SRR8647064_2.fastq.gz,SRR8647064_3.fastq.gz
-    TERT-HEK,1,SRR8647119_SRR8647120_1.fastq.gz,SRR8647119_SRR8647120_2.fastq.gz,SRR8647119_SRR8647120_3.fastq.gz,SRR8647125_SRR8647126_1.fastq.gz,SRR8647125_SRR8647126_2.fastq.gz,SRR8647125_SRR8647126_3.fastq.gz
-    TERT-HEK,2,SRR8647121_SRR8647122_1.fastq.gz,SRR8647121_SRR8647122_2.fastq.gz,SRR8647121_SRR8647122_3.fastq.gz,SRR8647127_SRR8647128_1.fastq.gz,SRR8647127_SRR8647128_2.fastq.gz,SRR8647127_SRR8647128_3.fastq.gz
-    TERT-HEK,3,SRR8647123_SRR8647124_1.fastq.gz,SRR8647123_SRR8647124_2.fastq.gz,SRR8647123_SRR8647124_3.fastq.gz,SRR8647129_SRR8647130_1.fastq.gz,SRR8647129_SRR8647130_2.fastq.gz,SRR8647129_SRR8647130_3.fastq.gz
+    Condition,Replicate,DNA_BC_F,DNA_UMI,DNA_BC_R,RNA_BC_F,RNA_UMI,RNA_BC_R
+    TERT-GBM,1,SRR8647059_1.fastq.gz,SRR8647059_3.fastq.gz,SRR8647059_2.fastq.gz,SRR8647062_1.fastq.gz,SRR8647062_3.fastq.gz,SRR8647062_2.fastq.gz
+    TERT-GBM,2,SRR8647060_1.fastq.gz,SRR8647060_3.fastq.gz,SRR8647060_2.fastq.gz,SRR8647063_1.fastq.gz,SRR8647063_3.fastq.gz,SRR8647063_2.fastq.gz
+    TERT-GBM,3,SRR8647061_1.fastq.gz,SRR8647061_3.fastq.gz,SRR8647061_2.fastq.gz,SRR8647064_1.fastq.gz,SRR8647064_3.fastq.gz,SRR8647064_2.fastq.gz
+    TERT-HEK,1,SRR8647119_SRR8647120_1.fastq.gz,SRR8647119_SRR8647120_3.fastq.gz,SRR8647119_SRR8647120_2.fastq.gz,SRR8647125_SRR8647126_1.fastq.gz,SRR8647125_SRR8647126_3.fastq.gz,SRR8647125_SRR8647126_2.fastq.gz
+    TERT-HEK,2,SRR8647121_SRR8647122_1.fastq.gz,SRR8647121_SRR8647122_3.fastq.gz,SRR8647121_SRR8647122_2.fastq.gz,SRR8647127_SRR8647128_1.fastq.gz,SRR8647127_SRR8647128_3.fastq.gz,SRR8647127_SRR8647128_2.fastq.gz
+    TERT-HEK,3,SRR8647123_SRR8647124_1.fastq.gz,SRR8647123_SRR8647124_3.fastq.gz,SRR8647123_SRR8647124_2.fastq.gz,SRR8647129_SRR8647130_1.fastq.gz,SRR8647129_SRR8647130_3.fastq.gz,SRR8647129_SRR8647130_2.fastq.gz
+
 
 Save it into the :code:`Count_TERT/data` folder under :code:`experiment.csv`.
 
 Run nextflow
 ------------------------------
 
-Now we have everything at hand to run the count MPRAflow pripeline. Therefore we have to be in the cloned MPRAflow folder. But we will change the working and output directory to the :code:`Count_TERT` folder. For the TERT example the barcode length is 20 bp and the UMI length 10. The MPRAflow count command is:
+Now we have everything at hand to run the count MPRAflow pipeline. Therefore we have to be in the cloned MPRAflow folder. But we will change the working and output directory to the :code:`Count_TERT` folder. For the TERT example the barcode length is 20 bp and the UMI length 10. The MPRAflow count command is:
 
 
 .. code-block:: bash
@@ -193,7 +194,7 @@ Now we have everything at hand to run the count MPRAflow pripeline. Therefore we
 
 If everything works fine the following 5 processes will run: :code:`create_BAM (make idx)` :code:`raw_counts`, :code:`filter_counts`, :code:`final_counts`, :code:`dna_rna_merge_counts`.
 
-..code-block:: text
+.. code-block:: text
 
     [49/53495c] process > create_BAM (make idx)    [100%] 12 of 12 ✔
     [92/f2a68d] process > raw_counts (12)          [100%] 12 of 12 ✔
