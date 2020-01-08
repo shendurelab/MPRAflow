@@ -11,8 +11,11 @@ Count Utility
 #### Homepage / Documentation
 https://github.com/shendurelab/MPRAflow
 #### Authors
+Vikram Agarwal <thefinitemachine@gmail.com>
 Gracie Gordon <gracie.gordon@ucsf.edu>
+Martin Kircher <martin.kircher@bihealth.de>
 Max Schubach <max.schubach@bihealth.de>
+
 ----------------------------------------------------------------------------------------
 */
 
@@ -242,6 +245,7 @@ println 'start analysis'
 
 /*
 * STEP 1: Create BAM files
+* contributions: Martin Kircher, Max Schubach, & Gracie Gordon
 */
 //if UMI
 if (!params.no_umi) {
@@ -280,6 +284,7 @@ if (!params.no_umi) {
 }
 
 //if no UMI
+* contributions: Martin Kircher, Max Schubach, & Gracie Gordon
 if (params.no_umi) {
     process 'create_BAM_noUMI' {
         tag "make idx"
@@ -322,6 +327,7 @@ if (params.no_umi) {
 
 /*
 * STEP 2: create raw counts
+* contributions: Martin Kircher, Max Schubach, & Gracie Gordon
 */
 
 process 'raw_counts'{
@@ -364,6 +370,7 @@ process 'raw_counts'{
 
 /*
 * STEP 3: Filter counts for correct barcode length
+* contributions: Martin Kircher, Max Schubach, & Gracie Gordon
 */
 
 process 'filter_counts'{
@@ -390,6 +397,7 @@ process 'filter_counts'{
 
 /*
 * STEP 4: Record overrepresended UMIs and final count table
+* contributions: Martin Kircher, Max Schubach, & Gracie Gordon
 */
 
 process 'final_counts'{
@@ -426,6 +434,7 @@ process 'final_counts'{
 
 /*
 * STEP 5: MPRAnalyze input generation (if option selected)
+* contributions: Gracie Gordon
 */
 process 'dna_rna_merge_counts'{
     publishDir "$params.outdir/$cond/$rep", mode:'copy'
@@ -450,6 +459,7 @@ process 'dna_rna_merge_counts'{
 
 
 //MPRAnalyze option
+//contributions: Gracie Gordon
 if(params.mpranalyze){
     /*
     * STEP 5: Merge each DNA and RNA file
@@ -473,6 +483,7 @@ if(params.mpranalyze){
 
     /*
     * STEP 6: Merge all DNA/RNA counts into one big file
+    * contributions: Gracie Gordon
     */
 
     process 'final_merge'{
@@ -502,6 +513,7 @@ if(params.mpranalyze){
 
     /*
     * STEP 7: Add label to outfile
+    * contributions: Gracie Gordon
     */
 
     process 'final_label'{
@@ -524,6 +536,7 @@ if(params.mpranalyze){
 
     /*
     * STEP 8: Generate inputs
+    * contributions: Tal Ashuach
     */
 
     process 'generate_mpranalyze_inputs'{
@@ -550,6 +563,7 @@ if(params.mpranalyze){
 
 /*
 * STEP 5: Merge each DNA and RNA file label with sequence and insert and normalize
+* contributions: Gracie Gordon
 */
 //merge and normalize
 if(!params.mpranalyze && params.containsKey("association")){
@@ -575,6 +589,7 @@ if(!params.mpranalyze && params.containsKey("association")){
 
     /*
     * STEP 6: Calculate correlations between Replicates
+    * contributions: Vikram Agarwal & Gracie Gordon
     */
     process 'calc_correlations'{
         label 'shorttime'
@@ -602,7 +617,9 @@ if(!params.mpranalyze && params.containsKey("association")){
             Rscript ${"$baseDir"}/src/plot_perInsertCounts_correlation.R $cond $label $pairlist $replicate
             """
     }
-
+    /*
+    * contributions: Vikram Agarwal & Gracie Gordon
+    */
     process 'make_master_tables' {
         label 'shorttime'
         publishDir "$params.outdir/$cond", mode:'copy'
