@@ -7,7 +7,7 @@
 Basic Count workflow
 =====================
 
-This example runs the count workflow on 5'/5' WT MRPA data in the HEPG2 cell line from `Klein J., Agarwal, V., Keith, A., et al. 2019 <https://www.biorxiv.org/content/10.1101/576405v1.full.pdf>`_. 
+This example runs the count workflow on 5'/5' WT MRPA data in the HEPG2 cell line from `Klein J., Agarwal, V., Keith, A., et al. 2019 <https://www.biorxiv.org/content/10.1101/576405v1.full.pdf>`_.
 
 Prerequirements
 ======================
@@ -82,10 +82,10 @@ Our experiment file looks exactly like this:
 
 .. code-block:: text
 
-    Condition,Replicate,DNA_R1,DNA_R2,DNA_R3,RNA_R1,RNA_R2,RNA_R3
-    HEPG2,1,SRR10800881_1.fastq.gz,SRR10800881_2.fastq.gz,SRR10800881_3.fastq.gz,SRR10800882_1.fastq.gz,SRR10800882_2.fastq.gz,SRR10800882_3.fastq.gz
-    HEPG2,2,SRR10800883_1.fastq.gz,SRR10800883_2.fastq.gz,SRR10800883_3.fastq.gz,SRR10800884_1.fastq.gz,SRR10800884_2.fastq.gz,SRR10800884_3.fastq.gz
-    HEPG2,3,SRR10800885_1.fastq.gz,SRR10800885_2.fastq.gz,SRR10800885_3.fastq.gz,SRR10800886_1.fastq.gz,SRR10800886_2.fastq.gz,SRR10800886_3.fastq.gz
+    Condition,Replicate,,DNA_BC_F,DNA_UMI,DNA_BC_R,RNA_BC_F,RNA_UMI,RNA_BC_R
+    HEPG2,1,SRR10800881_1.fastq.gz,SRR10800881_3.fastq.gz,SRR10800881_2.fastq.gz,SRR10800882_1.fastq.gz,SRR10800882_3.fastq.gz,SRR10800882_2.fastq.gz
+    HEPG2,2,SRR10800883_1.fastq.gz,SRR10800883_3.fastq.gz,SRR10800883_2.fastq.gz,SRR10800884_1.fastq.gz,SRR10800884_3.fastq.gz,SRR10800884_2.fastq.gz
+    HEPG2,3,SRR10800885_1.fastq.gz,SRR10800885_3.fastq.gz,SRR10800885_2.fastq.gz,SRR10800886_1.fastq.gz,SRR10800886_3.fastq.gz,SRR10800886_2.fastq.gz
 
 Save it into the :code:`Count_Basic/data` folder under :code:`experiment.csv`.
 
@@ -99,7 +99,7 @@ Now we have everything at hand to run the count MPRAflow pripeline. Therefore we
 
     cd <path/to/MPRAflow>/MPRAflow
     conda activate MPRAflow
-    nextflow run count.nf -w <path/to/Basic>/Count_Basic/work --experiment-file "<path/to/Basic>/Count_Basic/data/experiment.csv" --dir "<path/to/Basic>/Count_Basic/data" --outdir "<path/to/Basic>/Count_Basic/output" --design "<path/to/design/fasta/design.fa" --association "<path/to/association/pickle/SRR10800986_filtered_coords_to_barcodes.pickle" 
+    nextflow run count.nf -w <path/to/Basic>/Count_Basic/work --experiment-file "<path/to/Basic>/Count_Basic/data/experiment.csv" --dir "<path/to/Basic>/Count_Basic/data" --outdir "<path/to/Basic>/Count_Basic/output" --design "<path/to/design/fasta/design.fa" --association "<path/to/association/pickle/SRR10800986_filtered_coords_to_barcodes.pickle"
 
 .. note:: Please check your :code:`nextflow.config` file if it is correctly configured (e.g. with your SGE cluster commands).
 
@@ -109,11 +109,11 @@ If everything works fine the following 5 processes will run: :code:`create_BAM (
 Results
 -----------------
 
-All output files will be in the :code:`Count_Basic/output` folder. 
+All output files will be in the :code:`Count_Basic/output` folder.
 
 We expect the program to output the following status when complete:
 
-.. code-block:: text 
+.. code-block:: text
 
     start analysis
     executor >  sge (32)
@@ -129,4 +129,3 @@ We expect the program to output the following status when complete:
     Duration    : 11h 28m 5s
     CPU hours   : 41.5
     Succeeded   : 32
-    
