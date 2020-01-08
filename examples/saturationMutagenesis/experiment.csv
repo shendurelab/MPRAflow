@@ -1,0 +1,7 @@
+Condition,Replicate,COUNTS
+TERT-GBM,1,TERT-GBM_1_counts.tsv.gz
+TERT-GBM,2,TERT-GBM_2_counts.tsv.gz
+TERT-GBM,3,TERT-GBM_3_counts.tsv.gz
+TERT-HEK,1,TERT-HEK_1_counts.tsv.gz
+TERT-HEK,2,TERT-HEK_2_counts.tsv.gz
+TERT-HEK,3,TERT-HEK_3_counts.tsv.gz

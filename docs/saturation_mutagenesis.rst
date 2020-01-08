@@ -4,6 +4,8 @@
 Saturation mutagenesis
 ================================
 
+.. image:: SaturationMut.png
+
 
 Input files
 ===============
