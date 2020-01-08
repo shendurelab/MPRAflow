@@ -1,4 +1,4 @@
-.. _Basic association workflow:
+.. _Association example:
 
 .. role:: bash(code)
    :language: bash
