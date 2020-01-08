@@ -10,6 +10,8 @@ Library Association package
 https://github.com/shendurelab/MPRAflow
 #### Authors
 Gracie Gordon <gracie.gordon@ucsf.edu>
+Max Schubach <max.schubach@bihealth.de>
+Sean Whalen <sean.whalen@gladstone.ucsf.edu>
 ----------------------------------------------------------------------------------------
 */
 
@@ -188,6 +190,7 @@ try {
 /*
 * count fastq and bam length remove the illegal regex characters
 * and make label file if missing
+* contributions: Gracie Gordon & Max Schubach
 */
 
 if (params.label_file != null) {
@@ -223,6 +226,7 @@ if (params.label_file != null) {
 /*
 * count fastq and bam length remove the illegal regex characters
 * and make design file
+* contributions: Gracie Gordon & Max Schubach
 */
 
 if (params.label_file == null) {
@@ -259,6 +263,7 @@ if (params.label_file == null) {
 /*
 * STEP 1: Align
 * Process 1A: create BWA reference
+* contributions: Gracie Gordon 
 */
 
 process 'create_BWA_ref' {
@@ -307,6 +312,7 @@ if (params.fastq_insertPE_file != null) {
 
 /*
 *Process 1B: merge Paired end reads
+* contributions: Gracie Gordon 
 */
 if (params.fastq_insertPE_file != null) {
     process 'PE_merge' {
@@ -330,6 +336,7 @@ if (params.fastq_insertPE_file != null) {
 
 /*
 * Process 1C: align with BWA
+* contributions: Gracie Gordon 
 */
 
 //paired ends
@@ -431,6 +438,7 @@ process 'collect_chunks'{
 
 /*
 * Assign barcodes to element sequences
+* contributions: Sean Whalen
 */
 
 process 'map_element_barcodes' {
@@ -473,6 +481,7 @@ process 'map_element_barcodes' {
 
 /*
 * Filter barcodes for minimum coverage and unique mapping
+* contributions: Gracie Gordon 
 */
 
 process 'filter_barcodes' {
