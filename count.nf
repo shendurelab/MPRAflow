@@ -145,31 +145,31 @@ if (params.no_umi) {
     row -> [
       tuple(row.Condition,row.Replicate,"DNA",
         [row.Condition,row.Replicate,"DNA"].join("_"),
-        file([params.dir,"/",row.dna,row.DNA_R1].join()),
-        file([params.dir,"/",row.dna,row.DNA_R2].join())
+        file([params.dir,"/",row.dna,row.DNA_BC_F].join()),
+        file([params.dir,"/",row.dna,row.DNA_BC_R].join())
       ),
       tuple(row.Condition,row.Replicate,"RNA",
         [row.Condition,row.Replicate,"RNA"].join("_"),
-        file([params.dir,"/",row.rna,row.RNA_R1].join()),
-        file([params.dir,"/",row.rna,row.RNA_R3].join())
+        file([params.dir,"/",row.rna,row.RNA_BC_F].join()),
+        file([params.dir,"/",row.rna,row.RNA_BC_R].join())
       )
     ]
   }
 } else {
   reads = Channel.fromPath(params.experiment_file).splitCsv(header: true).flatMap{
     row -> [
-      [row.Condition, row.Replicate, "DNA",
+      tuple(row.Condition, row.Replicate, "DNA",
         [row.Condition,row.Replicate,"DNA"].join("_"),
-        file([params.dir,"/",row.DNA_R1].join()),
-        file([params.dir,"/",row.DNA_R2].join()),
-        file([params.dir,"/",row.DNA_R3].join()),
-      ],
-      [row.Condition, row.Replicate, "RNA",
+        file([params.dir,"/",row.DNA_BC_F].join()),
+        file([params.dir,"/",row.DNA_UMI].join()),
+        file([params.dir,"/",row.DNA_BC_R].join()),
+      ),
+      tuple(row.Condition, row.Replicate, "RNA",
         [row.Condition,row.Replicate,"RNA"].join("_"),
-        file([params.dir,"/",row.RNA_R1].join()),
-        file([params.dir,"/",row.RNA_R2].join()),
-        file([params.dir,"/",row.RNA_R3].join()),
-      ],
+        file([params.dir,"/",row.RNA_BC_F].join()),
+        file([params.dir,"/",row.RNA_UMI].join()),
+        file([params.dir,"/",row.RNA_BC_R].join()),
+      ),
     ]
   }
 }
@@ -252,7 +252,7 @@ if (!params.no_umi) {
         conda 'conf/mpraflow_py27.yml'
 
         input:
-            tuple val(cond), val(rep), val(type),val(datasetID), file(r1_fastq), file(r2_fastq), file(r3_fastq) from reads
+            tuple val(cond), val(rep), val(type), val(datasetID), file(fw_fastq), file(umi_fastq), file(rev_fastq) from reads
             val(bc_length) from params.bc_length
         output:
             tuple val(cond), val(rep), val(type),val(datasetID),file("${datasetID}.bam") into clean_bam
@@ -261,20 +261,20 @@ if (!params.no_umi) {
             #!/bin/bash
             echo $datasetID
 
-            echo $r1_fastq
-            echo $r2_fastq
-            echo $r3_fastq
+            echo $fw_fastq
+            echo $umi_fastq
+            echo $rev_fastq
 
             bc_length=$bc_length
             bc_s=\$(expr \$((\$bc_length+1)))
 
-            umi_t=`zcat $r2_fastq | head -2 | tail -1 | wc -c`
+            umi_t=`zcat $umi_fastq | head -2 | tail -1 | wc -c`
             umi=\$(expr \$((\$umi_t-1)))
 
             echo \$bc_s
             echo \$umi
 
-            paste <( zcat $r1_fastq ) <( zcat $r3_fastq  ) <( zcat $r2_fastq ) | awk '{if (NR % 4 == 2 || NR % 4 == 0) {print \$1\$2\$3} else {print \$1}}' | python ${"$baseDir"}/src/FastQ2doubleIndexBAM.py -p -s \$bc_s -l 0 -m \$umi --RG ${datasetID} | python ${"$baseDir"}/src/MergeTrimReadsBAM.py -p --mergeoverlap > ${datasetID}.bam
+            paste <( zcat $fw_fastq ) <( zcat $rev_fastq  ) <( zcat $umi_fastq ) | awk '{if (NR % 4 == 2 || NR % 4 == 0) {print \$1\$2\$3} else {print \$1}}' | python ${"$baseDir"}/src/FastQ2doubleIndexBAM.py -p -s \$bc_s -l 0 -m \$umi --RG ${datasetID} | python ${"$baseDir"}/src/MergeTrimReadsBAM.py --adapterFirstRead '' --adapterSecondRead '' -p --mergeoverlap > ${datasetID}.bam
             """
     }
 }
@@ -288,7 +288,7 @@ if (params.no_umi) {
         conda 'conf/mpraflow_py27.yml'
 
         input:
-            tuple val(cond), val(rep),val(type),val(datasetID),file(r1_fastq), file(r3_fastq) from reads_noUMI
+            tuple val(cond), val(rep),val(type),val(datasetID),file(fw_fastq), file(rev_fastq) from reads_noUMI
             val(bc_length) from params.bc_length
         output:
             tuple val(cond), val(rep),val(type),val(datasetID),file("${datasetID}.bam") into clean_bam
@@ -298,15 +298,15 @@ if (params.no_umi) {
             """
             echo $datasetID
 
-            echo $r1_fastq
-            echo $r3_fastq
+            echo $fw_fastq
+            echo $rev_fastq
 
             bc_length=$bc_length
             bc_s=\$(expr \$((\$bc_length+1)))
 
             echo \$bc_s
 
-            paste <( zcat $r1_fastq ) <(zcat $r3_fastq  ) | \
+            paste <( zcat $fw_fastq ) <(zcat $rev_fastq  ) | \
             awk '{
                 if (NR % 4 == 2 || NR % 4 == 0) {
                   print \$1\$2
@@ -314,7 +314,7 @@ if (params.no_umi) {
                   print \$1
                 }}' | \
               python ${"$baseDir"}/src/FastQ2doubleIndexBAM.py -p -s \$bc_s -l 0 -m 0 --RG ${datasetID} | \
-              python ${"$baseDir"}/src/MergeTrimReadsBAM.py -p --mergeoverlap > ${datasetID}.bam
+              python ${"$baseDir"}/src/MergeTrimReadsBAM.py --adapterFirstRead '' --adapterSecondRead '' -p --mergeoverlap > ${datasetID}.bam
               """
     }
 }
@@ -341,7 +341,7 @@ process 'raw_counts'{
             """
             #!/bin/bash
 
-            samtools view -F -r $bam | \
+            samtools view -F 1 -r $datasetID $bam | \
             awk '{print \$10}' | \
             sort | \
             gzip -c > ${datasetID}_raw_counts.tsv.gz
@@ -351,7 +351,7 @@ process 'raw_counts'{
             """
             #!/bin/bash
 
-            samtools view -F -r $bam | \
+            samtools view -F 1 -r $datasetID $bam | \
             awk -v 'OFS=\t' '{ for (i=12; i<=NF; i++) {
               if (\$i ~ /^XJ:Z:/) print \$10,substr(\$i,6,$umi_length)
             }}' | \

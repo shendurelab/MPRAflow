@@ -73,7 +73,7 @@ This pipeline expects the FASTQ files to be demultiplexed and trimmed to only in
 1. Create an 'experiment' csv in the format below, including the header. `DNA_R1` or `RNA_R1` is name of the gzipped fastq of the forward read of the DNA or RNA from the defined condition and replicate. `DNA_R2` or `RNA_R2` is the corresponding index read with UMIs (excluding sample barcodes) and `DNA_R3` or `RNA_R3` of the reverse read. If you do not have UMIs remove the columns `DNA_R2` and `RNA_R2` or leave them empty.
 
    ```
-   Condition,Replicate,DNA_R1,DNA_R2,DNA_R3,RNA_R1,RNA_R2,RNA_R3
+   Condition,Replicate,DNA_BC_F,DNA_UMI,DNA_BC_R,RNA_BC_F,RNA_UMI,RNA_BC_R
    condition1,1,cond1_rep1_DNA_FWD_reads.fastq.gz,cond1_rep1_DNA_IDX_reads.fastq.gz,cond1_rep1_DNA_REV_reads.fastq.gz,cond1_rep1_RNA_FWD_reads.fastq.gz,cond1_rep1_RNA_IDX_reads.fastq.gz,cond1_rep1_RNA_REV_reads.fastq.gz
    condition1,2,cond1_rep2_DNA_FWD_reads.fastq.gz,cond1_rep2_DNA_IDX_reads.fastq.gz,cond1_rep2_DNA_REV_reads.fastq.gz,cond1_rep2_RNA_FWD_reads.fastq.gz,cond1_rep2_RNA_IDX_reads.fastq.gz,cond1_rep2_RNA_REV_reads.fastq.gz
    condition2,1,cond2_rep1_DNA_FWD_reads.fastq.gz,cond2_rep1_DNA_IDX_reads.fastq.gz,cond2_rep1_DNA_REV_reads.fastq.gz,cond2_rep1_RNA_FWD_reads.fastq.gz,cond2_rep1_RNA_IDX_reads.fastq.gz,cond2_rep1_RNA_REV_reads.fastq.gz
