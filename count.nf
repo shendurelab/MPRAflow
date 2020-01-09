@@ -265,16 +265,24 @@ if (!params.no_umi) {
             echo $umi_fastq
             echo $rev_fastq
 
-            bc_length=$bc_length
-            bc_s=\$(expr \$((\$bc_length+1)))
+            bc_s=\$(expr \$(($bc_length+1)))
 
-            umi_t=`zcat $umi_fastq | head -2 | tail -1 | wc -c`
-            umi=\$(expr \$((\$umi_t-1)))
+            umi_length=`zcat $umi_fastq | head -2 | tail -1 | wc -c`
+            umi_length=\$(expr \$((\$umi_length-1)))
+
+            fwd_length=`zcat $fw_fastq | head -2 | tail -1 | wc -c`
+            fwd_length=\$(expr \$((\$fwd_length-1)))
+
+            rev_length=`zcat $rev_fastq | head -2 | tail -1 | wc -c`
+            rev_length=\$(expr \$((\$rev_length-1)))
+
+            minoverlap=`echo \${fwd_length} \${fwd_length} $bc_length | awk '{print (\$1+\$2-\$3-1 < 11) ? \$1+\$2-\$3-1 : 11}'`
 
             echo \$bc_s
-            echo \$umi
+            echo \$umi_length
+            echo \$minoverlap
 
-            paste <( zcat $fw_fastq ) <( zcat $rev_fastq  ) <( zcat $umi_fastq ) | awk '{if (NR % 4 == 2 || NR % 4 == 0) {print \$1\$2\$3} else {print \$1}}' | python ${"$baseDir"}/src/FastQ2doubleIndexBAM.py -p -s \$bc_s -l 0 -m \$umi --RG ${datasetID} | python ${"$baseDir"}/src/MergeTrimReadsBAM.py --adapterFirstRead '' --adapterSecondRead '' -p --mergeoverlap > ${datasetID}.bam
+            paste <( zcat $fw_fastq ) <( zcat $rev_fastq  ) <( zcat $umi_fastq ) | awk '{if (NR % 4 == 2 || NR % 4 == 0) {print \$1\$2\$3} else {print \$1}}' | python ${"$baseDir"}/src/FastQ2doubleIndexBAM.py -p -s \$bc_s -l 0 -m \$umi_length --RG ${datasetID} | python ${"$baseDir"}/src/MergeTrimReadsBAM.py --FirstReadChimeraFilter '' --adapterFirstRead '' --adapterSecondRead '' -p --mergeoverlap --minoverlap \$minoverlap > ${datasetID}.bam
             """
     }
 }
@@ -296,15 +304,24 @@ if (params.no_umi) {
             params.no_umi
         shell:
             """
+            #!/bin/bash
             echo $datasetID
 
             echo $fw_fastq
             echo $rev_fastq
 
-            bc_length=$bc_length
-            bc_s=\$(expr \$((\$bc_length+1)))
+            bc_s=\$(expr \$(($bc_length+1)))
+
+            fwd_length=`zcat $fw_fastq | head -2 | tail -1 | wc -c`
+            fwd_length=\$(expr \$((\$fwd_length-1)))
+
+            rev_length=`zcat $rev_fastq | head -2 | tail -1 | wc -c`
+            rev_length=\$(expr \$((\$rev_length-1)))
+
+            minoverlap=`echo \${fwd_length} \${fwd_length} $bc_length | awk '{print (\$1+\$2-\$3-1 < 11) ? \$1+\$2-\$3-1 : 11}'`
 
             echo \$bc_s
+            echo \$minoverlap
 
             paste <( zcat $fw_fastq ) <(zcat $rev_fastq  ) | \
             awk '{
@@ -312,9 +329,7 @@ if (params.no_umi) {
                   print \$1\$2
                 } else {
                   print \$1
-                }}' | \
-              python ${"$baseDir"}/src/FastQ2doubleIndexBAM.py -p -s \$bc_s -l 0 -m 0 --RG ${datasetID} | \
-              python ${"$baseDir"}/src/MergeTrimReadsBAM.py --adapterFirstRead '' --adapterSecondRead '' -p --mergeoverlap > ${datasetID}.bam
+                }}' | python ${"$baseDir"}/src/FastQ2doubleIndexBAM.py -p -s \$bc_s -l 0 -m 0 --RG ${datasetID} | python ${"$baseDir"}/src/MergeTrimReadsBAM.py --FirstReadChimeraFilter '' --adapterFirstRead '' --adapterSecondRead '' -p --mergeoverlap  --minoverlap \$minoverlap> ${datasetID}.bam
               """
     }
 }
