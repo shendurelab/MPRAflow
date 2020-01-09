@@ -142,18 +142,20 @@ Here is an overview of the files:
 
 .. code-block:: bash
 
-Also two different sequencing runs where made in condition TERT-HEK. Therefore We have to combine the reads:
+Also two different sequencing runs where made in condition TERT-HEK using the same library. Therefore, we have to process both runs together. So we will combine the reads. But in this csase bot sequencing runs have different read lengths (20 and 50 bp). Different read length will make false assumption when merging paired-end reads. Therefore we cut them down to 20 bp.
 
 .. code-block:: bash
 
     for i in 1 2 3; do
-       zcat data/{SRR8647119,SRR8647120}_$i.fastq.gz | gzip -c > data/SRR8647119_SRR8647120_$i.fastq.gz;
-       zcat data/{SRR8647121,SRR8647122}_$i.fastq.gz | gzip -c > data/SRR8647121_SRR8647122_$i.fastq.gz;
-       zcat data/{SRR8647123,SRR8647124}_$i.fastq.gz | gzip -c > data/SRR8647123_SRR8647124_$i.fastq.gz;
-       zcat data/{SRR8647125,SRR8647126}_$i.fastq.gz | gzip -c > data/SRR8647125_SRR8647126_$i.fastq.gz;
-       zcat data/{SRR8647127,SRR8647128}_$i.fastq.gz | gzip -c > data/SRR8647127_SRR8647128_$i.fastq.gz;
-       zcat data/{SRR8647129,SRR8647130}_$i.fastq.gz | gzip -c > data/SRR8647129_SRR8647130_$i.fastq.gz;
+       zcat data/{SRR8647119,SRR8647120}_$i.fastq.gz | cut -c 1-20 | gzip -c > data/SRR8647119_SRR8647120_$i.fastq.gz;
+       zcat data/{SRR8647121,SRR8647122}_$i.fastq.gz | cut -c 1-20 | gzip -c > data/SRR8647121_SRR8647122_$i.fastq.gz;
+       zcat data/{SRR8647123,SRR8647124}_$i.fastq.gz | cut -c 1-20 | gzip -c > data/SRR8647123_SRR8647124_$i.fastq.gz;
+       zcat data/{SRR8647125,SRR8647126}_$i.fastq.gz | cut -c 1-20 | gzip -c > data/SRR8647125_SRR8647126_$i.fastq.gz;
+       zcat data/{SRR8647127,SRR8647128}_$i.fastq.gz | cut -c 1-20 | gzip -c > data/SRR8647127_SRR8647128_$i.fastq.gz;
+       zcat data/{SRR8647129,SRR8647130}_$i.fastq.gz | cut -c 1-20 | gzip -c > data/SRR8647129_SRR8647130_$i.fastq.gz;
     done
+
+.. note:: If you combine multiple sequence runs (e.g. you need more reads) you have to combine the reads before. Otherwise barcodes with the same UMI can be count twice. But it is important that all read lengths are the same. The easiest workaround is to cut them down to the minimum length. If you have a different library (but with the same barcodes) you should run the count utility with both runs separately using different conditions. Later you have to combine the final counts of both conditions.
 
 MPRAflow
 =================================
@@ -181,7 +183,7 @@ Save it into the :code:`Count_TERT/data` folder under :code:`experiment.csv`.
 Run nextflow
 ------------------------------
 
-Now we have everything at hand to run the count MPRAflow pipeline. Therefore we have to be in the cloned MPRAflow folder. But we will change the working and output directory to the :code:`Count_TERT` folder. For the TERT example the barcode length is 20 bp and the UMI length 10. The MPRAflow count command is:
+Now we have everything at hand to run the count MPRAflow pipeline. Therefore we have to be in the cloned MPRAflow folder. But we will change the working and output directory to the :code:`Count_TERT` folder. For the TERT example the barcode length is 20 bp and the UMI length 10 bp. The MPRAflow count command is:
 
 
 .. code-block:: bash
