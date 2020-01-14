@@ -4,6 +4,12 @@
 Installation
 =====================
 
+***Installation should take less than 10 minutes
+
+System Requirements
+===================
+
+Linux 
 
 Required packages
 ==================
