@@ -9,7 +9,7 @@ Installation
 System Requirements
 ===================
 
-Linux 
+CentOS Linux 7 or above
 
 Required packages
 ==================
