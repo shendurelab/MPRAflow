@@ -16,7 +16,7 @@ Required packages
 
 .. code-block:: bash
 
-  	conda
+  	conda 4.6 or above
 
 Download here: https://docs.conda.io/en/latest/miniconda.html
 
