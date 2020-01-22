@@ -292,7 +292,9 @@ if (!params.no_umi) {
 }
 
 //if no UMI
+/*
 * contributions: Martin Kircher, Max Schubach, & Gracie Gordon
+*/
 if (params.no_umi) {
     process 'create_BAM_noUMI' {
         tag "make idx"
