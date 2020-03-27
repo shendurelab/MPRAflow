@@ -18,11 +18,11 @@ Comma separated file (CSV) that assigns all fastq files present in a directory t
 
     Condition,Replicate,DNA_BC_F,DNA_UMI,DNA_BC_R,RNA_BC_F,RNA_UMI,RNA_BC_R
     Condidtion1,1,C1R1_DNA_barcode_F.fastq.gz,C1R1_DNA_barcode_UMI.fastq.gz,C1R1_C1R1_DNA_barcode_R.fastq.gz,C1R1_RNA_barcode_F.fastq.gz,C1R1_RNA_barcode_UMI.fastq.gz,C1R1_RNA_barcode_R.fastq.gz
-      Condidtion1,2,C1R2_DNA_barcode_F.fastq.gz,C1R2_DNA_barcode_UMI.fastq.gz,C1R2_DNA_barcode_R.fastq.gz,C1R2_RNA_barcode_F.fastq.gz,C1R2_RNA_barcode_UMI.fastq.gz,C1R2_RNA_barcode_R.fastq.gz
-       Condidtion1,3,C1R3_DNA_barcode_F.fastq.gz,C1R3_DNA_barcode_UMI.fastq.gz,C1R3_DNA_barcode_R.fastq.gz,C1R3_RNA_barcode_F.fastq.gz,C1R3_RNA_barcode_UMI.fastq.gz,C1R3_RNA_barcode_R.fastq.gz
-          Condidtion2,1,C2R1_DNA_barcode_F.fastq.gz,C2R1_DNA_barcode_UMI.fastq.gz,C2R1_DNA_barcode_R.fastq.gz,C2R1_RNA_barcode_F.fastq.gz,C2R1_RNA_barcode_UMI.fastq.gz,C2R1_RNA_barcode_R.fastq.gz
-             Condidtion2,2,C2R2_DNA_barcode_F.fastq.gz,C2R2_DNA_barcode_UMI.fastq.gz,C2R2_DNA_barcode_R.fastq.gz,C2R2_RNA_barcode_F.fastq.gz,C2R2_RNA_barcode_UMI.fastq.gz,C2R2_RNA_barcode_R.fastq.gz
-                Condidtion2,3,C2R3_DNA_barcode_F.fastq.gz,C2R3_DNA_barcode_UMI.fastq.gz,C2R3_DNA_barcode_R.fastq.gz,C2R3_RNA_barcode_F.fastq.gz,C2R3_RNA_barcode_UMI.fastq.gz,C2R3_RNA_barcode_R.fastq.gz
+Condidtion1,2,C1R2_DNA_barcode_F.fastq.gz,C1R2_DNA_barcode_UMI.fastq.gz,C1R2_DNA_barcode_R.fastq.gz,C1R2_RNA_barcode_F.fastq.gz,C1R2_RNA_barcode_UMI.fastq.gz,C1R2_RNA_barcode_R.fastq.gz
+Condidtion1,3,C1R3_DNA_barcode_F.fastq.gz,C1R3_DNA_barcode_UMI.fastq.gz,C1R3_DNA_barcode_R.fastq.gz,C1R3_RNA_barcode_F.fastq.gz,C1R3_RNA_barcode_UMI.fastq.gz,C1R3_RNA_barcode_R.fastq.gz
+Condidtion2,1,C2R1_DNA_barcode_F.fastq.gz,C2R1_DNA_barcode_UMI.fastq.gz,C2R1_DNA_barcode_R.fastq.gz,C2R1_RNA_barcode_F.fastq.gz,C2R1_RNA_barcode_UMI.fastq.gz,C2R1_RNA_barcode_R.fastq.gz
+Condidtion2,2,C2R2_DNA_barcode_F.fastq.gz,C2R2_DNA_barcode_UMI.fastq.gz,C2R2_DNA_barcode_R.fastq.gz,C2R2_RNA_barcode_F.fastq.gz,C2R2_RNA_barcode_UMI.fastq.gz,C2R2_RNA_barcode_R.fastq.gz
+Condidtion2,3,C2R3_DNA_barcode_F.fastq.gz,C2R3_DNA_barcode_UMI.fastq.gz,C2R3_DNA_barcode_R.fastq.gz,C2R3_RNA_barcode_F.fastq.gz,C2R3_RNA_barcode_UMI.fastq.gz,C2R3_RNA_barcode_R.fastq.gz
 
 Design File
 -----------
@@ -131,26 +131,28 @@ Files
 -------------
 
 File tree
-outdir
-  |_Condition
-    |allreps.tsv
-    |average_allreps.tsv
-    |HepG2_1_2_correlation.txt
-    |HepG2_1_2_DNA_pairwise.png
-    |HepG2_1_2_Ratio_pairwise.png
-    |HepG2_1_2_RNA_pairwise.png
-    |HepG2_all_barcodesPerInsert_box.png
-    |HepG2_barcodesPerInsert.png
-    |HepG2_group_barcodesPerInsert_box.png
-    |_Reps
-      |HepG2_1_counts.tsv     
-      |HepG2_1_counts.tsv.gz
-      |HepG2_1_DNA_counts.tsv              
-      |HepG2_1_DNA_raw_counts.tsv.gz  
-      |HepG2_1_RNA_filtered_counts.tsv.gz
-      |HepG2_1_DNA_filtered_counts.tsv.gz  
-      |HepG2_1_RNA_counts.tsv         
-      |HepG2_1_RNA_raw_counts.tsv.gz
+.. code-block:: text
+
+    outdir
+      |_Condition
+        |allreps.tsv
+        |average_allreps.tsv
+        |HepG2_1_2_correlation.txt
+       |HepG2_1_2_DNA_pairwise.png
+       |HepG2_1_2_Ratio_pairwise.png
+       |HepG2_1_2_RNA_pairwise.png
+       |HepG2_all_barcodesPerInsert_box.png
+       |HepG2_barcodesPerInsert.png
+       |HepG2_group_barcodesPerInsert_box.png
+       |_Reps
+        |HepG2_1_counts.tsv     
+         |HepG2_1_counts.tsv.gz
+         |HepG2_1_DNA_counts.tsv              
+         |HepG2_1_DNA_raw_counts.tsv.gz  
+         |HepG2_1_RNA_filtered_counts.tsv.gz
+          |HepG2_1_DNA_filtered_counts.tsv.gz  
+       |HepG2_1_RNA_counts.tsv         
+       |HepG2_1_RNA_raw_counts.tsv.gz
 
 Files for each Condition
 ------------------------
