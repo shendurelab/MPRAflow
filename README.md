@@ -5,6 +5,8 @@
 
 This pipeline processes sequencing data from Massively Parallel Reporter Assays (MPRA) to create count tables for candidate sequences tested in the experiment.
 
+Check out MPRAflow's details documentation: https://mpraflow.readthedocs.io/en/latest/index.html
+
 This package contains three utilities:
 
 ## ASSOCIATION:
