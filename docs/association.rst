@@ -73,7 +73,7 @@ With :code:`--help` or :code:`--h` you can see the help message.
   --name                        Name of the association. Files will be named after this.
 
 **Optional:**
-  --fastq-insertPE              Full path to library association fastq for read2 if the library is paired end (must be surrounded with quotes)
+  --fastq-insertPE.             Full path to library association fastq for read2 if the library is paired end (must be surrounded with quotes)
   --min-cov                     minimum coverage of bc to count it (default 3)
   --min-frac                    minimum fraction of bc map to single insert (default 0.5)
   --mapq                        map quality (default 30)
