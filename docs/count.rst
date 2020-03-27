@@ -131,6 +131,7 @@ Files
 -------------
 
 File tree
+
 .. code-block:: text
 
     outdir
