@@ -52,6 +52,7 @@ For libraries of test sequences with single nucleotide variants (SNVs), a TSV of
 Example file:
 
 .. code-block:: text
+
     reference_name  variant_positions ref_bases alt_bases
     ref1  130 A T
     ref2  108 G A
@@ -117,19 +118,19 @@ The output can be found in the folder defined by the option :code:`--outdir`. It
 Files
 -------------
 count_fastq.txt  
-  number of barcode reads
+    number of barcode reads
 count_merged.txt  
-  number of aligned CRS reads
+    number of aligned CRS reads
 design_rmIllegalChars.fa  
-  Design file with illegal characters removed
+    Design file with illegal characters removed
 label_rmIllegalChars.txt  
-  Label file with illegal characters removed
+    Label file with illegal characters removed
 s_merged.bam
-  sorted bamfile for CRS alignment
+    sorted bamfile for CRS alignment
 ${name}_coords_to_barcodes.pickle
-  pickle file containing a python dictionary of CRS/barcode mappings
- *.png
-  Visualization of number of barcodes mapping to enhancers
+    pickle file containing a python dictionary of CRS/barcode mappings
+*.png
+    Visualization of number of barcodes mapping to enhancers
   
 
 
