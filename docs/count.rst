@@ -135,24 +135,24 @@ File tree
 .. code-block:: text
 
     outdir
-      |_Condition
-        |allreps.tsv
-        |average_allreps.tsv
-        |HepG2_1_2_correlation.txt
-        |HepG2_1_2_DNA_pairwise.png
-        |HepG2_1_2_Ratio_pairwise.png
-        |HepG2_1_2_RNA_pairwise.png
-        |HepG2_all_barcodesPerInsert_box.png
-        |HepG2_barcodesPerInsert.png
-            |_Reps
-                |HepG2_1_counts.tsv
-                |HepG2_1_counts.tsv.gz
-                |HepG2_1_DNA_counts.tsv
-                |HepG2_1_DNA_raw_counts.tsv.gz  
-                |HepG2_1_RNA_filtered_counts.tsv.gz
-                |HepG2_1_DNA_filtered_counts.tsv.gz
-                |HepG2_1_RNA_counts.tsv
-                |HepG2_1_RNA_raw_counts.tsv.gz
+      |-Condition
+        |-allreps.tsv
+        |-average_allreps.tsv
+        |-HepG2_1_2_correlation.txt
+        |-HepG2_1_2_DNA_pairwise.png
+        |-HepG2_1_2_Ratio_pairwise.png
+        |-HepG2_1_2_RNA_pairwise.png
+        |-HepG2_all_barcodesPerInsert_box.png
+        |-HepG2_barcodesPerInsert.png
+            |-Reps
+                |-HepG2_1_counts.tsv
+                |-HepG2_1_counts.tsv.gz
+                |-HepG2_1_DNA_counts.tsv
+                |-HepG2_1_DNA_raw_counts.tsv.gz  
+                |-HepG2_1_RNA_filtered_counts.tsv.gz
+                |-HepG2_1_DNA_filtered_counts.tsv.gz
+                |-HepG2_1_RNA_counts.tsv
+                |-HepG2_1_RNA_raw_counts.tsv.gz
 
 Files for each Condition
 ------------------------
