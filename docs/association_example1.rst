@@ -85,8 +85,8 @@ Now we have everything at hand to run the count MPRAflow pripeline. Therefore we
 .. code-block:: bash
 
     cd <path/to/MPRAflow>/MPRAflow
-    conda activate MPRAflow†
-    nextflow run  -w <path/to/Basic>/Assoc_Basic/work association.nf --fastq-insert "<path/to/Basic>/Assoc_Basic/data/SRR10800986_1.fastq.gz" --fastq-insertPE "<path/to/Basic>/Assoc_Basic/data/SRR10800986_3.fastq.gz" --fastq-bc "<path/to/Basic>/Assoc_Basic/data/SRR10800986_2.fastq.gz" --design "<path/to/Basic>/Assoc_Basic/data/design.fa"
+    conda activate MPRAflow
+    nextflow run association.nf -w <path/to/Basic>/Assoc_Basic/work association.nf --fastq-insert "<path/to/Basic>/Assoc_Basic/data/SRR10800986_1.fastq.gz" --fastq-insertPE "<path/to/Basic>/Assoc_Basic/data/SRR10800986_3.fastq.gz" --fastq-bc "<path/to/Basic>/Assoc_Basic/data/SRR10800986_2.fastq.gz" --design "<path/to/Basic>/Assoc_Basic/data/design.fa"
 
 .. note:: Please check your :code:`nextflow.config` file if it is correctly configured (e.g. with your SGE cluster commands).
 
