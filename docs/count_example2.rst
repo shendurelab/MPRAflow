@@ -198,14 +198,14 @@ If everything works fine the following 5 processes will run: :code:`create_BAM (
 
 .. code-block:: text
 
-    [49/53495c] process > create_BAM (make idx)    [100%] 12 of 12 ✔
-    [92/f2a68d] process > raw_counts (12)          [100%] 12 of 12 ✔
-    [af/398836] process > filter_counts (12)       [100%] 12 of 12 ✔
-    [63/fb29b6] process > final_counts (12)        [100%] 12 of 12 ✔
-    [75/f412e8] process > dna_rna_merge_counts (5) [100%] 6 of 6 ✔
-    Completed at: 03-Jan-2020 19:55:10
-    Duration    : 6h 16m 17s
-    CPU hours   : 34.6
+    [fe/d8ac14] process > create_BAM (make idx)    [100%] 12 of 12 ✔
+    [7d/b56129] process > raw_counts (12)          [100%] 12 of 12 ✔
+    [06/2c938d] process > filter_counts (12)       [100%] 12 of 12 ✔
+    [2d/ce1afe] process > final_counts (12)        [100%] 12 of 12 ✔
+    [68/df8db0] process > dna_rna_merge_counts (6) [100%] 6 of 6 ✔
+    Completed at: 09-Jan-2020 15:38:32
+    Duration    : 3h 45m 17s
+    CPU hours   : 21.8
     Succeeded   : 54
 
 

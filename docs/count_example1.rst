@@ -51,7 +51,7 @@ With
 
 the folder should look like this:
 
-.. code-black:: text
+.. code-block:: text
 
     data
 

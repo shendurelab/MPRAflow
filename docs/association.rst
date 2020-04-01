@@ -91,19 +91,19 @@ Processes run by nextflow in the Association Utility. Some Processes will be run
 
 count_bc or count_bc_nolab (if no label file is provided)
   Removes any illegal characters (defined by Piccard) in the label file and design file. Counts the number of reads in the fastq file.
-  
+
 create_BWA_ref
-  Creates a BWA reference based on the design file  
-  
+  Creates a BWA reference based on the design file
+
 PE_merge (if paired end fastq files provided)
   Merges the forward and reverse reads covering the CRS using fastq-join
-  
+
 align_BWA_PE or align_BWA_S (if single end mode)
   Uses BWA to align the CRS fastq files to the reference created from the Design File. This will be done for each fastq file chunk based on the split option.
-  
+
 collect_chunks
-  merges all bamfiles from each separate alignment 
-  
+  merges all bamfiles from each separate alignment
+
 map_element_barcodes or map_element_barcodes_var (if variant file provided)
   Assign barcodes to CRS and filters barcodes by user defined parameters for coverage and mapping percentage
 
@@ -117,21 +117,18 @@ The output can be found in the folder defined by the option :code:`--outdir`. It
 
 Files
 -------------
-count_fastq.txt  
+
+count_fastq.txt
     number of barcode reads
-count_merged.txt  
+count_merged.txt
     number of aligned CRS reads
-design_rmIllegalChars.fa  
+design_rmIllegalChars.fa
     Design file with illegal characters removed
-label_rmIllegalChars.txt  
+label_rmIllegalChars.txt
     Label file with illegal characters removed
 s_merged.bam
     sorted bamfile for CRS alignment
 ${name}_coords_to_barcodes.pickle
     pickle file containing a python dictionary of CRS/barcode mappings
-*.png
+\*.png
     Visualization of number of barcodes mapping to enhancers
-  
-
-
-
