@@ -1,4 +1,5 @@
-params.version="2.1"
+#!/usr/bin/env nextflow
+
 /*
 ========================================================================================
                          MPRAflow
@@ -70,8 +71,6 @@ params.min_frac="0.5"
 params.baseq="30"
 params.mapq="30"
 params.cigar="n"
-params.outdir="outs"
-params.nf_required_version="19.10"
 params.split=2000000
 
 
@@ -213,8 +212,8 @@ if (params.label_file != null) {
             ## Get rid of illegal regex characters
             awk '{gsub(/\\[/,"_")}1' $labels > t_new_label.txt
             awk '{gsub(/\\]/,"_")}1' t_new_label.txt > label_rmIllegalChars.txt
-            
-            
+
+
             awk '{gsub(/\\[/,"_")}1' $design > t_new_design.txt
             awk '{gsub(/\\]/,"_")}1' t_new_design.txt > design_rmIllegalChars.fa
 
@@ -263,7 +262,7 @@ if (params.label_file == null) {
 /*
 * STEP 1: Align
 * Process 1A: create BWA reference
-* contributions: Gracie Gordon 
+* contributions: Gracie Gordon
 */
 
 process 'create_BWA_ref' {
@@ -312,7 +311,7 @@ if (params.fastq_insertPE_file != null) {
 
 /*
 *Process 1B: merge Paired end reads
-* contributions: Gracie Gordon 
+* contributions: Gracie Gordon
 */
 if (params.fastq_insertPE_file != null) {
     process 'PE_merge' {
@@ -336,7 +335,7 @@ if (params.fastq_insertPE_file != null) {
 
 /*
 * Process 1C: align with BWA
-* contributions: Gracie Gordon 
+* contributions: Gracie Gordon
 */
 
 //paired ends
@@ -481,7 +480,7 @@ process 'map_element_barcodes' {
 
 /*
 * Filter barcodes for minimum coverage and unique mapping
-* contributions: Gracie Gordon 
+* contributions: Gracie Gordon
 */
 
 process 'filter_barcodes' {
