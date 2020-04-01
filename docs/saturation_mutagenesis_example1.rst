@@ -102,7 +102,7 @@ Now we have everything at hand to run the saturation mutagenesis MPRAflow pipeli
 
 If everything works fine the following 11 processes will run: :code:`calc_assign_variantMatrix` :code:`calc_assign_variantMatrixWith1bpDel`, :code:`fitModel`, :code:`summarizeVariantMatrix`, :code:`statsWithCoefficient`, :code:`plotCorrelation`, :code:`plotStatsWithCoefficient`, :code:`fitModelCombined`, :code:`combinedStats`, :code:`statsWithCoefficientCombined`, and :code:`plotStatsWithCoefficientCombined`.
 
-..code-block:: text
+.. code-block:: text
 
     [3c/835d00] process > calc_assign_variantMatrix (1)           [100%] 6 of 6 ✔
     [7a/887135] process > calc_assign_variantMatrixWith1bpDel (1) [100%] 6 of 6 ✔
