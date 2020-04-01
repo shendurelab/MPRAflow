@@ -58,7 +58,7 @@ the folder should look like this:
 Here is an overview of the files:
 
 .. csv-table:: HEPG2 data
-      :header: "Condition", "GEO Accession", "SRA Accession", SRA Runs
+   :header: "Condition", "GEO Accession", "SRA Accession", SRA Runs
    :widths: 40, 10, 10, 20
 
    "HEPG2-DNA-1: HEPG2 DNA replicate 1", GSM4237863, SRX7474781, "SRR10800881"
