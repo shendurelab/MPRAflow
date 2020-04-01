@@ -163,12 +163,13 @@ First, create your Documentation development setup.
    Now you can make your changes locally.
 
 5. When you're done making your changes, make sure that nextflow runs properly
-   For nextflow:
+   For nextflow::
 
     nextflow run <your_nextflow_pipeline>
 
-   For documentation:
+   For documentation::
 
+    cd docs
     make clean && make html
 
 6. Commit your changes and push your branch to GitHub::
