@@ -98,7 +98,7 @@ Now we have everything at hand to run the saturation mutagenesis MPRAflow pipeli
     conda activate MPRAflow
     nextflow run -resume -w <path/to/TERT>/SatMut_TERT/work  saturationMutagenesis.nf --experiment-file "<path/to/TERT>/SatMut_TERT/data/experiment.csv" --assignment "<path/to/TERT>/SatMut_TERT/data/TERT.variants.txt.gz" --dir "<path/to/TERT>/SatMut_TERT/data" --outdir "<path/to/TERT>/SatMut_TERT/output"
 
-.. note:: Please check your :code:`nextflow.config` file if it is correctly configured (e.g. with your SGE cluster commands).
+.. note:: Please check your :code:`conf/cluster.config` file if it is correctly configured (e.g. with your SGE cluster commands).
 
 If everything works fine the following 11 processes will run: :code:`calc_assign_variantMatrix` :code:`calc_assign_variantMatrixWith1bpDel`, :code:`fitModel`, :code:`summarizeVariantMatrix`, :code:`statsWithCoefficient`, :code:`plotCorrelation`, :code:`plotStatsWithCoefficient`, :code:`fitModelCombined`, :code:`combinedStats`, :code:`statsWithCoefficientCombined`, and :code:`plotStatsWithCoefficientCombined`.
 
