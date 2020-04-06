@@ -1,6 +1,5 @@
 #!/usr/bin/env nextflow
 
-params.version=2.1
 /*
 ========================================================================================
                          MPRAflow
@@ -48,7 +47,7 @@ if (params.containsKey('h') || params.containsKey('help')){
 // Configurable variables
 //defaults
 results_path = params.outdir
-params.nf_required_version="19.10"
+
 params.thresh = 10
 params.pvalue = 1e-5
 

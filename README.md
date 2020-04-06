@@ -55,7 +55,7 @@ ln -s ~/miniconda3/bin/activate ~/miniconda3/envs/MPRAflow/bin/activate
 
 #### Steps to run the pipeline
 
-This pipeline comes with a `nextflow.config` file set up to run on HPC clusters, allowing each process to be run as a separate 'qsub' command. The config contains example code for SGE, LSF, and SLURM architectures. The default is SGE.
+This pipeline comes with a `conf/cluster.config` file set up to run on HPC clusters, allowing each process to be run as a separate `qsub`, `sbatch` or similar command. The config contains example code for SGE, LSF, and SLURM architectures. The default is SGE.
 Please remove the `\\` for the architecture you would like to use and place `\\` in front of any architectures not currently in use. A '\\' in front of all of them runs the pipeline on your local machine. If you run MPRAflow on a cluster system make sure be that you export all environment variables. E.g. this can be done with the `-V` option by SGE.
 
 **NOTE:**: Please consult your cluster's wiki page for cluster specific commands and change `clusterOptions = ` to reflect these specifications. Additionally, for large libraries, more memory can be specified in this location.

@@ -1,6 +1,4 @@
 #!/usr/bin/env nextflow
-
-params.version=2.1
 /*
 ========================================================================================
                          MPRAflow
@@ -70,9 +68,7 @@ params.plaintext_email = false
 output_docs = file("$baseDir/docs/output.md")
 
 //defaults
-params.outdir="outs"
 results_path = params.outdir
-params.nf_required_version="19.10"
 
 params.merge_intersect=false
 params.mpranalyze=false
