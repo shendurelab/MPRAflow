@@ -11,6 +11,8 @@
 
 * Bugfix of default out dir. It was not set to `params.outdir = "outs"` so it tries to create a folder `null`. Now in `params.outdir`
 * removing default `params.version` and `params.nf_required_version`. Now in `conf/global.config`
+* Catching cases when barcode/p-value filtering produces 0 variants
+* Change update depricated fork method. Now works with nextflow 20.01
 
 ### count.nf
 
