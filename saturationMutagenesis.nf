@@ -271,7 +271,7 @@ process 'fitModelCombined' {
 
   conda 'conf/mpraflow_r.yml'
 
-  result = variantMatrixCombined.concat(variantMatrix1bpDelCombined).groupTuple(by: [0,2]).fork{i ->
+  result = variantMatrixCombined.concat(variantMatrix1bpDelCombined).groupTuple(by: [0,2]).multiMap{i ->
                             cond: i[0]
                             type: i[2]
                             replicate: i[1].join(" ")
@@ -282,9 +282,11 @@ process 'fitModelCombined' {
     val(cond) from result.cond
     val(type) from result.type
     val(replicates) from result.replicate
-    file(variantMatrix) from result.files
+    file variantMatrixFiles from result.files
   output:
     tuple val(cond), val(type), file("${cond}.Combined.${type}.ModelCoefficients.txt") into variantMatrixModelCoefficientsCombined
+  script:
+    variantMatrix = variantMatrixFiles.collect{"$it"}.join(' ')
   shell:
     """
     Rscript ${"$baseDir"}/src/satMut/fitModelCombined.R ${cond}.Combined.${type}.ModelCoefficients.txt $variantMatrix $replicates
@@ -298,7 +300,7 @@ process 'combinedStats' {
 
   conda 'conf/mpraflow_r.yml'
 
-  result = variantMatrixModelCoefficientsStatsForCombined.groupTuple(by: [0,2]).fork{i ->
+  result = variantMatrixModelCoefficientsStatsForCombined.groupTuple(by: [0,2]).multiMap{i ->
                             cond: i[0]
                             type: i[2]
                             replicate: i[1].join(" ")
@@ -309,7 +311,9 @@ process 'combinedStats' {
     val(cond) from result.cond
     val(type) from result.type
     val(replicates) from result.replicate
-    file(stats) from result.files
+    file statsFile from result.files
+  script:
+    stats = statsFile.collect{"$it"}.join(' ')
   output:
     tuple val(cond), val(type), file("${cond}.Combined.${type}.stats") into variantMatrixModelCoefficientsStatsCombined
   shell:
@@ -323,7 +327,7 @@ process 'statsWithCoefficientCombined' {
   publishDir "$params.outdir/$cond", mode:'copy'
   label 'shorttime'
 
-  result = variantMatrixModelCoefficientsStatsCombined.concat(variantMatrixModelCoefficientsCombined).groupTuple(by: [0,1]).fork{i ->
+  result = variantMatrixModelCoefficientsStatsCombined.concat(variantMatrixModelCoefficientsCombined).groupTuple(by: [0,1]).multiMap{i ->
                             cond: i[0]
                             type: i[1]
                             files: i[2]
