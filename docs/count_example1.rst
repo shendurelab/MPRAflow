@@ -92,7 +92,7 @@ Our experiment file looks exactly like this:
 
 .. code-block:: text
 
-    Condition,Replicate,,DNA_BC_F,DNA_UMI,DNA_BC_R,RNA_BC_F,RNA_UMI,RNA_BC_R
+    Condition,Replicate,DNA_BC_F,DNA_UMI,DNA_BC_R,RNA_BC_F,RNA_UMI,RNA_BC_R
     HEPG2,1,SRR10800881_1.fastq.gz,SRR10800881_3.fastq.gz,SRR10800881_2.fastq.gz,SRR10800882_1.fastq.gz,SRR10800882_3.fastq.gz,SRR10800882_2.fastq.gz
     HEPG2,2,SRR10800883_1.fastq.gz,SRR10800883_3.fastq.gz,SRR10800883_2.fastq.gz,SRR10800884_1.fastq.gz,SRR10800884_3.fastq.gz,SRR10800884_2.fastq.gz
     HEPG2,3,SRR10800885_1.fastq.gz,SRR10800885_3.fastq.gz,SRR10800885_2.fastq.gz,SRR10800886_1.fastq.gz,SRR10800886_3.fastq.gz,SRR10800886_2.fastq.gz
