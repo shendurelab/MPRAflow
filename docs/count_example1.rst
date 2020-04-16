@@ -40,6 +40,16 @@ There is one condition (HEPG2) with three technical replicates. Each replicate c
     fastq-dump --gzip --split-files SRR10800881 SRR10800882 SRR10800883 SRR10800884 SRR10800885 SRR10800886
     cd ..
 
+For large files and unstable internet connection we reccommend the comand `prefetch` from SRA tools before running `fastq-dump`. This command is much smarter in warnings when something went wrong.
+
+conda install sra-tools
+cd Count_Basic/data
+prefetch SRR10800881 SRR10800882 SRR10800883 SRR10800884 SRR10800885 SRR10800886
+fastq-dump --gzip --split-files SRR10800986
+cd ..
+
+
+
 .. note:: Please be sure that all files are downloaded completely without errors! Depending on your internet connection this can take a while. If you just want some data to run MPRAflow you can just limit yourself to one condition and/or just one replicate.
 
 With
