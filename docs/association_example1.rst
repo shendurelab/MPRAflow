@@ -47,7 +47,18 @@ There is one set of association sequencing for this data, which contains a forwa
     fastq-dump --gzip --split-files SRR10800986
     cd ..
 
-.. note:: Please be sure that all files are downloaded completely without errors! Depending on your internet connection this can take a while. If you just want some data to run MPRAflow you can just limit yourself to one condition and/or just one replicate.
+For large files and unstable internet connection we reccommend the comand `prefetch` from SRA tools before running `fastq-dump`. This command is much smarter in warnings when something went wrong.
+
+.. code-block:: bash
+
+    conda install sra-tools
+    cd Assoc_Basic/data
+    prefetch SRR10800986
+    fastq-dump --gzip --split-files SRR10800986
+    cd ..
+
+.. note:: Please be sure that all files are downloaded completely without errors! Depending on your internet connection this can take a while. If you just want some data to run MPRAflow you can just limit yourself to one condition and/or just one replicate. 
+
 
 With
 
