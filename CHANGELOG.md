@@ -4,6 +4,7 @@
 
 ### global changes
 
+* nextflow version 20.01 is needed because of multiMap() function
 * introducing new config file `conf/global.config` with global variables like the min. required nextflow version and the actual MPRAflow version.
 * moving cluster config to a sepArate file: `conf/cluster.config`. Try to adapt the times to the sort and longtime labels. Modify SLURM queue to SLUM not SGE options.
 
