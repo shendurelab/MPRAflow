@@ -1,4 +1,4 @@
-[![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A519.10-brightgreen.svg)](https://www.nextflow.io/)
+[![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A520.01-brightgreen.svg)](https://www.nextflow.io/)
 [![Documentation Status](https://readthedocs.org/projects/mpraflow/badge/?version=latest)](https://mpraflow.readthedocs.io/en/latest/?badge=latest)
 
 # MPRAflow
