@@ -415,11 +415,14 @@ process 'collect_chunks'{
     conda 'conf/mpraflow_py36.yml'
 
     input:
-        file sbam_list from s_bam.collect()
-        file count_bam from bam_ch.collect()
+        file sbam_listFiles from s_bam.collect()
+        file count_bamFiles from bam_ch.collect()
     output:
         file 's_merged.bam' into s_merge
         file 'count_merged.txt' into ch_merge
+    script:
+        count_bam = count_bamFiles.join(' ')
+        sbam_list = sbam_listFiles.join(' ')
     shell:
         """
         #collect sorted bams into one file
