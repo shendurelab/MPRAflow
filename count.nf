@@ -198,8 +198,6 @@ summary['Pipeline Version'] = params.version
 summary['Run Name']         = custom_runName ?: workflow.runName
 
 //summary['Thread fqdump']    = params.threadfqdump ? 'YES' : 'NO'
-summary['Max CPUs']         = params.max_cpus
-summary['Max Time']         = params.max_time
 summary['Output dir']       = params.outdir
 summary['Working dir']      = workflow.workDir
 //summary['Container Engine'] = workflow.containerEngine
@@ -212,7 +210,6 @@ summary['Output dir']       = params.outdir
 summary['Script dir']       = workflow.projectDir
 summary['Config Profile']   = workflow.profile
 summary['Experiment File']  = params.experiment_file
-summary['design file']      = params.design_file
 summary['reads']            = (params.no_umi ? reads_noUMI : reads)
 summary['UMIs']             = (params.no_umi ? "Reads without UMI" : "Reads with UMI")
 summary['BC length']        = params.bc_length
