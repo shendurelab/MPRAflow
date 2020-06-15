@@ -7,6 +7,8 @@ This pipeline processes sequencing data from Massively Parallel Reporter Assays 
 
 **Check out MPRAflow's details documentation [here](https://mpraflow.readthedocs.io/en/latest/index.html)**
 
+**NOTE:**: MPRAflow cannot analyze STARR-seq data. Have a look at the [documentation](https://mpraflow.readthedocs.io/en/latest/index.html) to see some MPRA examples.
+
 This package contains three utilities:
 
 ## ASSOCIATION:
