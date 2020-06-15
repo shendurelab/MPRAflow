@@ -21,4 +21,4 @@ MPRAflow is not able to create a Conda environment
 
 
 Can I use STARR-seq with MPRA-flow?
-    No. For more details have a look at this [comment](https://github.com/shendurelab/MPRAflow/issues/27#issuecomment-636515565).
+    No. For more details have a look at this `comment<https://github.com/shendurelab/MPRAflow/issues/27#issuecomment-636515565>`_.
