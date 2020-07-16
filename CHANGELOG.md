@@ -2,11 +2,16 @@
 
 ## development
 
+## v2.2
+
+No workflow changes. Only a few fixes and some restructuring of configs. Using nextflow version 20.01 now!
+
 ### global changes
 
 * nextflow version 20.01 is needed because of multiMap() function
 * introducing new config file `conf/global.config` with global variables like the min. required nextflow version and the actual MPRAflow version.
 * moving cluster config to a sepArate file: `conf/cluster.config`. Try to adapt the times to the sort and longtime labels. Modify SLURM queue to SLUM not SGE options.
+* improved documentation
 
 ### saturationMutagenesis.nf
 
@@ -24,6 +29,6 @@
 * removing default `params.version`, `params.nf_required_version` and `params.outdir`. Now in `conf/global.config`.
 
 
-# v2.1
+## v2.1
 
 Initial MPRAflow version for publication.
