@@ -111,7 +111,7 @@ Now we have everything at hand to run the count MPRAflow pripeline. Therefore we
     conda activate MPRAflow
     nextflow run count.nf -w <path/to/Basic>/Count_Basic/work --experiment-file "<path/to/Basic>/Count_Basic/data/experiment.csv" --dir "<path/to/Basic>/Count_Basic/data" --outdir "<path/to/Basic>/Count_Basic/output" --design "<path/to/design/fasta/design.fa" --association "<path/to/association/pickle/SRR10800986_filtered_coords_to_barcodes.pickle"
 
-.. note:: Please check your :code:`nextflow.config` file if it is correctly configured (e.g. with your SGE cluster commands).
+.. note:: Please check your :code:`conf/cluster.config` file if it is correctly configured (e.g. with your SGE cluster commands).
 
 If everything works fine the following 5 processes will run: :code:`create_BAM (make idx)` :code:`raw_counts`, :code:`filter_counts`, :code:`final_counts`, :code:`dna_rna_merge_counts`, :code:`calc_correlations`, :code:`make_master_tables`.
 
