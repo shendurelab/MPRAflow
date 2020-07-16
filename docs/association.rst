@@ -45,14 +45,11 @@ Example file:
     CRS3  Test
     CRS4  Positive_Control
 
-Variant File (Optional)
------------------------
-For libraries of test sequences with single nucleotide variants (SNVs), a TSV of locations and base pair changes in each CRS
+.. Variant File (Optional)
+    -----------------------
+    For libraries of test sequences with single nucleotide variants (SNVs), a TSV of locations and base pair changes in each CRS
 
-Example file:
-
-.. code-block:: text
-
+.. Example file
     reference_name  variant_positions ref_bases alt_bases
     ref1  130 A T
     ref2  108 G A
@@ -82,7 +79,8 @@ With :code:`--help` or :code:`--h` you can see the help message.
   --outdir                      The output directory where the results will be saved and what will be used as a prefix (default outs)
   --split                       Number read entries per fastq chunk for faster processing (default: 2000000)
   --labels                      tsv with the oligo pool fasta and a group label (ex: positive_control) if no labels desired a file will be automatically generated
-  --variants                    tsv with reference_name variant_positions ref_bases alt_bases, only input for variant analyses workflow
+
+.. --variants                    tsv with reference_name variant_positions ref_bases alt_bases, only input for variant analyses workflow
 
 Processes
 -------------
