@@ -102,7 +102,7 @@ align_BWA_PE or align_BWA_S (if single end mode)
 collect_chunks
   merges all bamfiles from each separate alignment
 
-map_element_barcodes or map_element_barcodes_var (if variant file provided)
+map_element_barcodes
   Assign barcodes to CRS and filters barcodes by user defined parameters for coverage and mapping percentage
 
 filter_barcodes
