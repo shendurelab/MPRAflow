@@ -103,5 +103,6 @@ Indices and tables
 
    contributing
    authors
+   history
    license
    todo_list

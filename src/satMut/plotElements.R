@@ -72,12 +72,15 @@ barcodes <- as.integer(args[3])
 significance <- as.double(args[4])
 output <- args[5]
 
-input <- read.table(args[1],as.is=T,header=T,sep="\t") %>%
+input <- read.table(file,as.is=T,header=T,sep="\t") %>%
           separate('Position', c("Position","Ref","Alt"), sep = "([\\_\\.])") %>%
           mutate(Alt = if_else(Alt == 'd', '-', Alt))
 input <- modify.filterdata(input, barcodes=barcodes, threshold=significance, deletions=TRUE, range=NULL)
 
-p <- getPlot(input, name)
 
-
+if (nrow(input) == 0) {
+    p <- ggplot() + annotate("text",x=1,y=1,label="No variants left after filtering")
+} else {
+    p <- getPlot(input, name)
+}
 ggsave(filename=output,plot=p, width=20, height=10)

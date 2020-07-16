@@ -1,6 +1,4 @@
 #!/usr/bin/env nextflow
-
-params.version=2.1
 /*
 ========================================================================================
                          MPRAflow
@@ -70,9 +68,7 @@ params.plaintext_email = false
 output_docs = file("$baseDir/docs/output.md")
 
 //defaults
-params.outdir="outs"
 results_path = params.outdir
-params.nf_required_version="19.10"
 
 params.merge_intersect=false
 params.mpranalyze=false
@@ -202,8 +198,6 @@ summary['Pipeline Version'] = params.version
 summary['Run Name']         = custom_runName ?: workflow.runName
 
 //summary['Thread fqdump']    = params.threadfqdump ? 'YES' : 'NO'
-summary['Max CPUs']         = params.max_cpus
-summary['Max Time']         = params.max_time
 summary['Output dir']       = params.outdir
 summary['Working dir']      = workflow.workDir
 //summary['Container Engine'] = workflow.containerEngine
@@ -216,7 +210,6 @@ summary['Output dir']       = params.outdir
 summary['Script dir']       = workflow.projectDir
 summary['Config Profile']   = workflow.profile
 summary['Experiment File']  = params.experiment_file
-summary['design file']      = params.design_file
 summary['reads']            = (params.no_umi ? reads_noUMI : reads)
 summary['UMIs']             = (params.no_umi ? "Reads without UMI" : "Reads with UMI")
 summary['BC length']        = params.bc_length
@@ -509,18 +502,20 @@ if(params.mpranalyze){
 
         conda 'conf/mpraflow_py36.yml'
 
-        result = merged_ch.groupTuple(by: 0).fork{i ->
+        result = merged_ch.groupTuple(by: 0).multiMap{i ->
                                   cond: i[0]
                                   replicate: i[1].join(" ")
                                   files: i[2]
                                 }
 
         input:
-            file(pairlist) from result.files
+            file(pairlistFiles) from result.files
             val(replicate) from result.replicate
             val(cond) from result.cond
         output:
             tuple val(cond),file("${cond}_count.csv") into merged_out
+        script:
+            pairlist = pairlistFiles.collect{"$it"}.join(' ')
         shell:
             """
             python ${"$baseDir"}/src/merge_all.py $cond "${cond}_count.csv" $pairlist $replicate
@@ -614,14 +609,14 @@ if(!params.mpranalyze && params.containsKey("association")){
 
         conda 'conf/mpraflow_r.yml'
 
-        result = merged_ch.groupTuple(by: 0).fork{i ->
+        result = merged_ch.groupTuple(by: 0).multiMap{i ->
                                   cond: i[0]
                                   replicate: i[1].join(" ")
                                   files: i[2]
                                 }
 
         input:
-            file(pairlist) from result.files
+            file(pairlistFiles) from result.files
             val(replicate) from result.replicate
             val(cond) from result.cond
             file(lab) from label_file
@@ -629,6 +624,7 @@ if(!params.mpranalyze && params.containsKey("association")){
             file "*.png"
             file "*_correlation.txt"
         script:
+            pairlist = pairlistFiles.collect{"$it"}.join(' ')
             def label = lab.exists() ? lab : lab.name
             """
             Rscript ${"$baseDir"}/src/plot_perInsertCounts_correlation.R $cond $label $pairlist $replicate
@@ -643,19 +639,21 @@ if(!params.mpranalyze && params.containsKey("association")){
 
         conda 'conf/mpraflow_r.yml'
 
-        result = merged_ch2.groupTuple(by: 0).fork{i ->
+        result = merged_ch2.groupTuple(by: 0).multiMap{i ->
                                   cond: i[0]
                                   replicate: i[1].join(" ")
                                   files: i[2]
                                 }
 
         input:
-            file(pairlist) from result.files
+            file(pairlistFiles) from result.files
             val(replicate) from result.replicate
             val(cond) from result.cond
         output:
             file "average_allreps.tsv"
             file "allreps.tsv"
+        script:
+            pairlist = pairlistFiles.collect{"$it"}.join(' ')
         shell:
             """
             Rscript ${"$baseDir"}/src/make_master_tables.R $cond $params.thresh allreps.tsv average_allreps.tsv $pairlist $replicate

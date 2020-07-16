@@ -45,14 +45,11 @@ Example file:
     CRS3  Test
     CRS4  Positive_Control
 
-Variant File (Optional)
------------------------
-For libraries of test sequences with single nucleotide variants (SNVs), a TSV of locations and base pair changes in each CRS
+.. Variant File (Optional)
+    -----------------------
+    For libraries of test sequences with single nucleotide variants (SNVs), a TSV of locations and base pair changes in each CRS
 
-Example file:
-
-.. code-block:: text
-
+.. Example file
     reference_name  variant_positions ref_bases alt_bases
     ref1  130 A T
     ref2  108 G A
@@ -82,7 +79,8 @@ With :code:`--help` or :code:`--h` you can see the help message.
   --outdir                      The output directory where the results will be saved and what will be used as a prefix (default outs)
   --split                       Number read entries per fastq chunk for faster processing (default: 2000000)
   --labels                      tsv with the oligo pool fasta and a group label (ex: positive_control) if no labels desired a file will be automatically generated
-  --variants                    tsv with reference_name variant_positions ref_bases alt_bases, only input for variant analyses workflow
+
+.. --variants                    tsv with reference_name variant_positions ref_bases alt_bases, only input for variant analyses workflow
 
 Processes
 -------------
@@ -104,7 +102,7 @@ align_BWA_PE or align_BWA_S (if single end mode)
 collect_chunks
   merges all bamfiles from each separate alignment
 
-map_element_barcodes or map_element_barcodes_var (if variant file provided)
+map_element_barcodes
   Assign barcodes to CRS and filters barcodes by user defined parameters for coverage and mapping percentage
 
 filter_barcodes

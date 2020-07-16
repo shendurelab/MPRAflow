@@ -24,21 +24,25 @@ readData <- function(file, name, threshold) {
             separate('Position', c("Position","Ref","Alt"), sep = "([\\_\\.])") %>%
             mutate(Alt = if_else(Alt == 'd', '-', Alt)) %>%
             mutate(Type=if_else(Alt=="-","1 bp deletions", "SNVs")) %>%
+            mutate(name=name) %>%
             filter(Barcodes >= threshold) %>%
-            select(Position, Ref, Alt , Coefficient, Type)
-  data$name <- name
+            select(Position, Ref, Alt , Coefficient, Type, name)
   return(data)
 }
 
 getPlot <- function(file1,file2, name1,name2, threshold) {
   data <- readData(file1,name1,threshold) %>% inner_join(readData(file2,name2,threshold),by=c("Position", "Ref", "Alt", "Type"))
 
-  correlation <- round(cor.test(data$Coefficient.x,data$Coefficient.y)$estimate,3)
+  if (nrow(data) < 2) {
+      p <- ggplot() + annotate("text",x=1,y=1,label="Not enough variants left after filtering for correation (n<2)")
+  } else {
+      correlation <- round(cor.test(data$Coefficient.x,data$Coefficient.y)$estimate,3)
 
-  p <- ggplot(data, aes(x=data$Coefficient.x,y=data$Coefficient.y,colour=Type)) + geom_abline(intercept=0, colour="gray") +
+      p <- ggplot(data, aes(x=data$Coefficient.x,y=data$Coefficient.y,colour=Type)) + geom_abline(intercept=0, colour="gray") +
       geom_point(size=3)  +
       ggtitle(paste(paste(name1,"vs."),name2,paste0("(rho_p ",correlation, ")" ),sep="\n")) + labs(x = paste0("Log2 variant effect\n",name1), y= paste0(name2,"\nLog2 variant effect")) +
       standard_style + scale_colour_manual(values = colours) + guides(colour = guide_legend(override.aes = list(size=5)))
+  }
   return(p)
 }
 
