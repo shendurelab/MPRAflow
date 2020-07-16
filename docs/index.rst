@@ -60,6 +60,7 @@ Indices and tables
 
     quickstart
     install
+    cluster
 
 
 .. toctree::
