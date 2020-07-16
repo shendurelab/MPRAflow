@@ -17,3 +17,8 @@ MPRAflow is not able to create a Conda environment
         conda env create --prefix /home/user/MPRAflow/work/conda/mpraflow_py27-a6601743cee3b1029d4f3c810b7ebf02 --file /home/user/MPRAflow/conf/mpraflow_py27.yml
 
     Afterwards try MPRAflow again. Please be sure that you are connected to the internet!
+
+
+
+Can I use STARR-seq with MPRAflow?
+    No. For more details have a look at this `comment <https://github.com/shendurelab/MPRAflow/issues/27#issuecomment-636515565>`_.

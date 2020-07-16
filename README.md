@@ -7,6 +7,8 @@ This pipeline processes sequencing data from Massively Parallel Reporter Assays 
 
 **Check out MPRAflow's details documentation [here](https://mpraflow.readthedocs.io/en/latest/index.html)**
 
+**NOTE:** MPRAflow cannot analyze STARR-seq data. Have a look at the [documentation](https://mpraflow.readthedocs.io/en/latest/index.html) to see some MPRA examples.
+
 This package contains three utilities:
 
 ## ASSOCIATION:
@@ -58,7 +60,7 @@ ln -s ~/miniconda3/bin/activate ~/miniconda3/envs/MPRAflow/bin/activate
 This pipeline comes with a `conf/cluster.config` file set up to run on HPC clusters, allowing each process to be run as a separate `qsub`, `sbatch` or similar command. The config contains example code for SGE, LSF, and SLURM architectures. The default is SGE.
 Please remove the `\\` for the architecture you would like to use and place `\\` in front of any architectures not currently in use. A '\\' in front of all of them runs the pipeline on your local machine. If you run MPRAflow on a cluster system make sure be that you export all environment variables. E.g. this can be done with the `-V` option by SGE.
 
-**NOTE:**: Please consult your cluster's wiki page for cluster specific commands and change `clusterOptions = ` to reflect these specifications. Additionally, for large libraries, more memory can be specified in this location.
+**NOTE:** Please consult your cluster's wiki page for cluster specific commands and change `clusterOptions = ` to reflect these specifications. Additionally, for large libraries, more memory can be specified in this location.
 
 Please use a submit script for steps 2 and 3. For full details of mandatory and optional arguments run:
 
