@@ -45,6 +45,8 @@ Example file:
     CRS3  Test
     CRS4  Positive_Control
 
+.. note:: If you provide a label file, the first column of the label file must exactly match the FASTA file or the files will not merge properly in the pipeline.
+
 .. Variant File (Optional)
     -----------------------
     For libraries of test sequences with single nucleotide variants (SNVs), a TSV of locations and base pair changes in each CRS
