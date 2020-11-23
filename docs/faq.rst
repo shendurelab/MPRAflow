@@ -22,3 +22,7 @@ MPRAflow is not able to create a Conda environment
 
 Can I use STARR-seq with MPRAflow?
     No. For more details have a look at this `comment <https://github.com/shendurelab/MPRAflow/issues/27#issuecomment-636515565>`_.
+
+
+The pipeline is giving an error `QXcbConnection: Could not connect to display` and won't run. How can I fix this?
+    Depending on your cluser configuration, the QT_QPA_PLATFORM variable may not be compatible with the plotting scripts in the pipeline. To resolve this error, add `QT_QPA_PLATFORM='offscreen'` to your bash profile.
