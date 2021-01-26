@@ -394,7 +394,7 @@ if (params.fastq_insertPE_file != null) {
             file reference_dict from reference_dict
         output:
             file "${name}.${chunk}.sorted.bam" into s_bam
-            file '${chunk}_count_bam.txt' into bam_ch
+            file '*count_bam.txt' into bam_ch
         shell:
             """
             bwa mem $design $chunk | samtools sort - -o ${name}.${chunk}.sorted.bam
