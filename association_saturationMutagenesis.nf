@@ -167,18 +167,6 @@ try {
 
 
 /*
-*CHUNKING FASTQ
-*/
-
-Channel
-    .fromPath(params.fastq_insert_file)
-    .set{ FWD_READS }
-
-Channel
-    .fromPath(params.fastq_insertPE_file)
-    .set{ REV_READS }
-
-/*
 * remove the illegal regex characters from reference
 * contributions: GMax Schubach
 */
@@ -254,9 +242,9 @@ process 'create_BAM' {
     conda 'conf/mpraflow_py27.yml'
 
     input:
-        file(fw_fastq) from FWD_READS
-        file(rev_fastq) from REV_READS
-        file(fastq_bc_file) from fastq_bc_file
+        file(fw_fastq) from params.fastq_insert_file
+        file(rev_fastq) from params.fastq_insertPE_file
+        file(fastq_bc_file) from params.fastq_bc_file
         val datasetID from element
         val bc_length from bc_length
     output:
