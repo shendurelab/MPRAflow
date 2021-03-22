@@ -339,8 +339,8 @@ process 'PE_mapping' {
 
         samtools flagstat aligned_${datasetID}.bam > aligned_${datasetID}.bam_stats
         """
-    }
 }
+
 
 
 /*
