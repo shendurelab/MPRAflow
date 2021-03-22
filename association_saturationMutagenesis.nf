@@ -108,7 +108,6 @@ if (params.containsKey("bc-length")){
 } else {
     params.bc_length = 15
 }
-clipping-penalty
 
 // BC length
 if (params.containsKey("clipping-penalty")){
