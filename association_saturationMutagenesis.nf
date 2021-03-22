@@ -40,7 +40,6 @@ def helpMessage() {
       --bc-length                   Barcode length (default 15)
       --cigar                       require exact match ex: 200M (default none)
       --outdir                      The output directory where the results will be saved and what will be used as a prefix (default outs)
-      --split                       Number read entries per fastq chunk for faster processing (default: 2000000)
 
     Extras:
       --h, --help                   Print this help message
@@ -173,7 +172,6 @@ try {
 
 Channel
     .fromPath(params.fastq_insert_file)
-    .splitFastq( by: params.split, file: true )
     .set{ FWD_READS }
 
 Channel
