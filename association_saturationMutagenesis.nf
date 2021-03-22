@@ -246,7 +246,7 @@ process 'create_BAM' {
         file(rev_fastq) from params.fastq_insertPE_file
         file(fastq_bc_file) from params.fastq_bc_file
         val datasetID from element
-        val bc_length from bc_length
+        val bc_length from params.bc_length
     output:
         tuple val(datasetID),file("${datasetID}.bam") into clean_bam
     shell:
@@ -355,7 +355,7 @@ process 'get_count' {
     input:
         tuple val(datasetID),file(bam) from aligned_bam
         file fixed_design from fixed_design
-        val bc_length from bc_length
+        val bc_length from params.bc_length
     output:
         tuple val(datasetID),file("counts_${datasetID}.filtered.tsv.gz") into filtered_counts
         file "counts_${datasetID}.tsv.gz" into counts
@@ -381,7 +381,7 @@ process 'extract_reads' {
         tuple val(datasetID),file(counts) from filtered_counts
         tuple val(datasetID_bam),file(bam) from aligned_bam
         file fixed_design from fixed_design
-        val bc_length from bc_length
+        val bc_length from params.bc_length
     output:
         file("reads/*.bam") into reads
     shell:
