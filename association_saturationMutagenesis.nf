@@ -310,20 +310,20 @@ process 'PE_mapping' {
                     awk 'BEGIN{ FS="\\t"; OFS="\\n" }{ split(\$0,a,"\\t"); \
                 helper = ""; 
                 for (i=12; i <= length(a); i++) { helper = helper""a[i]"\\t"}; 
-                sub("\\t$","",helper); print "@"\$1" "helper,\$10,"+",\$11 }'
+                sub("\\t\$","",helper); print "@"\$1" "helper,\$10,"+",\$11 }'
             ); 
             bwa mem -L 80 -M -C $design <( \
                 samtools view -f 64 $bam | \
                     awk 'BEGIN{ FS="\\t"; OFS="\\n" }{ split(\$0,a,"\\t"); 
                 helper = ""; 
                 for (i=12; i <= length(a); i++) { helper = helper""a[i]"\\t"};
-                sub("\\t$","",helper); print "@"\$1" "helper,\$10,"+",\$11 }'
+                sub("\\t\$","",helper); print "@"\$1" "helper,\$10,"+",\$11 }'
             ) <( \
                 samtools view -f 128 $bam | \
                     awk 'BEGIN{ FS="\\t"; OFS="\\n" }{ split(\$0,a,"\\t");
                 helper = ""; 
                 for (i=12; i <= length(a); i++) { helper = helper""a[i]"\\t"}; 
-                sub("\\t$","",helper); print "@"\$1" "helper,\$10,"+",\$11 }' \
+                sub("\\t\$","",helper); print "@"\$1" "helper,\$10,"+",\$11 }' \
             ) | grep -v "^@" \
         ) | samtools view -Su | \
         samtools sort aligned_${datasetID}.bam;
