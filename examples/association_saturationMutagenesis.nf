@@ -376,36 +376,35 @@ process 'extract_reads' {
         file fixed_design from fixed_design
         val bc_length from bc_length
     output:
-        tuple val(datasetID),file("counts_${datasetID}.filtered.tsv.gz") into filtered_counts
-        file "counts_${datasetID}.tsv.gz" into counts
+        file("reads/*.bam") into reads
     shell:
         """
         python src/satMut/extractReadsAssignmentSimple.py --BAMfield -s -f $bc_length \
-        -a $counts -o nobackup/${datasetID}_reads $bam;
+        -a $counts -o reads $bam;
         """
 }
 
-process 'get_count' {
-    label 'shorttime'
+// process 'get_variants' {
+//     label 'shorttime'
 
-    conda 'conf/mpraflow_py27.yml'
+//     conda 'conf/mpraflow_py27.yml'
 
-    input:
-        tuple val(datasetID),file(counts) from filtered_counts
-        tuple val(datasetID_bam),file(bam) from aligned_bam
-        file fixed_design from fixed_design
-        val bc_length from bc_length
-    output:
-        tuple val(datasetID),file("variants_${datasetID}.txt") into variants
-    shell:
-        """
-        region=$(grep -i $datasetID $reference_fai | awk '{ print \$1":20-"\$2-20 }');
-        for i in $( zcat $assignment | cut -f 1 | grep "^${datasetID}" ); do
-            echo $i $(
-                samtools mpileup -A -m 3 -R -f $design -u $bam 2> /dev/null | \
-                bcftools call -c -f GQ | python src/satMut/extractVariants.py -r \${region}
-                ); 
-        done > variants_${datasetID}.txt
-        """
-}
+//     input:
+//         file(counts) from reads
+//         file fixed_design from fixed_design
+//         val bc_length from bc_length
+//     output:
+//         tuple val(datasetID),file("variants_${datasetID}.txt") into variants
+//     shell:
+//         """
+
+//         region=$(grep -i $datasetID $reference_fai | awk '{ print \$1":20-"\$2-20 }');
+//         for i in $( zcat $assignment | cut -f 1 | grep "^${datasetID}" ); do
+//             echo $i $(
+//                 samtools mpileup -A -m 3 -R -f $design -u $reads 2> /dev/null | \
+//                 bcftools call -c -f GQ | python src/satMut/extractVariants.py -r \${region}
+//                 ); 
+//         done > variants_${bam}.txt
+//         """
+// }
 
