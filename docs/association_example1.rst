@@ -90,7 +90,7 @@ Now we are ready to run MPRAflow and create CRS-barcode mappings.
 Run nextflow
 ------------------------------
 
-Now we have everything at hand to run the count MPRAflow pripeline. Therefore we have to be in the cloned MPRAflow folder. But we will change the working and output directory to the :code:`Assoc_Basic` folder. The MPRAflow count command is:
+Now we have everything at hand to run the count MPRAflow pipeline. Therefore we have to be in the cloned MPRAflow folder. But we will change the working and output directory to the :code:`Assoc_Basic` folder. The MPRAflow count command is:
 
 
 .. code-block:: bash
