@@ -36,9 +36,7 @@ def helpMessage() {
     Options:
       
       --min-cov                     minimum coverage of bc to count it (default 3)
-      --min-frac                    minimum fraction of bc map to single insert (default 0.5)
-      --mapq                        map quality (default 30)
-      --baseq                       base quality (default 30)
+      --clipping-penalty            bwa mem clipping penalty (default 80)
       --bc-length                   Barcode length (default 15)
       --cigar                       require exact match ex: 200M (default none)
       --outdir                      The output directory where the results will be saved and what will be used as a prefix (default outs)
@@ -46,7 +44,6 @@ def helpMessage() {
 
     Extras:
       --h, --help                   Print this help message
-      --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
     """.stripIndent()
 }
 
@@ -62,8 +59,6 @@ if (params.containsKey('h') || params.containsKey('help')){
 
 //defaults
 params.min_cov="3"
-params.baseq="30"
-params.mapq="30"
 
 
 // Validate inputs
@@ -113,7 +108,14 @@ if (params.containsKey("bc-length")){
 } else {
     params.bc_length = 15
 }
+clipping-penalty
 
+// BC length
+if (params.containsKey("clipping-penalty")){
+    params.bc_length = params["clipping-penalty"]
+} else {
+    params.clipping_penalty = 80
+}
 
 
 // Header log info
@@ -165,6 +167,19 @@ try {
               "============================================================"
 }
 
+
+/*
+*CHUNKING FASTQ
+*/
+
+Channel
+    .fromPath(params.fastq_insert_file)
+    .splitFastq( by: params.split, file: true )
+    .set{ FWD_READS }
+
+Channel
+    .fromPath(params.fastq_insertPE_file)
+    .set{ REV_READS }
 
 /*
 * remove the illegal regex characters from reference
@@ -242,8 +257,8 @@ process 'create_BAM' {
     conda 'conf/mpraflow_py27.yml'
 
     input:
-        file(fw_fastq) from fastq_insert_file
-        file(rev_fastq) from fastq_insertPE_file
+        file(fw_fastq) from FWD_READS
+        file(rev_fastq) from REV_READS
         file(fastq_bc_file) from fastq_bc_file
         val datasetID from element
         val bc_length from bc_length
