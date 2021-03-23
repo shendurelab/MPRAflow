@@ -35,10 +35,9 @@ def helpMessage() {
 
     Options:
       
-      --min-cov                     minimum coverage of bc to count it (default 3)
-      --clipping-penalty            bwa mem clipping penalty (default 80)
       --bc-length                   Barcode length (default 15)
-      --cigar                       require exact match ex: 200M (default none)
+      --clipping-penalty            bwa mem clipping penalty (default 80)
+      --min-ireads                  minimum number gapped reads for indel candidates (default: 3)
       --outdir                      The output directory where the results will be saved and what will be used as a prefix (default outs)
 
     Extras:
@@ -115,6 +114,14 @@ if (params.containsKey("clipping-penalty")){
     params.clipping_penalty = 80
 }
 
+// min-ireads
+if (params.containsKey("min-ireads")){
+    params.min_ireads = params["min-ireads"]
+} else {
+    params.min_ireads = 3
+}
+
+
 
 // Header log info
 log.info """=======================================================
@@ -134,8 +141,6 @@ summary['fastq paired']     = params.fastq_insertPE_file
 summary['Fastq barcode']    = params.fastq_bc_file
 summary['design fasta']     = params.design_file
 summary['minimum BC cov']   = params.min_cov
-summary['map quality']      = params.mapq
-summary['base quality']     = params.baseq
 summary['Output dir']       = params.outdir
 summary['Run name'] = params.name
 summary['Working dir']      = workflow.workDir
@@ -171,7 +176,7 @@ try {
 * contributions: GMax Schubach
 */
 
-process 'count_bc' {
+process 'clean_design' {
     tag 'count'
     label 'shorttime'
     publishDir "${params.outdir}/${params.name}", mode:'copy'
@@ -250,7 +255,7 @@ process 'create_BAM' {
     output:
         tuple val(datasetID),file("${datasetID}.bam") into clean_bam
     shell:
-        """"
+        """
         fwd_length=`zcat $fw_fastq | head -2 | tail -1 | wc -c`
         fwd_length=\$(expr \$((\$fwd_length-1)))
 
@@ -297,6 +302,7 @@ process 'PE_mapping' {
         file reference_ann from reference_ann
         file reference_amb from reference_amb
         file reference_dict from reference_dict
+        val clipping from params.clipping_penalty
     output:
         tuple val(datasetID),file("aligned_${datasetID}.bam") into aligned_bam
         file "aligned_${datasetID}.bai" into aligned_bam_index
@@ -305,7 +311,7 @@ process 'PE_mapping' {
         """
         (
             samtools view -H $bam | grep '^@RG';
-            bwa mem -L 80 -M -C $design <(
+            bwa mem -L $clipping -M -C $design <(
                 samtools view -F 513 $bam | \
                 awk 'BEGIN{ FS="\\t"; OFS="\\n" }{ 
                     split(\$0,a,"\\t");
@@ -315,7 +321,7 @@ process 'PE_mapping' {
                     print "@"\$1" "helper,\$10,"+",\$11;
                 }'
             ); 
-            bwa mem -L 80 -M -C $design <(
+            bwa mem -L $clipping -M -C $design <(
                 samtools view -f 64 $bam | \
                 awk 'BEGIN{ FS="\\t"; OFS="\\n" }{
                     split(\$0,a,"\\t"); 
@@ -400,6 +406,7 @@ process 'extract_reads' {
 //         file(counts) from reads
 //         file fixed_design from fixed_design
 //         val bc_length from bc_length
+//         val m from params.min_ireads
 //     output:
 //         tuple val(datasetID),file("variants_${datasetID}.txt") into variants
 //     shell:
@@ -408,7 +415,7 @@ process 'extract_reads' {
 //         region=$(grep -i $datasetID $reference_fai | awk '{ print \$1":20-"\$2-20 }');
 //         for i in $( zcat $assignment | cut -f 1 | grep "^${datasetID}" ); do
 //             echo $i $(
-//                 samtools mpileup -A -m 3 -R -f $design -u $reads 2> /dev/null | \
+//                 bcftools mpileup -A -m $m -R -f $design -u $reads 2> /dev/null | \   
 //                 bcftools call -c -f GQ | python src/satMut/extractVariants.py -r \${region}
 //                 ); 
 //         done > variants_${bam}.txt
