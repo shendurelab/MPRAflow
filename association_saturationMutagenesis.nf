@@ -229,23 +229,26 @@ process 'get_name' {
     input:
         file(design_fai) from reference_fai
     output:
-         env ELEMENT into element
+         env ELEMENT into element,element2
     shell:
         """
         ELEMENT=\$(cat $design_fai | head -n 1 | cut -f 1)
         """
 }
 
+Channel
+    .fromPath(params.fastq_insert_file)
+    .splitFastq( by: params.split, file: true, compress: true)
+    .set{ FWD_ch }
+Channel
+    .fromPath(params.fastq_insertPE_file)
+    .splitFastq( by: params.split, file: true, compress: true)
+    .set{ REV_ch }
+Channel
+    .fromPath(params.fastq_bc_file)
+    .splitFastq( by: params.split, file: true, compress: true)
+    .set{ BC_ch }
 
-Channel.from([params.name,[params.fastq_insert_file,params.fastq_insertPE_file,params.fastq_bc_file]])
-    .splitFastq( by: params.split, file: true, pe: true)
-    .subscribe {
-         print it;
-         print "--- end of the chunk ---\n"
-     }
-    // .set{ fastq_ch }
-
-exit(0)
 /*
 * Merge reads
 * contributions: Max Schubach
@@ -256,24 +259,21 @@ process 'create_BAM' {
     conda 'conf/mpraflow_py27.yml'
 
     input:
-        file(fw_fastq) from params.fastq_insert_file
-        file(rev_fastq) from params.fastq_insertPE_file
-        file(fastq_bc_file) from params.fastq_bc_file
+        file(fw_fastq) from FWD_ch
+        file(rev_fastq) from REV_ch
+        file(fastq_bc_file) from BC_ch
         val datasetID from element
         val bc_length from params.bc_length
     output:
-        tuple val(datasetID),file("${datasetID}.bam") into clean_bam
+        file "${datasetID}.*.bam" into clean_bam
     shell:
         """
-        idx_length=`zcat $fastq_bc_file | head -2 | tail -1 | wc -c`;
-        idx_length=\$(expr \$((\$idx_length-1)));
         fwd_length=`zcat $fw_fastq | head -2 | tail -1 | wc -c`;
-        fwd_length=\$(expr \$(($fwd_length-1)));
-        rev_start=\$(expr \$((\$fwd_length+\$idx_length+1)));
-        echo $rev_start
-        echo $idx_length
+        fwd_length=\$(expr \$((\$fwd_length-1)));
+        rev_start=\$(expr \$((\$fwd_length+$bc_length+1)));
+        echo \$rev_start
 
-        paste <( zcat $fw_fastq ) <( zcat $fastq_bc_file ) <( zcat $rev_fastq ) | \
+        paste <( zcat $fw_fastq ) <( zcat $fastq_bc_file | cut -c 1-$bc_length ) <( zcat $rev_fastq ) | \
         awk '{
             if (NR % 4 == 2 || NR % 4 == 0) {
                 print \$1\$2\$3
@@ -281,9 +281,9 @@ process 'create_BAM' {
                 print \$1
             }
         }' | \
-        python ${"$baseDir"}/src/SplitFastQdoubleIndexBAM.py -p -s \$rev_start -l \$bc_length -m 0 --RG ${datasetID} |
+        python ${"$baseDir"}/src/FastQ2doubleIndexBAM.py -p -s \$rev_start -l $bc_length -m 0 --RG ${datasetID} |
         python ${"$baseDir"}/src/MergeTrimReadsBAM.py --FirstReadChimeraFilter '' --adapterFirstRead '' --adapterSecondRead '' -p --mergeoverlap \
-        > ${datasetID}.bam
+        > ${datasetID}.${fw_fastq}.bam
     
         """
         // """
@@ -316,31 +316,24 @@ process 'create_BAM' {
 *COLLCT FASTQ CHUNCKS
 */
 
-// process 'collect_chunks'{
-//     label 'shorttime'
+process 'collect_chunks'{
+     label 'shorttime'
 
-//     conda 'conf/mpraflow_py36.yml'
+     conda 'conf/mpraflow_py36.yml'
 
-//     input:
-//         file sbam_listFiles from s_bam.collect()
-//         file count_bamFiles from bam_ch.collect()
-//     output:
-//         file 's_merged.bam' into s_merge
-//         file 'count_merged.txt' into ch_merge
-//     script:
-//         count_bam = count_bamFiles.join(' ')
-//         sbam_list = sbam_listFiles.join(' ')
-//     shell:
-//         """
-//         #collect sorted bams into one file
-//         samtools merge all.bam $sbam_list
-//         samtools sort all.bam -o s_merged.bam
-
-//         #collect bam counts into one file
-
-//         samtools view s_merged.bam | wc -l > count_merged.txt
-//         """
-// }
+     input:
+         file bams from clean_bam.collect()
+         val datasetID from element2
+     output:
+         tuple val(datasetID),file("${datasetID}.bam") into bams_merged
+     script:
+         bam_list = bams.join(' ')
+     shell:
+         """
+         #collect sorted bams into one file
+         samtools merge ${datasetID}.bam $bam_list
+         """
+}
 
 
 /*
@@ -354,7 +347,7 @@ process 'PE_mapping' {
     conda 'conf/mpraflow_py36.yml'
 
     input:
-        tuple val(datasetID),file(bam) from clean_bam
+        tuple val(datasetID),file(bam) from bams_merged
         file(design) from fixed_design
         file(reference_fai) from reference_fai
         file reference_bwt from reference_bwt
@@ -365,8 +358,7 @@ process 'PE_mapping' {
         file reference_dict from reference_dict
         val clipping from params.clipping_penalty
     output:
-        tuple val(datasetID),file("aligned_${datasetID}.bam") into aligned_bam
-        file "aligned_${datasetID}.bai" into aligned_bam_index
+        tuple val(datasetID),file("aligned_${datasetID}.bam"),file("aligned_${datasetID}.bam.bai") into aligned_bam,aligned_bam2
         file "aligned_${datasetID}.bam_stats" into aligned_bam_stats
     shell:
         """
@@ -399,8 +391,8 @@ process 'PE_mapping' {
                     sub("\\t\$","",helper); print "@"\$1" "helper,\$10,"+",\$11 
                 }'
             ) | grep -v "^@" \
-        ) | samtools view -Su | \
-        samtools sort aligned_${datasetID}.bam;
+        ) | samtools view -Su - | \
+        samtools sort - > aligned_${datasetID}.bam;
 
         samtools index aligned_${datasetID}.bam;
 
@@ -420,7 +412,7 @@ process 'get_count' {
     conda 'conf/mpraflow_py27.yml'
 
     input:
-        tuple val(datasetID),file(bam) from aligned_bam
+        tuple val(datasetID),file(bam),file(bai) from aligned_bam
         file fixed_design from fixed_design
         val bc_length from params.bc_length
     output:
@@ -428,7 +420,7 @@ process 'get_count' {
         file "counts_${datasetID}.tsv.gz" into counts
     shell:
         """
-        python ${"$baseDir"}/src/satMut/extractBarcodesBAM.py --BAMfield -s -f $bc_length $bam | \
+        python ${"$baseDir"}/src/satMut/extractBarcodesBAM.py --BAMfield -f $bc_length $bam | \
         sort -k1,1 -k2,2 | uniq -c | \
         awk 'BEGIN{OFS="\\t"}{ print \$2,\$3,\$1}' | gzip -c > counts_${datasetID}.tsv.gz;
 
@@ -446,14 +438,14 @@ process 'extract_reads' {
 
     input:
         tuple val(datasetID),file(counts) from filtered_counts
-        tuple val(datasetID_bam),file(bam) from aligned_bam
+        tuple val(datasetID_bam),file(bam),file(bai) from aligned_bam2
         file fixed_design from fixed_design
         val bc_length from params.bc_length
     output:
         file("reads/*.bam") into reads
     shell:
         """
-        python src/satMut/extractReadsAssignmentSimple.py --BAMfield -s -f $bc_length \
+        python src/satMut/extractReadsAssignmentSimple.py --BAMfield -f $bc_length \
         -a $counts -o reads $bam;
         """
 }
