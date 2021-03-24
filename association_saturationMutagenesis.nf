@@ -237,9 +237,12 @@ process 'get_name' {
 }
 
 
-log.info(Channel.from([params.name,[params.fastq_insert_file,params.fastq_insertPE_file,params.fastq_bc_file]])
+Channel.from([params.name,[params.fastq_insert_file,params.fastq_insertPE_file,params.fastq_bc_file]])
     .splitFastq( by: params.split, file: true, pe: true)
-    .view())
+    .subscribe {
+         print it;
+         print "--- end of the chunk ---\n"
+     }
     // .set{ fastq_ch }
 
 exit(0)
