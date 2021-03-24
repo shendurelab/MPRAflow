@@ -428,26 +428,27 @@ process 'extract_reads' {
         """
 }
 
+reads.view()
 
-process 'call_variants' {
-    label 'shorttime'
+// process 'call_variants' {
+//     label 'shorttime'
 
-    conda 'conf/mpraflow_py27.yml'
+//     conda 'conf/mpraflow_py27.yml'
 
-    input:
-        file read_bam from reads
-        file reference_fai from reference_fai
-        file fixed_design from fixed_design
-        val datasetID from element3
-        val m from params.min_ireads
-    output:
-        file("variants_${read_bam}.txt") into variants
-    shell:
-        """
-        region=\$(grep -i $datasetID $reference_fai | awk '{ print \$1":20-"\$2-20 }');
-        bcftools mpileup -A -m $m -R -f $fixed_design -u $read_bam | \ 
-        bcftools call -c -f GQ | python src/satMut/extractVariants.py -r \${region} | \
-        gzip -c > variants_${reads}.txt
-        """
-}
+//     input:
+//         file read_bam from reads
+//         file reference_fai from reference_fai
+//         file fixed_design from fixed_design
+//         val datasetID from element3
+//         val m from params.min_ireads
+//     output:
+//         file("variants_${read_bam}.txt") into variants
+//     shell:
+//         """
+//         region=\$(grep -i $datasetID $reference_fai | awk '{ print \$1":20-"\$2-20 }');
+//         bcftools mpileup -A -m $m -R -f $fixed_design -u $read_bam | \ 
+//         bcftools call -c -f GQ | python src/satMut/extractVariants.py -r \${region} | \
+//         gzip -c > variants_${reads}.txt
+//         """
+// }
 
