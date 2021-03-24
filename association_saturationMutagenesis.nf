@@ -56,7 +56,7 @@ if (params.containsKey('h') || params.containsKey('help')){
 }
 
 //defaults
-params.min_cov="3"
+params.split=2000000
 
 
 // Validate inputs
@@ -237,6 +237,13 @@ process 'get_name' {
         """
 }
 
+
+Channel.from([params.name,[params.fastq_insert_file,params.fastq_insertPE_file,params.fastq_bc_file]])
+    .splitFastq( by: params.split, file: true, pe: true)
+    .view()
+    // .set{ fastq_ch }
+
+exit(0)
 /*
 * Merge reads
 * contributions: Max Schubach
@@ -256,30 +263,82 @@ process 'create_BAM' {
         tuple val(datasetID),file("${datasetID}.bam") into clean_bam
     shell:
         """
-        fwd_length=`zcat $fw_fastq | head -2 | tail -1 | wc -c`
-        fwd_length=\$(expr \$((\$fwd_length-1)))
+        idx_length=`zcat $fastq_bc_file | head -2 | tail -1 | wc -c`;
+        idx_length=\$(expr \$((\$idx_length-1)));
+        fwd_length=`zcat $fw_fastq | head -2 | tail -1 | wc -c`;
+        fwd_length=\$(expr \$(($fwd_length-1)));
+        rev_start=\$(expr \$((\$fwd_length+\$idx_length+1)));
+        echo $rev_start
+        echo $idx_length
 
-        rev_start=\$(expr \$((\$fwd_length+1)))
-
-        rev_length=`zcat $rev_fastq | head -2 | tail -1 | wc -c`
-        rev_length=\$(expr \$((\$rev_length-1)))
-
-        minoverlap=`echo \${fwd_length} \${fwd_length} $bc_length | awk '{print (\$1+\$2-\$3-1 < 11) ? \$1+\$2-\$3-1 : 11}'`
-
-        echo \$rev_start
-        echo \$minoverlap
-
-        paste <( zcat $fw_fastq ) <(zcat $rev_fastq  ) | \
+        paste <( zcat $fw_fastq ) <( zcat $fastq_bc_file ) <( zcat $rev_fastq ) | \
         awk '{
-        if (NR % 4 == 2 || NR % 4 == 0) {
-            print \$1\$2
-        } else {
-            print \$1
-        }}' | python ${"$baseDir"}/src/FastQ2doubleIndexBAM.py -p -s \$rev_start -l 0 -m 0 --RG ${datasetID} | \
-        python ${"$baseDir"}/src/MergeTrimReadsBAM.py --FirstReadChimeraFilter '' --adapterFirstRead '' --adapterSecondRead '' -p --mergeoverlap  --minoverlap \$minoverlap \
+            if (NR % 4 == 2 || NR % 4 == 0) {
+                print \$1\$2\$3
+            } else {
+                print \$1
+            }
+        }' | \
+        python ${"$baseDir"}/src/SplitFastQdoubleIndexBAM.py -p -s \$rev_start -l \$bc_length -m 0 --RG ${datasetID} |
+        python ${"$baseDir"}/src/MergeTrimReadsBAM.py --FirstReadChimeraFilter '' --adapterFirstRead '' --adapterSecondRead '' -p --mergeoverlap \
         > ${datasetID}.bam
+    
         """
+        // """
+        // fwd_length=`zcat $fw_fastq | head -2 | tail -1 | wc -c`
+        // fwd_length=\$(expr \$((\$fwd_length-1)))
+
+        // rev_start=\$(expr \$((\$fwd_length+1)))
+
+        // rev_length=`zcat $rev_fastq | head -2 | tail -1 | wc -c`
+        // rev_length=\$(expr \$((\$rev_length-1)))
+
+        // minoverlap=`echo \${fwd_length} \${fwd_length} $bc_length | awk '{print (\$1+\$2-\$3-1 < 11) ? \$1+\$2-\$3-1 : 11}'`
+
+        // echo \$rev_start
+        // echo \$minoverlap
+
+        // paste <( zcat $fw_fastq ) <(zcat $rev_fastq  ) | \
+        // awk '{
+        // if (NR % 4 == 2 || NR % 4 == 0) {
+        //     print \$1\$2
+        // } else {
+        //     print \$1
+        // }}' | python ${"$baseDir"}/src/FastQ2doubleIndexBAM.py -p -s \$rev_start -l 0 -m 0 --RG ${datasetID} | \
+        // python ${"$baseDir"}/src/MergeTrimReadsBAM.py --FirstReadChimeraFilter '' --adapterFirstRead '' --adapterSecondRead '' -p --mergeoverlap  --minoverlap \$minoverlap \
+        // > ${datasetID}.bam
+        // """
 }
+
+/*
+*COLLCT FASTQ CHUNCKS
+*/
+
+// process 'collect_chunks'{
+//     label 'shorttime'
+
+//     conda 'conf/mpraflow_py36.yml'
+
+//     input:
+//         file sbam_listFiles from s_bam.collect()
+//         file count_bamFiles from bam_ch.collect()
+//     output:
+//         file 's_merged.bam' into s_merge
+//         file 'count_merged.txt' into ch_merge
+//     script:
+//         count_bam = count_bamFiles.join(' ')
+//         sbam_list = sbam_listFiles.join(' ')
+//     shell:
+//         """
+//         #collect sorted bams into one file
+//         samtools merge all.bam $sbam_list
+//         samtools sort all.bam -o s_merged.bam
+
+//         #collect bam counts into one file
+
+//         samtools view s_merged.bam | wc -l > count_merged.txt
+//         """
+// }
 
 
 /*
