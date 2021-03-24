@@ -232,7 +232,7 @@ process 'get_name' {
     input:
         file(design_fai) from reference_fai
     output:
-         env ELEMENT into element,element2
+         env ELEMENT into element,element2,element3
     shell:
         """
         ELEMENT=\$(cat $design_fai | head -n 1 | cut -f 1)
@@ -411,7 +411,7 @@ process 'get_count' {
 }
 
 process 'extract_reads' {
-    label 'shorttime'
+    label 'highmem'
 
     conda 'conf/mpraflow_py27.yml'
 
@@ -421,36 +421,33 @@ process 'extract_reads' {
         file fixed_design from fixed_design
         val bc_length from params.bc_length
     output:
-        file("reads/*.bam") into reads
+        file("reads/*/*.bam") into reads
     shell:
         """
-        python src/satMut/extractReadsAssignmentSimple.py --BAMfield -f $bc_length \
-        -a $counts -o reads $bam;
+        python ${"$baseDir"}/src/satMut/extractReadsAssignmentSimple.py --BAMfield -f $bc_length -a $counts -o reads $bam;
         """
 }
 
-// process 'get_variants' {
-//     label 'shorttime'
 
-//     conda 'conf/mpraflow_py27.yml'
+process 'call_variants' {
+    label 'shorttime'
 
-//     input:
-//         file(counts) from reads
-//         file fixed_design from fixed_design
-//         val bc_length from bc_length
-//         val m from params.min_ireads
-//     output:
-//         tuple val(datasetID),file("variants_${datasetID}.txt") into variants
-//     shell:
-//         """
+    conda 'conf/mpraflow_py27.yml'
 
-//         region=$(grep -i $datasetID $reference_fai | awk '{ print \$1":20-"\$2-20 }');
-//         for i in $( zcat $assignment | cut -f 1 | grep "^${datasetID}" ); do
-//             echo $i $(
-//                 bcftools mpileup -A -m $m -R -f $design -u $reads 2> /dev/null | \   
-//                 bcftools call -c -f GQ | python src/satMut/extractVariants.py -r \${region}
-//                 ); 
-//         done > variants_${bam}.txt
-//         """
-// }
+    input:
+        file read_bam from reads
+        file reference_fai from reference_fai
+        file fixed_design from fixed_design
+        val datasetID from element3
+        val m from params.min_ireads
+    output:
+        file("variants_${read_bam}.txt") into variants
+    shell:
+        """
+        region=\$(grep -i $datasetID $reference_fai | awk '{ print \$1":20-"\$2-20 }');
+        bcftools mpileup -A -m $m -R -f $fixed_design -u $read_bam | \ 
+        bcftools call -c -f GQ | python src/satMut/extractVariants.py -r \${region} | \
+        gzip -c > variants_${reads}.txt
+        """
+}
 
