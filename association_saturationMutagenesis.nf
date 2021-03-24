@@ -140,7 +140,6 @@ summary['Fastq insert']     = params.fastq_insert_file
 summary['fastq paired']     = params.fastq_insertPE_file
 summary['Fastq barcode']    = params.fastq_bc_file
 summary['design fasta']     = params.design_file
-summary['minimum BC cov']   = params.min_cov
 summary['Output dir']       = params.outdir
 summary['Run name'] = params.name
 summary['Working dir']      = workflow.workDir
@@ -238,9 +237,9 @@ process 'get_name' {
 }
 
 
-Channel.from([params.name,[params.fastq_insert_file,params.fastq_insertPE_file,params.fastq_bc_file]])
+log.info(Channel.from([params.name,[params.fastq_insert_file,params.fastq_insertPE_file,params.fastq_bc_file]])
     .splitFastq( by: params.split, file: true, pe: true)
-    .view()
+    .view())
     // .set{ fastq_ch }
 
 exit(0)
