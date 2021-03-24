@@ -140,8 +140,11 @@ summary['Fastq insert']     = params.fastq_insert_file
 summary['fastq paired']     = params.fastq_insertPE_file
 summary['Fastq barcode']    = params.fastq_bc_file
 summary['design fasta']     = params.design_file
+summary['BC length']        = params.bc_length
+summary['clipping_penalty'] = params.clipping_penalty
+summary['min ireads']       = params.min_ireads
 summary['Output dir']       = params.outdir
-summary['Run name'] = params.name
+summary['Run name']         = params.name
 summary['Working dir']      = workflow.workDir
 summary['Container Engine'] = workflow.containerEngine
 if(workflow.containerEngine) summary['Container'] = workflow.container
@@ -286,30 +289,6 @@ process 'create_BAM' {
         > ${datasetID}.${fw_fastq}.bam
     
         """
-        // """
-        // fwd_length=`zcat $fw_fastq | head -2 | tail -1 | wc -c`
-        // fwd_length=\$(expr \$((\$fwd_length-1)))
-
-        // rev_start=\$(expr \$((\$fwd_length+1)))
-
-        // rev_length=`zcat $rev_fastq | head -2 | tail -1 | wc -c`
-        // rev_length=\$(expr \$((\$rev_length-1)))
-
-        // minoverlap=`echo \${fwd_length} \${fwd_length} $bc_length | awk '{print (\$1+\$2-\$3-1 < 11) ? \$1+\$2-\$3-1 : 11}'`
-
-        // echo \$rev_start
-        // echo \$minoverlap
-
-        // paste <( zcat $fw_fastq ) <(zcat $rev_fastq  ) | \
-        // awk '{
-        // if (NR % 4 == 2 || NR % 4 == 0) {
-        //     print \$1\$2
-        // } else {
-        //     print \$1
-        // }}' | python ${"$baseDir"}/src/FastQ2doubleIndexBAM.py -p -s \$rev_start -l 0 -m 0 --RG ${datasetID} | \
-        // python ${"$baseDir"}/src/MergeTrimReadsBAM.py --FirstReadChimeraFilter '' --adapterFirstRead '' --adapterSecondRead '' -p --mergeoverlap  --minoverlap \$minoverlap \
-        // > ${datasetID}.bam
-        // """
 }
 
 /*
