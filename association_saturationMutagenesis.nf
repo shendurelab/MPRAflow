@@ -428,7 +428,7 @@ process 'extract_reads' {
         """
 }
 
-echo Channel.of(reads).view{"Reads: $it"}
+Channel.fromList(reads).view{"Reads: $it"}
 
 // process 'call_variants' {
 //     label 'shorttime'
