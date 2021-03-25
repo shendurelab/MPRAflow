@@ -321,7 +321,7 @@ process 'collect_chunks'{
 */
 process 'PE_mapping' {
     tag 'align'
-    label 'shorttime'
+    label 'longtime'
 
     conda 'conf/mpraflow_py36.yml'
 
