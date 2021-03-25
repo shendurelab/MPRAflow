@@ -424,7 +424,7 @@ process 'extract_reads' {
         file("reads/*/*.bam") into reads
     shell:
         """
-        python ${"$baseDir"}/src/satMut/extractReadsAssignmentSimple.py --BAMfield -f $bc_length -a $counts -o reads $bam;
+        python ${"$baseDir"}/src/satMut/extractReadsAssignmentSimple.py --BAMfield -f $bc_length -a $counts -m 10000 -o reads $bam;
         """
 }
 
