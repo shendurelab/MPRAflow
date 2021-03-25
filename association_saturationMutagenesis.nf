@@ -430,7 +430,7 @@ process 'extract_reads' {
 
 reads
     .flatten()
-    .map { file -> tuple(file.name[0..3], file) }
+    .map { file -> tuple(file.name[0..4], file) }
     .groupTuple()
     .set { grouped_reads }
 
