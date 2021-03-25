@@ -477,6 +477,6 @@ process 'combine_variants' {
         variant_list = variants.collect{"$it"}.join(' ')
     shell:
         """
-        zcat $variant_list | gzip -c > ${element}_variants.txt
+        zcat $variant_list > ${element}_variants.txt
         """
 }
