@@ -428,7 +428,7 @@ process 'extract_reads' {
         """
 }
 
-reads.view()
+echo reads.view("Reads: $it")
 
 // process 'call_variants' {
 //     label 'shorttime'
