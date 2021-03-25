@@ -186,7 +186,7 @@ process 'clean_design' {
     input:
         file(design) from params.design_file
     output:
-        file "design_rmIllegalChars.fa" into fixed_design
+        file "design_rmIllegalChars.fa" into fixed_design,fixed_design2
     shell:
         """
         cat $design | awk '{gsub(/\\[/,"_")}1' | awk '{gsub(/\\]/,"_")}1' > design_rmIllegalChars.fa
@@ -209,7 +209,7 @@ process 'create_BWA_ref' {
     input:
         file(design) from fixed_design
     output:
-        file "${design}.fai" into reference_fai
+        file "${design}.fai" into reference_fai,reference_fai2
         file "${design}.bwt" into reference_bwt
         file "${design}.sa" into reference_sa
         file "${design}.pac" into reference_pac
@@ -443,21 +443,20 @@ process 'call_variants' {
 
     input:
         tuple val(prefix),file(read_bam) from grouped_reads
-        file reference_fai from reference_fai
-        file fixed_design from fixed_design
-        val datasetID from element3
-        val m from params.min_ireads
+        file(design_fai) from reference_fai2
+        file(design) from fixed_design2
+        val(m) from params.min_ireads
     output:
-        file("variants_${read_bam}.txt") into variants
+        file("variants_${prefix}.txt.gz") into prefix_variants
     script:
         read_bam_list = read_bam.collect{"$it"}.join(' ')
     shell:
         """
-        region=\$(grep -i $datasetID $reference_fai | awk '{ print \$1":20-"\$2-20 }');
+        region=\$(grep -i $datasetID $design_fai | awk '{ print \$1":20-"\$2-20 }');
         for i in $read_bam_list; do
-            bcftools mpileup -A -m $m -R -f $fixed_design -u \$i | \ 
+            bcftools mpileup -A -m $m -R -f $design -u \$i | \ 
             bcftools call -c -f GQ | \
-            python ${"$baseDir"}/src/satMut/extractVariants.py -r \${region};
+            python ${"$baseDir"}/src/satMut/extractVariants.py -r \$region;
         done | gzip -c > variants_${prefix}.txt.gz
         """
 }
