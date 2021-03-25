@@ -296,22 +296,22 @@ process 'create_BAM' {
 */
 
 process 'collect_chunks'{
-     label 'shorttime'
+    label 'shorttime'
 
-     conda 'conf/mpraflow_py36.yml'
+    conda 'conf/mpraflow_py36.yml'
 
-     input:
-         file bams from clean_bam.collect()
-         val datasetID from element2
-     output:
-         tuple val(datasetID),file("${datasetID}.bam") into bams_merged
-     script:
-         bam_list = bams.join(' ')
-     shell:
-         """
-         #collect sorted bams into one file
-         samtools merge ${datasetID}.bam $bam_list
-         """
+    input:
+        file bams from clean_bam.collect()
+        val datasetID from element2
+    output:
+        tuple val(datasetID),file("${datasetID}.bam") into bams_merged
+    script:
+        bam_list = bams.join(' ')
+    shell:
+        """
+        #collect sorted bams into one file
+        samtools merge ${datasetID}.bam $bam_list
+        """
 }
 
 
@@ -428,40 +428,37 @@ process 'extract_reads' {
         """
 }
 
-
-def get_prefixFolder(name) {
-    println(name)
-    println(name[0..3])
-    return name[0..3]
-}
 reads
     .flatten()
-    .map { file -> tuple(get_prefixFolder(file.name), file) }
+    .map { file -> tuple(file.name[0..3], file) }
     .groupTuple()
     .set { grouped_reads }
 
-grouped_reads.view()
 
 
-// process 'call_variants' {
-//     label 'shorttime'
+process 'call_variants' {
+    label 'shorttime'
 
-//     conda 'conf/mpraflow_py27.yml'
+    conda 'conf/mpraflow_py27.yml'
 
-//     input:
-//         file read_bam from reads
-//         file reference_fai from reference_fai
-//         file fixed_design from fixed_design
-//         val datasetID from element3
-//         val m from params.min_ireads
-//     output:
-//         file("variants_${read_bam}.txt") into variants
-//     shell:
-//         """
-//         region=\$(grep -i $datasetID $reference_fai | awk '{ print \$1":20-"\$2-20 }');
-//         bcftools mpileup -A -m $m -R -f $fixed_design -u $read_bam | \ 
-//         bcftools call -c -f GQ | python src/satMut/extractVariants.py -r \${region} | \
-//         gzip -c > variants_${reads}.txt
-//         """
-// }
+    input:
+        tuple val(prefix),file(read_bam) from grouped_reads
+        file reference_fai from reference_fai
+        file fixed_design from fixed_design
+        val datasetID from element3
+        val m from params.min_ireads
+    output:
+        file("variants_${read_bam}.txt") into variants
+    script:
+        read_bam_list = read_bam.collect{"$it"}.join(' ')
+    shell:
+        """
+        region=\$(grep -i $datasetID $reference_fai | awk '{ print \$1":20-"\$2-20 }');
+        for i in $read_bam_list; do
+            bcftools mpileup -A -m $m -R -f $fixed_design -u \$i | \ 
+            bcftools call -c -f GQ | \
+            python ${"$baseDir"}/src/satMut/extractVariants.py -r \${region};
+        done | gzip -c > variants_${prefix}.txt.gz
+        """
+}
 
