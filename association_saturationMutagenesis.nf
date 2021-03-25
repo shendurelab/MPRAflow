@@ -461,3 +461,22 @@ process 'call_variants' {
         """
 }
 
+
+process 'combine_variants' {
+    publishDir "${params.outdir}/${params.name}", mode:'copy'
+    label 'shorttime'
+
+    conda 'conf/mpraflow_py36.yml'
+
+    input:
+        file(variants) from prefix_variants.collect()
+        val element from element3
+    output:
+        file("${element}_variants.txt") into final_variants
+    script:
+        variant_list = variants.collect{"$it"}.join(' ')
+    shell:
+        """
+        zcat $variant_list > ${element}_variants.txt
+        """
+}
