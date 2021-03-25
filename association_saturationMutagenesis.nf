@@ -232,7 +232,7 @@ process 'get_name' {
     input:
         file(design_fai) from reference_fai
     output:
-         env ELEMENT into element,element2,element3
+         env ELEMENT into element,element2,element3,element4
     shell:
         """
         ELEMENT=\$(cat $design_fai | head -n 1 | cut -f 1)
@@ -445,6 +445,7 @@ process 'call_variants' {
         tuple val(prefix),file(read_bam) from grouped_reads
         file(design_fai) from reference_fai2
         file(design) from fixed_design2
+        val datasetID from element3
         val(m) from params.min_ireads
     output:
         file("variants_${prefix}.txt.gz") into prefix_variants
@@ -470,7 +471,7 @@ process 'combine_variants' {
 
     input:
         file(variants) from prefix_variants.collect()
-        val element from element3
+        val element from element4
     output:
         file("${element}_variants.txt") into final_variants
     script:
