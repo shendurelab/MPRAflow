@@ -428,7 +428,20 @@ process 'extract_reads' {
         """
 }
 
-Channel.fromList(reads).view{"Reads: $it"}
+
+def get_prefixFolder(name) {
+    println(name)
+    println(name[0..3])
+    return name[0..3]
+}
+reads
+    .flatten()
+    .map { file -> tuple(get_prefixFolder(file.name), file) }
+    .groupTuple()
+    .set { grouped_reads }
+
+grouped_reads.view()
+
 
 // process 'call_variants' {
 //     label 'shorttime'
