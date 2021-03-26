@@ -472,7 +472,7 @@ process 'combine_variants' {
         file(variants) from prefix_variants.collect()
         val element from element4
     output:
-        file("${element}_variants.txt") into final_variants
+        file("${element}_variants.txt.gz") into final_variants
     script:
         variant_list = variants.collect{"$it"}.join(' ')
     shell:
