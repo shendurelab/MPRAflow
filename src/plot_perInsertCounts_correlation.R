@@ -23,11 +23,13 @@ if (file.exists(args[2])) {
   useLabels=FALSE
 }
 
+# threshold
+thresh=strtoi(args[3])
 
 # replicates and count files
-num_replicates=((length(args)-2)/2)
-files=args[3:(3+num_replicates-1)]
-replicates=args[(3+num_replicates):length(args)]
+num_replicates=((length(args)-3)/2)
+files=args[4:(4+num_replicates-1)]
+replicates=args[(4+num_replicates):length(args)]
 
 data <- data.frame(File=files,Replicate=replicates)
 data$Condition <- cond
@@ -51,7 +53,6 @@ if(data %>% nrow >1){
     data1 <- read.table(as.character((data %>% filter(Replicate == r1))$File),as.is=T,sep="\t",header=T,stringsAsFactors = F)
     data2 <- read.table(as.character((data %>% filter(Replicate == r2))$File),as.is=T,sep="\t",header=T,stringsAsFactors = F)
 
-    thresh=10
     #FIXME what is this no_BC name?? we should docuent it
     data1<-data1 %>% filter(n_obs_bc > thresh, name != 'no_BC')
     data2<-data2 %>% filter(n_obs_bc > thresh, name != 'no_BC')
