@@ -38,6 +38,7 @@ def helpMessage() {
       --bc-length                   Barcode length (default 15)
       --clipping-penalty            bwa mem clipping penalty (default 80)
       --min-ireads                  minimum number gapped reads for indel candidates (default: 3)
+      --split                       Split up the fastq read into chunks with max limit of reads (default: 2000000)
       --outdir                      The output directory where the results will be saved and what will be used as a prefix (default outs)
 
     Extras:
@@ -386,6 +387,7 @@ process 'PE_mapping' {
 * contributions: Max Schubach
 */
 process 'get_count' {
+    publishDir "${params.outdir}/${params.name}", mode:'copy'
     label 'shorttime'
 
     conda 'conf/mpraflow_py27.yml'
