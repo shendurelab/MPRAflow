@@ -455,9 +455,8 @@ process 'call_variants' {
         """
         region=\$(grep -i $datasetID $design_fai | awk '{ print \$1":20-"\$2-20 }');
         for i in $read_bam_list; do
-            bcftools mpileup -A -m $m --fasta-ref $design \$i | \
-            bcftools call -c -f GQ | \
-            python ${"$baseDir"}/src/satMut/extractVariants.py -r \$region;
+            bc=`basename \$i .bam`;
+            echo \$bc \$(bcftools mpileup -A -m $m --fasta-ref $design \$i | bcftools call -c -f GQ | python ${"$baseDir"}/src/satMut/extractVariants.py -r \$region);
         done | gzip -c > variants_${prefix}.txt.gz
         """
 }
