@@ -4,6 +4,10 @@
 Association saturation mutagenesis
 ==========================================
 
+This workflow is about assocation variant calls with barcodes. 
+Variants are introduced by an error-prone PCR. 
+The workflow takes the sequencing of the region, with barcodes in index read and the reference sequence and maps the reads to the reference, calls variants and associates them with the corresponding barcode.
+
 Input files
 ===============
 
