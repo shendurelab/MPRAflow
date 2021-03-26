@@ -34,3 +34,4 @@ input_files/
 
 # Sphinx documentation
 _build
+.DS_Store

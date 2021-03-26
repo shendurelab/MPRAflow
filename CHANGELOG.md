@@ -2,6 +2,10 @@
 
 ## development
 
+### count.nf
+
+* using BC threshold input for `plot_perInsertCounts_correlation.R` instead of hard-coded. Modify process `calc_correlations` to use the new input theshold.
+
 ## v2.2
 
 No workflow changes. Only a few fixes and some restructuring of configs. Using nextflow version 20.01 now!
