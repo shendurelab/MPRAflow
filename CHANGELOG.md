@@ -1,6 +1,6 @@
 # MPRAflow Changelog
 
-## development
+## v2.3
 
 ### global changes
 
