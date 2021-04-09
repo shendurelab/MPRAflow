@@ -4,7 +4,8 @@
 
 ### global changes
 
-* Correcting typos in documentation 
+* Correcting typos in documentation
+* adding new process label `highmem` to `conf/cluster.config`
 
 ### association_saturationMutagenesis.nf
 
