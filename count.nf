@@ -627,7 +627,7 @@ if(!params.mpranalyze && params.containsKey("association")){
             pairlist = pairlistFiles.collect{"$it"}.join(' ')
             def label = lab.exists() ? lab : lab.name
             """
-            Rscript ${"$baseDir"}/src/plot_perInsertCounts_correlation.R $cond $label $pairlist $replicate
+            Rscript ${"$baseDir"}/src/plot_perInsertCounts_correlation.R $cond $label $params.thresh $pairlist $replicate
             """
     }
     /*

@@ -1,6 +1,24 @@
 # MPRAflow Changelog
 
-## development
+## v2.3
+
+### global changes
+
+* Correcting typos in documentation
+* adding new process label `highmem` to `conf/cluster.config`
+
+### association_saturationMutagenesis.nf
+
+New association saturation mutagenesis workflow. This workflow is about assocation variant calls with barcodes. Variants are introduced by an error-prone PCR. The workflow takes the sequencing of the region, with barcodes in index read and the reference sequence and maps the reads to the reference, calls variants and associates them with the corresponding barcode. it is a pre-step of `saturationMutagenesis.nf`.
+
+### count.nf
+
+* using BC threshold input for `plot_perInsertCounts_correlation.R` instead of hard-coded. Modify process `calc_correlations` to use the new input theshold.
+
+### association.nf
+
+* Remove "windows" characters in design fasta
+
 
 ## v2.2
 

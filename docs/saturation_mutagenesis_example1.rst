@@ -1,8 +1,8 @@
 .. _Saturation mutagenesis of the TERT promoter:
 
-============================================
+==================================================
 Saturation mutagenesis of the TERT promoter
-============================================
+==================================================
 
 This example runs the saturation mutagenesis workflow on saturation mutagenesis data of the TERT promoter from `Kircher et al. 2019 <https://doi.org/10.1038/s41467-019-11526-w>`_.
 The same saturation mutagenesis library was used in four different experiments.
@@ -29,9 +29,10 @@ This file is a tab separated files that assigns variants to barcodes. We will cr
 
     mkdir -p SatMut_TERT/data
     cd SatMut_TERT/data
-    wget http
+    wget http https://github.com/shendurelab/MPRAflow/raw/master/examples/saturationMutagenesis/TERT.variants.txt.gz
     cd ..
 
+    It is also possible to get using the workflow :ref:`Association for Saturation mutagenesis of TERT example`.
 
 Count tables
 ----------------
@@ -124,8 +125,4 @@ If everything works fine the following 11 processes will run: :code:`calc_assign
 Results
 -----------------
 
-
-
-
-.. todo::
-  Add sat mut example
+All needed output files will be in the :code:`SatMut_TERT/output` folder.
