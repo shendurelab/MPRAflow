@@ -15,6 +15,10 @@ New association saturation mutagenesis workflow. This workflow is about assocati
 
 * using BC threshold input for `plot_perInsertCounts_correlation.R` instead of hard-coded. Modify process `calc_correlations` to use the new input theshold.
 
+### association.nf
+
+* Remove "windows" characters in design fasta
+
 
 ## v2.2
 
