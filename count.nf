@@ -144,13 +144,13 @@ if (params.no_umi) {
     row -> [
       tuple(row.Condition,row.Replicate,"DNA",
         [row.Condition,row.Replicate,"DNA"].join("_"),
-        file([params.dir,"/",row.dna,row.DNA_BC_F].join()),
-        file([params.dir,"/",row.dna,row.DNA_BC_R].join())
+        file([params.dir,"/",row.DNA_BC_F].join()),
+        file([params.dir,"/",row.DNA_BC_R].join())
       ),
       tuple(row.Condition,row.Replicate,"RNA",
         [row.Condition,row.Replicate,"RNA"].join("_"),
-        file([params.dir,"/",row.rna,row.RNA_BC_F].join()),
-        file([params.dir,"/",row.rna,row.RNA_BC_R].join())
+        file([params.dir,"/",row.RNA_BC_F].join()),
+        file([params.dir,"/",row.RNA_BC_R].join())
       )
     ]
   }
