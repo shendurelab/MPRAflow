@@ -250,9 +250,9 @@ if (params.label_file == null) {
             awk '{gsub(/\\]/,"_")}1' t_new_label.txt > label_rmIllegalChars.txt
 
 
-            awk '{gsub(/\\[/,"_")}1' $design | \
-            awk '{gsub(/\\]/,"_")}1' | \
-            sed 's/\r//g' > design_rmIllegalChars.fa
+            awk '{gsub(/\\[/,"_")}1' $design | \\
+            awk '{gsub(/\\]/,"_")}1' | \\
+            sed 's/\\r//g' > design_rmIllegalChars.fa
 
             zcat $fastq_bc | wc -l  > count_fastq.txt
             """
