@@ -35,6 +35,7 @@ def helpMessage() {
 
     Options:
       --fastq-insertPE              Full path to library association fastq for read2 if the library is paired end (must be surrounded with quotes)
+      --fastq-bcPE                  Full path to barcode association fastq for read2 if the library is paired end (must be surrounded with quotes)
       --min-cov                     minimum coverage of bc to count it (default 3)
       --min-frac                    minimum fraction of bc map to single insert (default 0.5)
       --mapq                        map quality (default 30)
@@ -43,6 +44,7 @@ def helpMessage() {
       --outdir                      The output directory where the results will be saved and what will be used as a prefix (default outs)
       --split                       Number read entries per fastq chunk for faster processing (default: 2000000)
       --labels                      tsv with the oligo pool fasta and a group label (ex: positive_control) if no labels desired a file will be automatically generated
+      --strand-aware                Flag for strand aware analysis using bowtie2 (default: off)
 
     Extras:
       --h, --help                   Print this help message
@@ -72,7 +74,7 @@ params.baseq="30"
 params.mapq="30"
 params.cigar="n"
 params.split=2000000
-
+params.strand_aware="off"
 
 // Validate inputs
 if ( !params.containsKey("name") ){
@@ -101,6 +103,13 @@ if ( params.containsKey("fastq-bc")){
     exit 1, "Fastq barcode file not specified with --fastq-bc"
 }
 
+if(params.containsKey("fastq-bcPE")){
+    params.fastq_bcPE_file = file(params['fastq-bcPE'])
+    if( !params.fastq_bcPE_file.exists() ) exit 1, "Fastq paired-end bc file not found: ${params.fastq_bcPE_file}"
+} else {
+  params.fastq_bcPE_file = null
+}
+
 // design file saved in params.design_file
 if ( params.containsKey("design")){
     params.design_file=file(params.design)
@@ -116,6 +125,7 @@ if (params.containsKey("labels")){
 } else {
     params.label_file=null
 }
+
 
 // Has the run name been specified by the user?
 //  this has the bonus effect of catching both -name and --name
@@ -140,21 +150,23 @@ def summary = [:]
 summary['Pipeline Name']    = 'MPRAflow'
 summary['Pipeline Version'] = params.version
 summary['Fastq insert']     = params.fastq_insert_file
-summary['fastq paired']     = params.fastq_insertPE_file
+summary['fastq insert paired']     = params.fastq_insertPE_file
 summary['Fastq barcode']    = params.fastq_bc_file
+summary['Fastq barcode paired']    = params.fastq_bcPE_file
 summary['design fasta']     = params.design_file
 summary['minimum BC cov']   = params.min_cov
 summary['map quality']      = params.mapq
 summary['base quality']     = params.baseq
 summary['cigar string']     = params.cigar
 summary['min % mapped']     = params.min_frac
+summary['strand aware']     = params.strand_aware
 summary['Output dir']       = params.outdir
 summary['Run name'] = params.name
 summary['Working dir']      = workflow.workDir
 summary['Container Engine'] = workflow.containerEngine
 if(workflow.containerEngine) summary['Container'] = workflow.container
 summary['Current home']     = "$HOME"
-summary['Current user']     = "$USER"
+// summary['Current user']     = "$USER"
 summary['Current path']     = "$PWD"
 summary['base directory']   = "$baseDir"
 summary['Script dir']       = workflow.projectDir
@@ -333,6 +345,28 @@ if (params.fastq_insertPE_file != null) {
     }
 }
 
+/*
+*Process 1B_2: merge paired end reads overlapping barcode
+*contributions: Gracie Gordon
+*/
+if (params.fastq_bcPE_file != null) {
+    process 'PEbc_merge' {
+        tag 'merge'
+        label 'shorttime'
+
+        conda 'conf/mpraflow_py36.yml'
+
+        input:
+            file(fastq_bc) from params.fastq_bc_file
+            file(fastq_bcPE) from params.fastq_bcPE_file
+        output:
+            file "*merged.fastqjoin" into mergedPE_bc
+        shell:
+            """
+            fastq-join $fastq_bc $fastq_bcPE -o ${fastq_bc}_merged.fastq
+            """
+    }
+}
 
 /*
 * Process 1C: align with BWA
@@ -444,42 +478,82 @@ process 'collect_chunks'{
 * contributions: Sean Whalen
 */
 
-process 'map_element_barcodes' {
-    tag "assign"
-    label "shorttime"
-    publishDir "${params.outdir}/${params.name}", mode:'copy'
-
-    conda 'conf/mpraflow_py36.yml'
-
-    input:
-        val(name) from params.name
-        val(mapq) from params.mapq
-        val(baseq) from params.baseq
-        val(cigar) from params.cigar
-        file(fastq_bc) from params.fastq_bc_file
-        file count_fastq from bc_ch
-        file count_bam from ch_merge
-        file bam from s_merge
-    output:
-        file "${name}_coords_to_barcodes.pickle" into map_ch
-        file "${name}_barcodes_per_candidate-no_repeats-no_jackpots.feather" into count_table_ch
-        file "${name}_barcode_counts.pickle"
-    shell:
-        """
-        echo "test assign inputs"
-        echo ${mapq}
-        echo ${baseq}
-        echo $fastq_bc
-        zcat $fastq_bc | head
-
-        echo ${count_fastq}
-        echo ${count_bam}
-        cat ${count_fastq}
-        cat ${count_bam}
-
-        python ${"$baseDir"}/src/nf_ori_map_barcodes.py ${"$baseDir"} ${fastq_bc} ${count_fastq} \
-        $bam ${count_bam} ${name} ${mapq} ${baseq} ${cigar}
-        """
+if (params.fastq_insertPE_file != null) {
+    process 'map_element_PE_barcodes' {
+        tag "assign_PEbc"
+        label "shorttime"
+        publishDir "${params.outdir}/${params.name}", mode:'copy'
+    
+        conda 'conf/mpraflow_py36.yml'
+    
+        input:
+            val(name) from params.name
+            val(mapq) from params.mapq
+            val(baseq) from params.baseq
+            val(cigar) from params.cigar
+            file(fastq_bc) from mergedPE_bc
+            file count_fastq from bc_ch
+            file count_bam from ch_merge
+            file bam from s_merge
+        output:
+            file "${name}_coords_to_barcodes.pickle" into map_ch
+            file "${name}_barcodes_per_candidate-no_repeats-no_jackpots.feather" into count_table_ch
+            file "${name}_barcode_counts.pickle"
+        shell:
+            """
+            echo "test assign inputs"
+            echo ${mapq}
+            echo ${baseq}
+            echo $fastq_bc
+            zcat $fastq_bc | head
+    
+            echo ${count_fastq}
+            echo ${count_bam}
+            cat ${count_fastq}
+            cat ${count_bam}
+    
+            python ${"$baseDir"}/src/nf_ori_map_barcodes.py ${"$baseDir"} ${fastq_bc} ${count_fastq} \
+            $bam ${count_bam} ${name} ${mapq} ${baseq} ${cigar}
+            """
+    }
+} else {
+    process 'map_element_SE_barcodes' {
+        tag "assign_SEbc"
+        label "shorttime"
+        publishDir "${params.outdir}/${params.name}", mode:'copy'
+    
+        conda 'conf/mpraflow_py36.yml'
+    
+        input:
+            val(name) from params.name
+            val(mapq) from params.mapq
+            val(baseq) from params.baseq
+            val(cigar) from params.cigar
+            file(fastq_bc) from params.fastq_bc_file
+            file count_fastq from bc_ch
+            file count_bam from ch_merge
+            file bam from s_merge
+        output:
+            file "${name}_coords_to_barcodes.pickle" into map_ch
+            file "${name}_barcodes_per_candidate-no_repeats-no_jackpots.feather" into count_table_ch
+            file "${name}_barcode_counts.pickle"
+        shell:
+            """
+            echo "test assign inputs"
+            echo ${mapq}
+            echo ${baseq}
+            echo $fastq_bc
+            zcat $fastq_bc | head
+    
+            echo ${count_fastq}
+            echo ${count_bam}
+            cat ${count_fastq}
+            cat ${count_bam}
+    
+            python ${"$baseDir"}/src/nf_ori_map_barcodes.py ${"$baseDir"} ${fastq_bc} ${count_fastq} \
+            $bam ${count_bam} ${name} ${mapq} ${baseq} ${cigar}
+            """
+    }
 }
 
 /*
