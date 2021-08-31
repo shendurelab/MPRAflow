@@ -44,7 +44,7 @@ def helpMessage() {
       --outdir                      The output directory where the results will be saved and what will be used as a prefix (default outs)
       --split                       Number read entries per fastq chunk for faster processing (default: 2000000)
       --labels                      tsv with the oligo pool fasta and a group label (ex: positive_control) if no labels desired a file will be automatically generated
-      --strand-aware                Flag for strand aware analysis using bowtie2 (default: off)
+      --aligner                     Flag to switch aligner from BWA-mem to Bowtie2 (bt2) or a strand aware workflow usimg Bowtie2 (bt2_strand) (default: bwa)
 
     Extras:
       --h, --help                   Print this help message
@@ -74,7 +74,7 @@ params.baseq="30"
 params.mapq="30"
 params.cigar="n"
 params.split=2000000
-params.strand_aware="off"
+params.aligner="bwa"
 
 // Validate inputs
 if ( !params.containsKey("name") ){
@@ -159,7 +159,7 @@ summary['map quality']      = params.mapq
 summary['base quality']     = params.baseq
 summary['cigar string']     = params.cigar
 summary['min % mapped']     = params.min_frac
-summary['strand aware']     = params.strand_aware
+summary['aligner']     = params.aligner
 summary['Output dir']       = params.outdir
 summary['Run name'] = params.name
 summary['Working dir']      = workflow.workDir
@@ -274,35 +274,59 @@ if (params.label_file == null) {
 
 /*
 * STEP 1: Align
-* Process 1A: create BWA reference
+* Process 1A: create reference, BWA or botwie2
 * contributions: Gracie Gordon
 */
 
-process 'create_BWA_ref' {
-    tag "make ref"
-    label 'shorttime'
+if (params.aligner == "bwa") {
+    process 'create_BWA_ref' {
+        tag "make ref"
+        label 'shorttime'
+    
+        conda 'conf/mpraflow_py36.yml'
+    
+        input:
+            file(design) from fixed_design
+            file(label) from fixed_label
+        output:
+            file "${design}.fai" into reference_fai
+            file "${design}.bwt" into reference_bwt
+            file "${design}.sa" into reference_sa
+            file "${design}.pac" into reference_pac
+            file "${design}.ann" into reference_ann
+            file "${design}.amb" into reference_amb
+            file "${design}.dict" into reference_dict
+        shell:
+            """
+            #!/bin/bash
+            bwa index -a bwtsw $design
+            samtools faidx $design
+            picard CreateSequenceDictionary REFERENCE=$design OUTPUT=$design".dict"
+            """
+    }
+}else{
+    process 'create_BT2_ref' {
+        tag "make ref"
+        label 'shorttime'
+    
+        conda 'conf/mpraflow_py36.yml'
+    
+        input:
+            file(design) from fixed_design
+            file(label) from fixed_label
+        output:
+            file "*.bt2" into reference_bt2
+        shell:
+            """
+            #!/bin/bash
+            bowtie2-build -f ${design} ${design}_reference
 
-    conda 'conf/mpraflow_py36.yml'
+            """
+    }
 
-    input:
-        file(design) from fixed_design
-        file(label) from fixed_label
-    output:
-        file "${design}.fai" into reference_fai
-        file "${design}.bwt" into reference_bwt
-        file "${design}.sa" into reference_sa
-        file "${design}.pac" into reference_pac
-        file "${design}.ann" into reference_ann
-        file "${design}.amb" into reference_amb
-        file "${design}.dict" into reference_dict
-    shell:
-        """
-        #!/bin/bash
-        bwa index -a bwtsw $design
-        samtools faidx $design
-        picard CreateSequenceDictionary REFERENCE=$design OUTPUT=$design".dict"
-        """
 }
+
+
 
 /*
 *CHUNKING FASTQ
@@ -369,75 +393,178 @@ if (params.fastq_bcPE_file != null) {
 }
 
 /*
-* Process 1C: align with BWA
+* Process 1C: align with BWA or bowtie2
 * contributions: Gracie Gordon
 */
 
 //paired ends
-if (params.fastq_insertPE_file != null) {
-    process 'align_BWA_PE' {
-        tag "align"
-        label 'longtime'
-
-        conda 'conf/mpraflow_py36.yml'
-
-        input:
-            file(design) from fixed_design
-            file(chunk) from mergedPE
-            val(name) from params.name
-            file(reference_fai) from reference_fai
-            file reference_bwt from reference_bwt
-            file reference_sa from reference_sa
-            file reference_pac from reference_pac
-            file reference_ann from reference_ann
-            file reference_amb from reference_amb
-            file reference_dict from reference_dict
-        output:
-            file "${name}.${chunk}.sorted.bam" into s_bam
-            file '*count_bam.txt' into bam_ch
-        shell:
-            """
-            bwa mem $design $chunk | \
-            samtools sort - -o ${name}.${chunk}.sorted.bam
-
-            echo 'bam made'
-
-            samtools view ${name}.${chunk}.sorted.bam | head
-
-            samtools view ${name}.${chunk}.sorted.bam | \
-            wc -l > ${chunk}.count_bam.txt
-            """
+if (params.aligner == "bwa") {
+    if (params.fastq_insertPE_file != null) {
+        process 'align_BWA_PE' {
+            tag "align"
+            label 'longtime'
+    
+            conda 'conf/mpraflow_py36.yml'
+    
+            input:
+                file(design) from fixed_design
+                file(chunk) from mergedPE
+                val(name) from params.name
+                file(reference_fai) from reference_fai
+                file reference_bwt from reference_bwt
+                file reference_sa from reference_sa
+                file reference_pac from reference_pac
+                file reference_ann from reference_ann
+                file reference_amb from reference_amb
+                file reference_dict from reference_dict
+            output:
+                file "${name}.${chunk}.sorted.bam" into s_bam
+                file '*count_bam.txt' into bam_ch
+            shell:
+                """
+                bwa mem $design $chunk | \
+                samtools sort - -o ${name}.${chunk}.sorted.bam
+    
+                echo 'bam made'
+    
+                samtools view ${name}.${chunk}.sorted.bam | head
+    
+                samtools view ${name}.${chunk}.sorted.bam | \
+                wc -l > ${chunk}.count_bam.txt
+                """
+        }
+    } else {
+        //single end
+        process 'align_BWA_S' {
+            tag "align"
+            label 'longtime'
+    
+            conda 'conf/mpraflow_py36.yml'
+    
+            input:
+                file(design) from fixed_design
+                file(chunk) from R1_ch
+                val(name) from params.name
+                file(reference_fai) from reference_fai
+                file reference_bwt from reference_bwt
+                file reference_sa from reference_sa
+                file reference_pac from reference_pac
+                file reference_ann from reference_ann
+                file reference_amb from reference_amb
+                file reference_dict from reference_dict
+            output:
+                file "${name}.${chunk}.sorted.bam" into s_bam
+                file '*count_bam.txt' into bam_ch
+            shell:
+                """
+                bwa mem $design $chunk | samtools sort - -o ${name}.${chunk}.sorted.bam
+                echo 'bam made'
+                samtools view ${name}.${chunk}.sorted.bam | head
+                samtools view ${name}.${chunk}.sorted.bam | wc -l > ${chunk}_count_bam.txt
+                """
+        }
     }
-} else {
-    //single end
-    process 'align_BWA_S' {
-        tag "align"
-        label 'longtime'
+}else{
+    if (params.fastq_insertPE_file != null) {
+        process 'align_bt2_PE' {
+            tag "align"
+            label 'longtime'
+    
+            conda 'conf/mpraflow_py36.yml'
+    
+            input:
+                file(design) from fixed_design
+                file(chunk) from mergedPE
+                val(name) from params.name
+                file(reference) from reference_bt2 
+                val(strand) from params.aligner   
+            output:
+                file "${name}.${chunk}.sorted.bam" into s_bam
+                file '*count_bam.txt' into bam_ch
+            shell:
+                """
+                echo "aligner" 
+                echo $strand
+                if [ $strand == "bt2" ]
+                    then
+                        echo "standard bt2"
+                        bowtie2 -x ${design}_reference -U $chunk -S ${name}.${chunk}.sam
+                        samtools view -S -b ${name}.${chunk}.sam > ${name}.${chunk}.sorted.bam
+               
+                        echo 'bam made'
+                        samtools view ${name}.${chunk}.sorted.bam | head
+ 
+                        samtools view ${name}.${chunk}.sorted.bam | \
+                        wc -l > ${chunk}.count_bam.txt
+                    else
+                        echo "stranded norc bt2"
+                        bowtie2 -x ${design}_reference --norc -U $chunk -S ${name}.${chunk}.sam
+                        samtools view -S -b ${name}.${chunk}.sam > ${name}.${chunk}.sorted.bam
+               
+                        echo 'bam made'
+                        samtools view ${name}.${chunk}.sorted.bam | head
 
-        conda 'conf/mpraflow_py36.yml'
+                        samtools view ${name}.${chunk}.sorted.bam | \
+                        wc -l > ${chunk}.count_bam.txt
+                fi 
+    
+                """
+        }
+    } else {
+        //single end
+        process 'align_bt2_S' {
+            tag "align"
+            label 'longtime'
+    
+            conda 'conf/mpraflow_py36.yml'
+    
+            input:
+                file(design) from fixed_design
+                file(chunk) from R1_ch
+                val(name) from params.name
+                file(reference) from reference_bt2
 
-        input:
-            file(design) from fixed_design
-            file(chunk) from R1_ch
-            val(name) from params.name
-            file(reference_fai) from reference_fai
-            file reference_bwt from reference_bwt
-            file reference_sa from reference_sa
-            file reference_pac from reference_pac
-            file reference_ann from reference_ann
-            file reference_amb from reference_amb
-            file reference_dict from reference_dict
-        output:
-            file "${name}.${chunk}.sorted.bam" into s_bam
-            file '*count_bam.txt' into bam_ch
-        shell:
-            """
-            bwa mem $design $chunk | samtools sort - -o ${name}.${chunk}.sorted.bam
-            echo 'bam made'
-            samtools view ${name}.${chunk}.sorted.bam | head
-            samtools view ${name}.${chunk}.sorted.bam | wc -l > ${chunk}_count_bam.txt
-            """
+            output:
+                file "${name}.${chunk}.sorted.bam" into s_bam
+                file '*count_bam.txt' into bam_ch
+            shell:
+                """
+                if [ $strand == "bt2" ]
+                    then
+                        echo "standard bt2"
+                        bowtie2 -x ${design}_reference -U $chunk -S ${name}.${chunk}.sam
+                        samtools view -S -b ${name}.${chunk}.sam > ${name}.${chunk}.sorted.bam
+
+                        echo 'bam made'
+                        samtools view ${name}.${chunk}.sorted.bam | head
+
+                        samtools view ${name}.${chunk}.sorted.bam | \
+                        wc -l > ${chunk}.count_bam.txt
+                    else
+                        echo "stranded norc bt2"
+                        bowtie2 -x ${design}_reference --norc -U $chunk -S ${name}.${chunk}.sam
+                        samtools view -S -b ${name}.${chunk}.sam > ${name}.${chunk}.sorted.bam
+
+                        echo 'bam made'
+                        samtools view ${name}.${chunk}.sorted.bam | head
+
+                        samtools view ${name}.${chunk}.sorted.bam | \
+                        wc -l > ${chunk}.count_bam.txt
+                fi
+
+                #bowtie2 -x ${design}_reference --norc -U $chunk -S ${name}.${chunk}.sam
+                #samtools view -S -b ${name}.${chunk}.sam > ${name}.${chunk}.bam
+
+                #echo 'bam made'
+                #samtools view ${name}.${chunk}.sorted.bam | head
+
+                #samtools view ${name}.${chunk}.sorted.bam | \
+                #wc -l > ${chunk}.count_bam.txt
+ 
+                """
+        }
     }
+
 }
 
 /*
@@ -478,7 +605,7 @@ process 'collect_chunks'{
 * contributions: Sean Whalen
 */
 
-if (params.fastq_insertPE_file != null) {
+if (params.fastq_bcPE_file != null) {
     process 'map_element_PE_barcodes' {
         tag "assign_PEbc"
         label "shorttime"

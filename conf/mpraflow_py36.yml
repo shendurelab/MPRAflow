@@ -141,3 +141,6 @@ dependencies:
   - zict=1.0.0=py_0
   - zlib=1.2.11=h7b6447c_3
   - zstd=1.3.7=h0b5b093_0
+  - bowtie2=2.3.5.1=py36he513fc3_0
+  - python_abi=3.6=2_cp36m
+  - tbb=2020.2=hc9558a2_0
