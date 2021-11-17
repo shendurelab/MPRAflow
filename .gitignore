@@ -10,6 +10,8 @@ old/
 test_data/
 tmp/
 HK_inputs/
+Assoc_Basic/
+Count_Basic/
 
 # c compiled python
 src/*.pyc
