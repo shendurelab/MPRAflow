@@ -22,7 +22,13 @@ Please install conda, the MPRAflow environment and clone the actual MPRAflow mas
 
 Producing an association pickle
 ------------------------------------
-This workflow requires a python dictionary of candidate regulatory sequence (CRS) mapped to their barcodes in a pickle format. For this example the file can be generated using :ref:`Association example`.
+This workflow requires a python dictionary of candidate regulatory sequence (CRS) mapped to their barcodes in a pickle format. For this example the file can be generated using :ref:`Association example` or it can be found in the `example folder of the GitHub repository <https://github.com/shendurelab/MPRAflow/tree/master/examples/basic_count_workflow>`_.
+
+Design file
+---------------
+
+File can be generated using the :ref:`Association example` or downloaded from the `example folder <https://github.com/shendurelab/MPRAflow/tree/master/examples/basic_count_workflow>`_.
+
 
 
 Reads
@@ -109,7 +115,7 @@ Now we have everything at hand to run the count MPRAflow pipeline. Therefore we 
 
     cd <path/to/MPRAflow>/MPRAflow
     conda activate MPRAflow
-    nextflow run count.nf -w <path/to/Basic>/Count_Basic/work --experiment-file "<path/to/Basic>/Count_Basic/data/experiment.csv" --dir "<path/to/Basic>/Count_Basic/data" --outdir "<path/to/Basic>/Count_Basic/output" --design "<path/to/design/fasta/design.fa" --association "<path/to/association/pickle/SRR10800986_filtered_coords_to_barcodes.pickle"
+    nextflow run count.nf -w <path/to/Basic>/Count_Basic/work --experiment-file "<path/to/Basic>/Count_Basic/data/experiment.csv" --dir "<path/to/Basic>/Count_Basic/data" --outdir "<path/to/Basic>/Count_Basic/output" --design "<path/to/design/fasta>/design.fa" --association "<path/to/association/pickle>/SRR10800986_filtered_coords_to_barcodes.pickle"
 
 .. note:: Please check your :code:`conf/cluster.config` file if it is correctly configured (e.g. with your SGE cluster commands).
 
