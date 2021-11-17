@@ -1,6 +1,10 @@
 # MPRAflow Changelog
 
-## develpment
+## v2.3.1
+
+### association.nf
+
+* Bugfix empty design file (see issue #45)
 
 ## v2.3
 
