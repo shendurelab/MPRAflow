@@ -250,8 +250,9 @@ if (params.label_file == null) {
             awk '{gsub(/\\]/,"_")}1' t_new_label.txt > label_rmIllegalChars.txt
 
 
-            awk '{gsub(/\\[/,"_")}1' $design > t_new_design.txt
-            awk '{gsub(/\\]/,"_")}1' t_new_design.txt > design_rmIllegalChars.fa
+            awk '{gsub(/\\[/,"_")}1' $design | \\
+            awk '{gsub(/\\]/,"_")}1' | \\
+            sed 's/\\r//g' > design_rmIllegalChars.fa
 
             zcat $fastq_bc | wc -l  > count_fastq.txt
             """
@@ -394,7 +395,7 @@ if (params.fastq_insertPE_file != null) {
             file reference_dict from reference_dict
         output:
             file "${name}.${chunk}.sorted.bam" into s_bam
-            file '${chunk}_count_bam.txt' into bam_ch
+            file '*count_bam.txt' into bam_ch
         shell:
             """
             bwa mem $design $chunk | samtools sort - -o ${name}.${chunk}.sorted.bam

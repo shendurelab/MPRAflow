@@ -151,7 +151,7 @@ def save_non_repeated_barcodes_per_candidate(d, fn):
 
 #project_dir = '/ye/yelabstore3/gracieg/scMPRA/pilot_mixing/slimsdata.genomecenter.ucdavis.edu/Data/96qdysy9rg/Unaligned/Project_NAFI_FI48'
 
-coords_to_barcodes = get_coords_to_barcodes(fastq_in, n_fastq,bamfile,n_bam)
+coords_to_barcodes = get_coords_to_barcodes(fastq_in, n_fastq,bamfile,n_bam,mapq,baseq,cigar)
 
 
 save_barcodes_per_candidate(coords_to_barcodes, f'{prefix}_barcodes_per_candidate.feather')
