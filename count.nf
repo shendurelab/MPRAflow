@@ -504,7 +504,7 @@ if(params.mpranalyze){
 
         result = merged_ch.groupTuple(by: 0).multiMap{i ->
                                   cond: i[0]
-                                  replicate: i[1].join(" ")
+                                  replicate: i[1]
                                   files: i[2]
                                 }
 
@@ -515,10 +515,10 @@ if(params.mpranalyze){
         output:
             tuple val(cond),file("${cond}_count.csv") into merged_out
         script:
-            pairlist = pairlistFiles.collect{"$it"}.join(' ')
+            inputs = [["--counts"]*replicate.size(),replicate,pairlistFiles.collect{"$it"}].transpose().flatten().join(' ')
         shell:
             """
-            python ${"$baseDir"}/src/merge_all.py $cond "${cond}_count.csv" $pairlist $replicate
+            python ${"$baseDir"}/src/merge_all.py --condition $cond --output "${cond}_count.csv" $inputs
             """
     }
 
