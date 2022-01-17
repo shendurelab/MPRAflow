@@ -1,5 +1,11 @@
 # MPRAflow Changelog
 
+## v2.3.2
+
+### count.nf
+
+* Bugfix merge_all.py script (see issue #55)
+
 ## v2.3.1
 
 ### association.nf
