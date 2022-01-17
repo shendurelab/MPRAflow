@@ -38,7 +38,7 @@ def cli(condition, counts, output_file):
         #DNA 1 (condition A, replicate 1)
         colnames=["Barcode", "DNA %s (condition %s, replicate %s)" % (rep,condition,rep),
                              "RNA %s (condition %s, replicate %s)" % (rep,condition,rep)]
-        cur=pd.DataFrame(pd.read_csv(file, sep='\t', header=None))
+        cur=pd.DataFrame(pd.read_csv(file, sep=',', header=None))
         print(cur.head())
         cur.columns=colnames
         cur_dk=dd.from_pandas(cur,npartitions=1)
