@@ -1,5 +1,11 @@
 # MPRAflow Changelog
 
+## v2.3.3
+
+### association.nf
+
+* Bugfix in `src/nf_ori_map_barcodes.py` script (see issue #41). Now >= mapq instead of > mapq is used.
+
 ## v2.3.2
 
 ### count.nf
