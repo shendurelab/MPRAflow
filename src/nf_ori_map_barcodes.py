@@ -93,7 +93,7 @@ def get_coords_to_barcodes(fastq_in, n_fastq,bamfile,n_bam,mapq=30,baseq=30,ciga
             #if read.cigarstring == '179M' or read.cigarstring == '178M':
             
             ## filter reads with too low of map quality and exact cigar match if provided
-            if read.mapping_quality > int(mapq):
+            else:
                 if cigar == "":
                     if isinstance(read.reference_name, str):
                         query_to_coords[read.query_name] = read.reference_name
