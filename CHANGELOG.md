@@ -1,5 +1,11 @@
 # MPRAflow Changelog
 
+## v2.3.4
+
+### count.nf
+
+* increasing speed of `src/merge_label.py` speed for larger MPRAs.
+
 ## v2.3.3
 
 ### association.nf
