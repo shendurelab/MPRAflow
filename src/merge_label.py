@@ -122,31 +122,44 @@ counts_filtered_t = counts[mask]
 #res=''
 #res=pd.DataFrame()
 #normalize inserts
-for i in set(counts_filtered_t.Label):
-    sel=counts_filtered_t.loc[counts_filtered_t['Label']==i]
-    #print(sel)
-
-    #new formula
-    #dna=(sum(sel.dna_count)+1)/((len(sel.dna_count)+1))/(sum(counts_filtered_t.dna_count)/(10**6))
-    #rna=(sum(sel.rna_count)+1)/((len(sel.rna_count)+1))/(sum(counts_filtered_t.rna_count)/(10**6))
-
-    #copied formula
-    dna=(sum(sel.dna_count)+1)/((len(sel.dna_count)+1))/sum(counts_filtered_t.dna_count)*10**6
-    rna=(sum(sel.rna_count)+1)/((len(sel.rna_count)+1))/sum(counts_filtered_t.rna_count)*10**6
-    #rna=((sum(counts_filtered_t.rna_count[sel])+1)/(length(sel)+1))/sum(counts_filtered_t.rna)*10^6
-    res_temp=(pd.DataFrame([dna,rna,len(sel.dna_count)]))
-    res_t=res_temp.transpose()
-    res_t.rename(index={0:str(i)},inplace=True)
-
-    if 'res' in locals():
-        res=pd.concat([res,res_t])
-    else:
-        res=res_t
+#for i in set(counts_filtered_t.Label):
+#    sel=counts_filtered_t.loc[counts_filtered_t['Label']==i]
+#    #print(sel)
+#
+#    #new formula
+#    #dna=(sum(sel.dna_count)+1)/((len(sel.dna_count)+1))/(sum(counts_filtered_t.dna_count)/(10**6))
+#    #rna=(sum(sel.rna_count)+1)/((len(sel.rna_count)+1))/(sum(counts_filtered_t.rna_count)/(10**6))
+#
+#    #copied formula
+#    dna=(sum(sel.dna_count)+1)/((len(sel.dna_count)+1))/sum(counts_filtered_t.dna_count)*10**6
+#    rna=(sum(sel.rna_count)+1)/((len(sel.rna_count)+1))/sum(counts_filtered_t.rna_count)*10**6
+#    #rna=((sum(counts_filtered_t.rna_count[sel])+1)/(length(sel)+1))/sum(counts_filtered_t.rna)*10^6
+#    res_temp=(pd.DataFrame([dna,rna,len(sel.dna_count)]))
+#    res_t=res_temp.transpose()
+#    res_t.rename(index={0:str(i)},inplace=True)
+#
+#    if 'res' in locals():
+#        res=pd.concat([res,res_t])
+#    else:
+#        res=res_t
 #print(i)
+
+#normalize inserts
+# way more efficient, same result
+res = counts_filtered_t.groupby("Label", sort=False).agg({'rna_count':[('rna_sum','sum')],
+                                                          'dna_count':[("dna_sum",sum)],
+                                                          'Label':[("n_obs_bc",np.count_nonzero)]})
+res.columns = ['rna_sum','dna_sum','n_obs_bc']
+
+dna_total = sum(counts_filtered_t.dna_count)
+rna_total = sum(counts_filtered_t.rna_count)
+res.insert(0, 'dna_count',(res.dna_sum+1) / (res.n_obs_bc+1) / dna_total * 10**6)
+res.insert(1, 'rna_count',(res.rna_sum+1) / (res.n_obs_bc+1) / rna_total * 10**6)
+
 print(res_t)
 print('test')
 print(res.head())
-res.columns=['dna_count','rna_count','n_obs_bc']
+res = res[['dna_count','rna_count','n_obs_bc']]
 res.index.name = 'name'
 
 res.reset_index(inplace=True)
