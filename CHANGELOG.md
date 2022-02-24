@@ -1,5 +1,9 @@
 # MPRAflow Changelog
 
+## development
+
+* using mamba instead of conda
+
 ## v2.3.4
 
 ### count.nf
