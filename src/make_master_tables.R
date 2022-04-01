@@ -23,7 +23,7 @@ for (i in 5:(length(args)-replicates)){
    file=args[i]
    rep=args[i+replicates]
 
-   tab=as.data.frame(read.table(file,header=TRUE))
+   tab=as.data.frame(read.delim(file,header=TRUE))
 
    filter_tab=tab[tab$n_obs_bc >= thresh,]
 

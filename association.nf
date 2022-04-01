@@ -43,6 +43,7 @@ def helpMessage() {
       --outdir                      The output directory where the results will be saved and what will be used as a prefix (default outs)
       --split                       Number read entries per fastq chunk for faster processing (default: 2000000)
       --labels                      tsv with the oligo pool fasta and a group label (ex: positive_control) if no labels desired a file will be automatically generated
+      --variants                    tsv with reference_name variant_positions ref_bases alt_bases, only input for variant analyses workflow
 
     Extras:
       --h, --help                   Print this help message
@@ -117,6 +118,14 @@ if (params.containsKey("labels")){
     params.label_file=null
 }
 
+// variants file saved in params.variants_file
+if (params.containsKey("variants")){
+    params.variants_file=file(params.variants)
+    if (!params.variants_file.exists()) exit 1, "variants file ${params.variants_file} does not exist"
+} else {
+    params.variants_file=null
+}
+
 // Has the run name been specified by the user?
 //  this has the bonus effect of catching both -name and --name
 custom_runName = params.name
@@ -153,6 +162,7 @@ summary['Run name'] = params.name
 summary['Working dir']      = workflow.workDir
 summary['Container Engine'] = workflow.containerEngine
 if(workflow.containerEngine) summary['Container'] = workflow.container
+if(params.variants_file!=null) summary['Variants file'] = params.variants_file
 summary['Current home']     = "$HOME"
 summary['Current user']     = "$USER"
 summary['Current path']     = "$PWD"
@@ -444,78 +454,153 @@ process 'collect_chunks'{
 * contributions: Sean Whalen
 */
 
-process 'map_element_barcodes' {
-    tag "assign"
-    label "shorttime"
-    publishDir "${params.outdir}/${params.name}", mode:'copy'
-
-    conda 'conf/mpraflow_py36.yml'
-
-    input:
-        val(name) from params.name
-        val(mapq) from params.mapq
-        val(baseq) from params.baseq
-        val(cigar) from params.cigar
-        file(fastq_bc) from params.fastq_bc_file
-        file count_fastq from bc_ch
-        file count_bam from ch_merge
-        file bam from s_merge
-    output:
-        file "${name}_coords_to_barcodes.pickle" into map_ch
-        file "${name}_barcodes_per_candidate-no_repeats-no_jackpots.feather" into count_table_ch
-        file "${name}_barcode_counts.pickle"
-    shell:
-        """
-        echo "test assign inputs"
-        echo ${mapq}
-        echo ${baseq}
-        echo $fastq_bc
-        zcat $fastq_bc | head
-
-        echo ${count_fastq}
-        echo ${count_bam}
-        cat ${count_fastq}
-        cat ${count_bam}
-
-        python ${"$baseDir"}/src/nf_ori_map_barcodes.py ${"$baseDir"} ${fastq_bc} ${count_fastq} \
-        $bam ${count_bam} ${name} ${mapq} ${baseq} ${cigar}
-        """
+if (params.variants_file == null){
+    process 'map_element_barcodes' {
+        tag "assign"
+        label "shorttime"
+        publishDir "${params.outdir}/${params.name}", mode:'copy'
+    
+        conda 'conf/mpraflow_py36.yml'
+    
+        input:
+            val(name) from params.name
+            val(mapq) from params.mapq
+            val(baseq) from params.baseq
+            val(cigar) from params.cigar
+            file(fastq_bc) from params.fastq_bc_file
+            file count_fastq from bc_ch
+            file count_bam from ch_merge
+            file bam from s_merge
+        output:
+            file "${name}_coords_to_barcodes.pickle" into map_ch
+            file "${name}_barcodes_per_candidate-no_repeats-no_jackpots.feather" into count_table_ch
+            file "${name}_barcode_counts.pickle"
+        shell:
+            """
+            echo "test assign inputs"
+            echo ${mapq}
+            echo ${baseq}
+            echo $fastq_bc
+            zcat $fastq_bc | head
+    
+            echo ${count_fastq}
+            echo ${count_bam}
+            cat ${count_fastq}
+            cat ${count_bam}
+    
+            python ${"$baseDir"}/src/nf_ori_map_barcodes.py ${"$baseDir"} ${fastq_bc} ${count_fastq} \
+            $bam ${count_bam} ${name} ${mapq} ${baseq} ${cigar}
+            """
+    }
+} else {
+    process 'map_element_barcodes_mut' {
+        tag "assign"
+        label "shorttime"
+        publishDir "${params.outdir}/${params.name}", mode:'copy'
+    
+        conda 'conf/mpraflow_py36.yml'
+    
+        input:
+            val(name) from params.name
+            val(mapq) from params.mapq
+            val(baseq) from params.baseq
+            val(cigar) from params.cigar
+            file(fastq_bc) from params.fastq_bc_file
+            file count_fastq from bc_ch
+            file count_bam from ch_merge
+            file bam from s_merge
+            file(variants) from params.variants_file
+        output:
+            file "${name}_coords_to_barcodes.pickle" into map_ch
+            file "${name}_barcodes_per_candidate-no_repeats-no_jackpots.feather" into count_table_ch
+            file "${name}_barcode_counts.pickle"
+            
+        shell:
+            """
+            echo "test assign inputs"
+            echo ${mapq}
+            echo ${baseq}
+            echo $fastq_bc
+            zcat $fastq_bc | head
+    
+            echo ${count_fastq}
+            echo ${count_bam}
+            cat ${count_fastq}
+            cat ${count_bam}
+    
+            python ${"$baseDir"}/src/nf_ori_map_barcodes.py ${"$baseDir"} ${fastq_bc} ${count_fastq} \
+            $bam ${count_bam} ${name} ${mapq} ${baseq} ${cigar} --mutations ${variants}
+            """
+    }
 }
+
 
 /*
 * Filter barcodes for minimum coverage and unique mapping
 * contributions: Gracie Gordon
 */
-
-process 'filter_barcodes' {
-    tag "$filter"
-    label "shorttime"
-    publishDir "${params.outdir}/${params.name}", mode:'copy'
-
-    conda 'conf/mpraflow_py36.yml'
-
-    input:
-        val(min_cov) from params.min_cov
-        val(min_frac) from params.min_frac
-        val(out) from params.name
-        file(map) from map_ch
-        file(table) from count_table_ch
-        file(label) from fixed_label
-    output:
-        file "${out}_filtered_coords_to_barcodes.pickle"
-        file "${out}_original_counts.png"
-        file "original_count_summary.txt"
-        file "${out}_filtered_counts.png"
-        file "filtered_count_summary.txt"
-
-    shell:
-        """
-        python ${"$baseDir"}/src/nf_filter_barcodes.py ${out} ${map} ${table} \
-        ${min_cov} ${min_frac} $label
-        """
+if (params.variants_file == null) {
+    process 'filter_barcodes' {
+        tag "$filter"
+        label "shorttime"
+        publishDir "${params.outdir}/${params.name}", mode:'copy'
+    
+        conda 'conf/mpraflow_py36.yml'
+    
+        input:
+            val(min_cov) from params.min_cov
+            val(min_frac) from params.min_frac
+            val(out) from params.name
+            file(map) from map_ch
+            file(table) from count_table_ch
+            file(label) from fixed_label
+        output:
+            file "${out}_filtered_coords_to_barcodes.pickle"
+            file "${out}_original_counts.png"
+            file "original_count_summary.txt"
+            file "${out}_filtered_counts.png"
+            file "filtered_count_summary.txt"
+    
+        shell:
+            """
+            python ${"$baseDir"}/src/nf_filter_barcodes.py ${out} ${map} ${table} \
+            ${min_cov} ${min_frac} $label
+            """
+    }
+} else {
+    process 'filter_barcodes_mut' {
+        tag "$filter"
+        label "shorttime"
+        publishDir "${params.outdir}/${params.name}", mode:'copy'
+    
+        conda 'conf/mpraflow_py36.yml'
+    
+        input:
+            val(min_cov) from params.min_cov
+            val(min_frac) from params.min_frac
+            val(out) from params.name
+            file(map) from map_ch
+            file(table) from count_table_ch
+            file(label) from fixed_label
+            file(design) from fixed_design
+            file(variants) from params.variants_file
+        output:
+            file "${out}_filtered_coords_to_barcodes.pickle"
+            file "${out}_original_counts.png"
+            file "original_count_summary.txt"
+            file "${out}_filtered_counts.png"
+            file "filtered_count_summary.txt"
+            file "label_mutExpand.txt"
+            file "design_mutExpand.fa"
+    
+        shell:
+            """
+            python ${"$baseDir"}/src/expand_variants.py ${design} ${label} ${variants} design_mutExpand.fa label_mutExpand.txt
+            python ${"$baseDir"}/src/nf_filter_barcodes.py ${out} ${map} ${table} \
+            ${min_cov} ${min_frac} label_mutExpand.txt
+            """
+    }
 }
-
-
 
 
 
