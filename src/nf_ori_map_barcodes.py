@@ -13,6 +13,13 @@ from tqdm import tqdm
 ##CMD python ori_map_barcodes.py data_assoc/  
 
 #verify trailing arguments
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--mutations')
+args, argv = parser.parse_known_args()
+mutations_f = args.mutations
+
 project_dir=sys.argv[1]
 fastq_in=sys.argv[2]
 n_fastq_f=sys.argv[3]
@@ -41,12 +48,47 @@ with open(n_fastq_f, 'r') as file:
 #f=open(n_fastq_f, 'r')
 #n_fastq=f.read().replace('\n','')
 
+
+
 with open(n_bam_f, 'r') as file:
     n_bam = file.read().replace('\n','')
+
+if mutations_f is None:
+    mutations = None
+else:
+    print('mutations')
+    print(mutations_f)
+    mutations = {}
+    with open(mutations_f) as fp:
+        next(fp)
+        for row in fp:
+            name, positions, ref_bases, alt_bases = row.split()
+            mutations[name] = [
+                [int(pos) for pos in positions.split(',')],
+                ref_bases.upper().split(','),
+                alt_bases.upper().split(',')
+            ]
 
 print('counts')
 print(n_bam)
 print(n_fastq)
+
+def augment_rname_mutation(read):
+    rname = read.reference_name
+    if mutations is not None and isinstance(rname, str) and rname in mutations:
+        pos, ref, alt = mutations[rname]
+        for p, r, a in zip(pos, ref, alt):
+            try:
+                qidx = read.get_reference_positions().index(p - 1)
+            except ValueError:
+                return None
+            if read.query_alignment_sequence[qidx].upper() in (r, a):
+                rname += f':{p}={read.query_alignment_sequence[qidx]}'
+            else:  # read has unexpected mutation
+                return None
+
+    return rname
+
 #map coords to BCs and filter based on given read/map quality and an exact cigar string if provided
 def get_coords_to_barcodes(fastq_in, n_fastq,bamfile,n_bam,mapq=30,baseq=30,cigar=''):
     coords_to_barcodes_fn = f'{prefix}_coords_to_barcodes.pickle'
@@ -70,9 +112,10 @@ def get_coords_to_barcodes(fastq_in, n_fastq,bamfile,n_bam,mapq=30,baseq=30,ciga
         query_to_coords = {}
         bad_pairs = 0
         poor_quality = 0
+        unknown_mutation = 0
         print('start')
         #get names of the aligned reads that havae a high enough quality and match sequence
-        for i, read in tqdm(enumerate(bam), 'paired-end reads', total = n_bam_records):
+        for i, read in tqdm(enumerate(bam), 'paired-end reads', total = n_bam_records):  # type: int, pysam.AlignedSegment
             #print(read.cigarstring)
             #print(read)
             #print(read.reference_name)
@@ -85,7 +128,7 @@ def get_coords_to_barcodes(fastq_in, n_fastq,bamfile,n_bam,mapq=30,baseq=30,ciga
             #    bad_pairs += 1
             #    continue
             
-            if read.mapping_quality < int(mapq):
+            if not read.has_tag('XA') and read.mapping_quality < int(mapq):
                 poor_quality += 1
                 continue
             #only save exact matches and high read quality 		
@@ -94,15 +137,20 @@ def get_coords_to_barcodes(fastq_in, n_fastq,bamfile,n_bam,mapq=30,baseq=30,ciga
             
             ## filter reads with too low of map quality and exact cigar match if provided
             else:
+                qname = read.query_name
+                rname = augment_rname_mutation(read)
+                if rname is None:
+                    unknown_mutation += 1
+                    continue
                 if cigar == "":
-                    if isinstance(read.reference_name, str):
-                        query_to_coords[read.query_name] = read.reference_name
+                    if isinstance(rname, str):
+                        query_to_coords[qname] = rname
                 else:
                     if read.cigarstring==cigar:
-                        if isinstance(read.reference_name, str):
-                            query_to_coords[read.query_name] = read.reference_name           
+                        if isinstance(rname, str):
+                            query_to_coords[qname] = rname
 
-        print(f'bad pairs: {bad_pairs} poor quality: {poor_quality}')
+        print(f'bad pairs: {bad_pairs} poor quality: {poor_quality} unknown mutation: {unknown_mutation}')
         #print(query_to_coords)
         #print(read.reference_name)
         #print(fastq)

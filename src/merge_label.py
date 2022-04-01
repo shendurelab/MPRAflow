@@ -111,7 +111,7 @@ counts.insert(0,'Sequence',seqs)
 counts.insert(0, 'Label', label)
 #print(counts)
 
-mask=(counts['Barcode'].str.len() == 15)
+mask=(counts['Barcode'].str.len() == 16)  # Scott change - hardcoded barcode length is a bad idea, but so is spending a year refactoring this.
 #print(mask)
 counts[mask]
 counts_filtered_t = counts[mask]
@@ -156,7 +156,7 @@ rna_total = sum(counts_filtered_t.rna_count)
 res.insert(0, 'dna_count',(res.dna_sum+1) / (res.n_obs_bc+1) / dna_total * 10**6)
 res.insert(1, 'rna_count',(res.rna_sum+1) / (res.n_obs_bc+1) / rna_total * 10**6)
 
-print(res_t)
+#print(res_t)
 print('test')
 print(res.head())
 res = res[['dna_count','rna_count','n_obs_bc']]
