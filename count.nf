@@ -518,6 +518,8 @@ if(params.mpranalyze){
             inputs = [["--counts"]*replicate.size(),replicate,pairlistFiles.collect{"$it"}].transpose().flatten().join(' ')
         shell:
             """
+            export LC_ALL=en_US.utf-8
+            export LANG=en_US.utf-8
             python ${"$baseDir"}/src/merge_all.py --condition $cond --output "${cond}_count.csv" $inputs
             """
     }
@@ -590,11 +592,15 @@ if(!params.mpranalyze && params.containsKey("association")){
             tuple val(cond), val(rep),val(typeA),val(typeB),val(datasetIDA),val(datasetIDB),file(countA),file(countB) from final_count.groupTuple(by: [0,1]).map{i -> i.flatten()}
             file(des) from params.design_file
             file(association) from params.association_file
+            val(bc_length) from params.bc_length
         output:
              tuple val(cond), val(rep), file("${cond}_${rep}_counts.tsv") into merged_ch, merged_ch2
         shell:
             """
-            python ${"$baseDir"}/src/merge_label.py ${typeA} ${countA} ${countB} $association $des ${params.merge_intersect} ${cond}_${rep}_counts.tsv
+            python ${"$baseDir"}/src/merge_label.py --control-type ${typeA} --control ${countA} --experiment ${countB}  \
+            --coord $association --design $des \
+            --merge-intersect ${params.merge_intersect} --bc-length ${bc_length} \
+            --output ${cond}_${rep}_counts.tsv
             """
 
     }
