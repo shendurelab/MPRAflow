@@ -1,5 +1,11 @@
 # MPRAflow Changelog
 
+## v2.3.5
+
+### count.nf
+
+* fix hard coded BC length in `merge_label.py`
+
 ## v2.3.4
 
 ### count.nf
