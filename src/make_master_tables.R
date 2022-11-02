@@ -10,7 +10,7 @@ args <- commandArgs(trailingOnly = TRUE)
 
 #exp=args[1]
 cond=args[1]
-thresh=args[2]
+thresh=as.numeric(args[2])
 outfile=args[3]
 avg_outfile=args[4]
 #out=args[3]
