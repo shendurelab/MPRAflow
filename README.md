@@ -3,7 +3,7 @@
 
 # MPRAflow
 
-**IMPORTANT NOTE: MPRAflow will not developed further! Please use [MPRAsnakeflow](https://github.com/kircherlab/MPRAsnakeflow) for a more advanced pipeline with lots of improvements and fixes.** 
+<code style="color: red"> **IMPORTANT NOTE: MPRAflow will not developed further! Please use [MPRAsnakeflow](https://github.com/kircherlab/MPRAsnakeflow) for a more advanced pipeline with lots of improvements and fixes.** </code>
 
 
 
