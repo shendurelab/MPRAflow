@@ -1,5 +1,5 @@
 ---
-name: MPRAsnakeflow note
+name: Custom issue template
 about: Information on MPRAsnakeflow
 title: ''
 labels: ''
