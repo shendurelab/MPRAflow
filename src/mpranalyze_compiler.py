@@ -4,6 +4,7 @@ import os
 import re
 import sys
 from collections import defaultdict
+import pandas
 
 annot_pattern = re.compile("^([DR]NA).*\(condition (.*), replicate (.*)\)$")
 def get_annot(head):
@@ -12,29 +13,30 @@ def get_annot(head):
 		return m.group(1,2,3)
 
 def parse(in_path):
-	with open(in_path, 'r') as infile:
-		header = next(infile).strip().split('\t')
-		## parse header
-		header_annot = [get_annot(h) for h in header[3:]]
-		dna_annot = [h for h in header_annot if h[0] == 'DNA']
-		rna_annot = [h for h in header_annot if h[0] == 'RNA']
-		n_dna_obs = len(dna_annot)
-		n_rna_obs = len(rna_annot)
-
-		rna_dict = defaultdict(list)
-		dna_dict = defaultdict(list)
-		##
-		for l in infile:
-			l = l.strip().split('\t')
-			seq_id = l[0]
-			if seq_id == 'no_BC':
-				continue
-
-			## add DNA counts to dictionary
-			dna_dict[seq_id].append(l[3:(3 + n_dna_obs)])
-
-			## add RNA counts to dictionary
-			rna_dict[seq_id].append(l[(3 + n_dna_obs):])
+	infile = pandas.read_csv(in_path,sep='\t', dtype=str)
+	header = infile.columns.tolist()
+	header_annot = [get_annot(h) for h in header[3:]]
+	dna_annot = [h for h in header_annot if h[0] == 'DNA']
+	rna_annot = [h for h in header_annot if h[0] == 'RNA']
+	n_dna_obs = len(dna_annot)
+	n_rna_obs = len(rna_annot)
+	rna_dict = defaultdict(list)
+	dna_dict = defaultdict(list)
+	for n,l in infile.iterrows():
+		l = l.to_list()
+		for x in range(0,len(l)):
+			ll = str(l[x])
+			if(ll == "nan"):
+				l[x] = "NA"
+			else:
+				l[x] = ll
+		seq_id = l[0]
+		if seq_id == 'no_BC':
+			continue
+		## add DNA counts to dictionary
+		dna_dict[seq_id].append(l[3:(3 + n_dna_obs)])
+		## add RNA counts to dictionary
+		rna_dict[seq_id].append(l[(3 + n_dna_obs):])
 
 	n_bc = max([len(x) for x in rna_dict.values()])
 
