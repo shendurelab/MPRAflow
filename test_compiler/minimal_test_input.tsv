@@ -1,0 +1,5 @@
+label	Sequence	Barcode	DNA(condition X, replicate 1)	DNA(condition X, replicate 2)	DNA(condition X, replicate 3)	RNA(condition X, replicate 1)	RNA(condition X, replicate 2)	RNA(condition X, replicate 3)
+oligoA	A	BC0	10	20	30	100	200	300
+oligoA	A	BC1	11	21	31	101	201	
+oligoA	A	BC2	12	22	32	102	202	302
+oligoB	B	BC3	13	23	33	103	203	303
