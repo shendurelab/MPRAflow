@@ -1,0 +1,10 @@
+sample	type	condition	replicate	barcode
+DNA_X_1_1	DNA	X	1	1
+DNA_X_2_1	DNA	X	2	1
+DNA_X_3_1	DNA	X	3	1
+DNA_X_1_2	DNA	X	1	2
+DNA_X_2_2	DNA	X	2	2
+DNA_X_3_2	DNA	X	3	2
+DNA_X_1_3	DNA	X	1	3
+DNA_X_2_3	DNA	X	2	3
+DNA_X_3_3	DNA	X	3	3
